@@ -1,4 +1,4 @@
-import { env } from "../libs/env.js";
+import { env } from "../configs/env.js";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from './schema.js'

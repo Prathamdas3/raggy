@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq"
-import { redis } from "../libs/redis.js"
+import { redis } from "../configs/redis.js"
 
 const embedingFunc = async (job: Job) => {
 

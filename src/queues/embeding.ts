@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq'
-import { tryCatch } from '../libs/tryCatch.js'
-import { redis } from 'src/libs/redis.js'
+import { tryCatch } from '../utils/tryCatch.js'
+import { redis } from 'src/configs/redis.js'
 
 export const EmbedingQueue = new Queue('embeding', {
     connection: redis,

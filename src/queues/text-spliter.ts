@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq'
-import { tryCatch } from '../libs/tryCatch.js'
-import { redis } from 'src/libs/redis.js'
+import { tryCatch } from '../utils/tryCatch.js'
+import { redis } from 'src/configs/redis.js'
 
 export const TextSplitingQueue = new Queue('text-spliter', {
     connection: redis,

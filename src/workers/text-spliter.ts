@@ -1,8 +1,8 @@
 import { Job, Worker } from "bullmq"
-import { redis } from "../libs/redis.js"
+import { redis } from "../configs/redis.js"
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters'
-import { tryCatch } from "src/libs/tryCatch.js";
+import { tryCatch } from "src/utils/tryCatch.js";
 import fs from 'fs'
 
 const splitter = new RecursiveCharacterTextSplitter({

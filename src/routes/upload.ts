@@ -4,7 +4,7 @@ import { validator } from 'hono/validator'
 import path from "node:path";
 import z from 'zod'
 import fs from 'fs'
-import { tryCatch } from "src/libs/tryCatch.js";
+import { tryCatch } from "src/utils/tryCatch.js";
 import { randomUUID } from "node:crypto";
 import { AddToTextSplitingQueue } from "src/queues/text-spliter.js";
 
