@@ -6,6 +6,7 @@ import z from 'zod'
 import fs from 'fs'
 import { tryCatch } from "src/libs/tryCatch.js";
 import { randomUUID } from "node:crypto";
+import { AddToTextSplitingQueue } from "src/queues/text-spliter.js";
 
 const schema = z.object({
     file: z.custom<File>((val) => val instanceof File, {
@@ -76,7 +77,6 @@ export const UploadRouter = new Hono()
                 if (filePath) {
                     try {
                         await fs.promises.unlink(filePath)
-                        console.log('Cleaned up failed upload:', filePath)
                     } catch (unlinkErr) {
                         console.error('Failed to clean up file:', unlinkErr)
                     }
@@ -84,6 +84,13 @@ export const UploadRouter = new Hono()
 
                 c.status(500)
                 return c.json({ body: "Upload Failed, please try again later" })
+            }
+
+            //adding the filepath to the queue
+            const { data } = await tryCatch(AddToTextSplitingQueue({ filepath: filePath }))
+
+            if (!data?.id.trim()) {
+                console.log("failed to load the file to the queue")
             }
 
             c.status(200)
