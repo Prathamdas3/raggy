@@ -1,12 +1,15 @@
 import z from 'zod'
+// import 'dotenv'
 
 const EnvSchema = z.object({
     DATABASE_URL: z.url(),
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.url(),
+    QDRANT_URL: z.url(),
 
 })
 
+console.log(process.env)
 const parsed = EnvSchema.safeParse(process.env!)
 
 if (!parsed.success) {
