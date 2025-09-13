@@ -11,7 +11,7 @@ const splitter = new RecursiveCharacterTextSplitter({
 });
 
 
-const embadingFunc = async (job: Job) => {
+const SplitingFunc = async (job: Job) => {
     if (!job.data?.filepath.trim()) {
         console.log("No filepath present")
         return null
@@ -49,7 +49,7 @@ const embadingFunc = async (job: Job) => {
     return null
 }
 
-export const TextSplitingWorker = new Worker('text-spliter', embadingFunc, { connection: redis })
+export const TextSplitingWorker = new Worker('text-spliter', SplitingFunc, { connection: redis })
 
 TextSplitingWorker.on("ready", () => {
     console.log("Started the worker text-spliter")

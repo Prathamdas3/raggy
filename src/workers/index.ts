@@ -1,3 +1,2 @@
 import './text-spliter.js'
-
-console.log("All workers started")
+import './embeding.js'
