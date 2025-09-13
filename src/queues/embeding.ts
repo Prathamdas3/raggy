@@ -16,8 +16,8 @@ export const EmbedingQueue = new Queue('embeding', {
     },
 })
 
-export async function AddToEmbedingQueue(payload: { filepath: string }): Promise<{ id: string }> {
-    const { data, error } = await tryCatch(EmbedingQueue.add('embeding', payload))
+export async function AddToEmbedingQueue(payload: any): Promise<{ id: string }> {
+    const { data, error } = await tryCatch(EmbedingQueue.add('embeding', {content:payload}))
     if (error || !data?.id) {
         return { id: '' }
     }

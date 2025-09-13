@@ -4,6 +4,7 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters'
 import { tryCatch } from "src/utils/tryCatch.js";
 import fs from 'fs'
+import { AddToEmbedingQueue } from "src/queues/embeding.js";
 
 const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
@@ -36,10 +37,14 @@ const SplitingFunc = async (job: Job) => {
         throw new Error("Failed to split the texts content")
     }
 
+    const { error } = await tryCatch(AddToEmbedingQueue(texts))
+
+    if (error) {
+        console.log("Failed to add the data to embeding queue")
+    }
 
     if (filePath && texts.length > 0) {
         try {
-
             await fs.promises.unlink(filePath)
         } catch (unlinkErr) {
             console.error('Failed to clean up file:', unlinkErr)
