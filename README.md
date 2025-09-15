@@ -6,4 +6,9 @@
 - Drizzle
 - Better Auth
 - langchain
-- Huggingface transformers 
+- Postgresql
+- Qdrent for vectorestore
+
+Models
+- MistralAi
+- Huggingface transformers
