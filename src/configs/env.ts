@@ -1,15 +1,23 @@
+import 'dotenv/config'
 import z from 'zod'
-// import 'dotenv'
 
 const EnvSchema = z.object({
-    DATABASE_URL: z.url(),
-    BETTER_AUTH_SECRET: z.string(),
-    BETTER_AUTH_URL: z.url(),
-    QDRANT_URL: z.url(),
-    HUGGINGFACEHUB_API_KEY: z.string()
-})
+  BETTER_AUTH_SECRET: z.string(),
+  MISTRALAI_API_KEY: z.string(),
+  DATABASE_URL: z.url(),
+  BETTER_AUTH_URL: z.url(),
+  QDRANT_URL: z.url(),
+  REDIS_HOST: z.string(),
+  REDIS_PORT: z
+    .string()
+    .transform((val) => parseInt(val, 10)) 
+    .refine((val) => !isNaN(val), { message: "REDIS_PORT must be a number" }),
+  PORT: z
+    .string()
+    .transform((val) => parseInt(val, 10)) 
+    .refine((val) => !isNaN(val), { message: "PORT must be a number" }),
+});
 
-console.log(process.env)
 const parsed = EnvSchema.safeParse(process.env!)
 
 if (!parsed.success) {

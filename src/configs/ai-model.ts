@@ -1,9 +1,8 @@
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
 import { ChatMistralAI } from "@langchain/mistralai";
+import { env } from "./env.js";
 // import { HuggingFaceInference } from "@langchain/community/llms/hf";
 // import { MistralAIEmbeddings } from "@langchain/mistralai";
-
-
 
 //if you are going to change the embeding model then also change the name of the collection otherwise it will corrupt the data in the db
 // export const embeddingsModel = new MistralAIEmbeddings({
@@ -19,7 +18,7 @@ export const model = new HuggingFaceTransformersEmbeddings({
 export const summaryModel = new ChatMistralAI({
   model: "mistral-large-latest",
   temperature: 0.4,
-  apiKey: ""
+  apiKey: env.MISTRALAI_API_KEY!
 });
 
 

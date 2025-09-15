@@ -1,33 +1,7 @@
 import { Job, Worker } from "bullmq";
 import { redis } from "../configs/redis.js";
-import { model } from "../configs/ai-model.js";
 import { tryCatch } from "src/utils/tryCatch.js";
-import type { EmbeddingsInterface } from "@langchain/core/embeddings";
-import { QdrantVectorStore } from "@langchain/qdrant";
-
-class CustomEmbeddings implements EmbeddingsInterface {
-    async embedDocuments(texts: string[]): Promise<number[][]> {
-        return model.embedDocuments(texts);
-    }
-
-    async embedQuery(text: string): Promise<number[]> {
-        return (await model.embedDocuments([text]))[0];
-    }
-}
-
-let vectorStore: QdrantVectorStore | null = null;
-
-async function getVectorStore() {
-    if (!vectorStore) {
-        const embeddings = new CustomEmbeddings();
-        vectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, {
-            url: "http://localhost:6333",
-            collectionName: "rag",
-        });
-        console.log("Qdrant VectorStore initialized ✅");
-    }
-    return vectorStore;
-}
+import { getVectorStore } from "src/configs/qdrant.js";
 
 
 const embedingFunc = async (job: Job) => {
