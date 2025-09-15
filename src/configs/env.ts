@@ -6,7 +6,7 @@ const EnvSchema = z.object({
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.url(),
     QDRANT_URL: z.url(),
-
+    HUGGINGFACEHUB_API_KEY: z.string()
 })
 
 console.log(process.env)

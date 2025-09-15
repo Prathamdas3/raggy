@@ -27,6 +27,14 @@ services:
     # networks:
     #   - app_network
 
+  qdrant:
+    image: qdrant/qdrant:v1.15.1
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    # volumes:
+    #   - ./qdrant_storage:/qdrant/storage
 # volumes:
 #   postgres_data:
 #   redis_data:

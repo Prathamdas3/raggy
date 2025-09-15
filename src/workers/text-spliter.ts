@@ -5,6 +5,7 @@ import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters'
 import { tryCatch } from "src/utils/tryCatch.js";
 import fs from 'fs'
 import { AddToEmbedingQueue } from "src/queues/embeding.js";
+import { AddToSummaryQueue } from "src/queues/summary.js";
 
 const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
@@ -37,14 +38,21 @@ const SplitingFunc = async (job: Job) => {
         throw new Error("Failed to split the texts content")
     }
 
-    const { error } = await tryCatch(AddToEmbedingQueue(texts))
+ 
+    const { error: EmbeddingQueueError } = await tryCatch(AddToEmbedingQueue(texts))
+    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content:texts }))
 
-    if (error) {
+    if (EmbeddingQueueError) {
         console.log("Failed to add the data to embeding queue")
+    }
+
+    if (SummaryQueueError) {
+        console.log("Failed to add the data to summary queue ")
     }
 
     if (filePath && texts.length > 0) {
         try {
+            //before removing the file just store the texts inthe db so that it can be used later on
             await fs.promises.unlink(filePath)
         } catch (unlinkErr) {
             console.error('Failed to clean up file:', unlinkErr)

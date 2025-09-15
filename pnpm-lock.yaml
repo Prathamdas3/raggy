@@ -19,10 +19,16 @@ importers:
         version: 3.7.3
       '@langchain/community':
         specifier: ^0.3.55
-        version: 0.3.55(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(zod@4.1.8))(@huggingface/transformers@3.7.3)(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(axios@1.12.1)(ibm-cloud-sdk-core@5.4.2)(ioredis@5.7.0)(jsonwebtoken@9.0.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(pdf-parse@1.1.1)(pg@8.16.3)(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)
+        version: 0.3.55(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(zod@4.1.8))(@huggingface/inference@4.8.0)(@huggingface/transformers@3.7.3)(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(@qdrant/js-client-rest@1.15.1(typescript@5.9.2))(axios@1.12.1)(ibm-cloud-sdk-core@5.4.2)(ioredis@5.7.0)(jsonwebtoken@9.0.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(pdf-parse@1.1.1)(pg@8.16.3)(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)
       '@langchain/core':
         specifier: ^0.3.75
         version: 0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))
+      '@langchain/mistralai':
+        specifier: ^0.2.1
+        version: 0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))
+      '@langchain/qdrant':
+        specifier: ^0.1.3
+        version: 0.1.3(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(typescript@5.9.2)
       '@langchain/textsplitters':
         specifier: ^0.1.0
         version: 0.1.0(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))
@@ -46,7 +52,7 @@ importers:
         version: 5.7.0
       langchain:
         specifier: ^0.3.33
-        version: 0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3)
+        version: 0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3)
       pdf-parse:
         specifier: ^1.1.1
         version: 1.1.1
@@ -438,9 +444,16 @@ packages:
     peerDependencies:
       hono: '*'
 
+  '@huggingface/inference@4.8.0':
+    resolution: {integrity: sha512-Eq98EAXqYn4rKMfrbEXuhc3IjKfaeIO6eXNOZk9xk6v5akrIWRtd6d1h0fjAWyX4zRbdUpXRh6MvsqXnzGvXCA==}
+    engines: {node: '>=18'}
+
   '@huggingface/jinja@0.5.1':
     resolution: {integrity: sha512-yUZLld4lrM9iFxHCwFQ7D1HW2MWMwSbeB7WzWqFYDWK+rEb+WldkLdAJxUPOmgICMHZLzZGVcVjFh3w/YGubng==}
     engines: {node: '>=18'}
+
+  '@huggingface/tasks@0.19.45':
+    resolution: {integrity: sha512-lM3QOgbfkGZ5gAZOYWOmzMM6BbKcXOIHjgnUAoymTdZEcEcGSr0vy/LWGEiK+vBXC4vU+sCT+WNoA/JZ8TEWdA==}
 
   '@huggingface/transformers@3.7.3':
     resolution: {integrity: sha512-on3Y4Pn9oK/OqNKygojnAn6RePtOVlIZbMFwnP6Q8q9p6UiYPp5IDR08KWN0FSic5fBbrZvF+vVH67vNXBqZvA==}
@@ -968,11 +981,23 @@ packages:
     resolution: {integrity: sha512-kTyBS0DTeD0JYa9YH5lg6UdDbHmvplk3t9PCjP5jDQZCK5kPe2aDFToqdiCaLzZg8RzzM+clXLVyJtPTE8bZ2Q==}
     engines: {node: '>=18'}
 
+  '@langchain/mistralai@0.2.1':
+    resolution: {integrity: sha512-s91BlNcuxaaZGnVukyl81nwGrWpeE0EYiAdEFoBmZwlT4yLpx+QpPhRsGKrTg/Vm7Nscy6Wd8Xy2PJ93wftMdw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': '>=0.3.58 <0.4.0'
+
   '@langchain/openai@0.6.11':
     resolution: {integrity: sha512-BkaudQTLsmdt9mF6tn6CrsK2TEFKk4EhAWYkouGTy/ljJIH/p2Nz9awIOGdrQiQt6AJ5mvKGupyVqy3W/jim2Q==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.3.68 <0.4.0'
+
+  '@langchain/qdrant@0.1.3':
+    resolution: {integrity: sha512-3cay+u3Ri7KPEwBrn/e0V2GPJDHz8U/ZetSjexB7kbgBJeljzEoRxXEeoDCd4pok48GA+n+j0/p+rPA0K7zedQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': '>=0.2.21 <0.4.0'
 
   '@langchain/textsplitters@0.1.0':
     resolution: {integrity: sha512-djI4uw9rlkAb5iMhtLED+xJebDdAG935AdP4eRTB02R7OB/act55Bj9wsskhZsvuyQRpO4O1wQOp85s6T6GWmw==}
@@ -988,6 +1013,9 @@ packages:
 
   '@levischuck/tiny-cbor@0.2.11':
     resolution: {integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==}
+
+  '@mistralai/mistralai@1.10.0':
+    resolution: {integrity: sha512-tdIgWs4Le8vpvPiUEWne6tK0qbVc+jMenujnvTqOjogrJUsCSQhus0tHTU1avDDh5//Rq2dFgP9mWRAdIEoBqg==}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     resolution: {integrity: sha512-QZHtlVgbAdy2zAqNA9Gu1UpIuI8Xvsd1v8ic6B2pZmeFnFcMWiPLfWXh7TVw4eGEZ/C9TH281KwhVoeQUKbyjw==}
@@ -1076,6 +1104,19 @@ packages:
 
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
+
+  '@qdrant/js-client-rest@1.15.1':
+    resolution: {integrity: sha512-FAPMz6Z7RFj9vUun8R9e8SYcX6EkZtdfYfnh5lFXWcjEaat9q/jce1baAJCWAr3k8yHh62HpzCRYOatLVII28g==}
+    engines: {node: '>=18.17.0', pnpm: '>=8'}
+    peerDependencies:
+      typescript: '>=4.7'
+
+  '@qdrant/openapi-typescript-fetch@1.2.6':
+    resolution: {integrity: sha512-oQG/FejNpItrxRHoyctYvT3rwGZOnK4jr3JdppO/c78ktDvkWiPXPHNsrDf33K9sZdRb6PR7gi4noIapu5q4HA==}
+    engines: {node: '>=18.0.0', pnpm: '>=8'}
+
+  '@sevinf/maybe@0.5.0':
+    resolution: {integrity: sha512-ARhyoYDnY1LES3vYI0fiG6e9esWfTNcXcO6+MPJJXcnyMV3bim4lnFt45VXouV7y82F4x3YH8nOQ6VztuvUiWg==}
 
   '@simplewebauthn/browser@13.1.2':
     resolution: {integrity: sha512-aZnW0KawAM83fSBUgglP5WofbrLbLyr7CoPqYr66Eppm7zO86YX6rrCjRB3hQKPrL7ATvY4FVXlykZ6w6FwYYw==}
@@ -2204,6 +2245,10 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
+  undici@6.21.3:
+    resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
+    engines: {node: '>=18.17'}
+
   universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}
     engines: {node: '>= 4.0.0'}
@@ -2525,7 +2570,16 @@ snapshots:
     dependencies:
       hono: 4.9.7
 
+  '@huggingface/inference@4.8.0':
+    dependencies:
+      '@huggingface/jinja': 0.5.1
+      '@huggingface/tasks': 0.19.45
+    optional: true
+
   '@huggingface/jinja@0.5.1': {}
+
+  '@huggingface/tasks@0.19.45':
+    optional: true
 
   '@huggingface/transformers@3.7.3':
     dependencies:
@@ -2637,7 +2691,7 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@langchain/community@0.3.55(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(zod@4.1.8))(@huggingface/transformers@3.7.3)(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(axios@1.12.1)(ibm-cloud-sdk-core@5.4.2)(ioredis@5.7.0)(jsonwebtoken@9.0.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(pdf-parse@1.1.1)(pg@8.16.3)(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)':
+  '@langchain/community@0.3.55(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(zod@4.1.8))(@huggingface/inference@4.8.0)(@huggingface/transformers@3.7.3)(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(@qdrant/js-client-rest@1.15.1(typescript@5.9.2))(axios@1.12.1)(ibm-cloud-sdk-core@5.4.2)(ioredis@5.7.0)(jsonwebtoken@9.0.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(pdf-parse@1.1.1)(pg@8.16.3)(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)':
     dependencies:
       '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.2)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(zod@4.1.8)
       '@ibm-cloud/watsonx-ai': 1.6.12
@@ -2649,14 +2703,16 @@ snapshots:
       flat: 5.0.2
       ibm-cloud-sdk-core: 5.4.2
       js-yaml: 4.1.0
-      langchain: 0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3)
+      langchain: 0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3)
       langsmith: 0.3.68(openai@5.12.2(ws@8.18.3)(zod@4.1.8))
       openai: 5.12.2(ws@8.18.3)(zod@4.1.8)
       uuid: 10.0.0
       zod: 3.25.76
     optionalDependencies:
       '@browserbasehq/sdk': 2.6.0
+      '@huggingface/inference': 4.8.0
       '@huggingface/transformers': 3.7.3
+      '@qdrant/js-client-rest': 1.15.1(typescript@5.9.2)
       ioredis: 5.7.0
       jsonwebtoken: 9.0.2
       pdf-parse: 1.1.1
@@ -2705,6 +2761,12 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
+  '@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))':
+    dependencies:
+      '@langchain/core': 0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))
+      '@mistralai/mistralai': 1.10.0
+      uuid: 10.0.0
+
   '@langchain/openai@0.6.11(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(ws@8.18.3)':
     dependencies:
       '@langchain/core': 0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))
@@ -2713,6 +2775,14 @@ snapshots:
       zod: 3.25.76
     transitivePeerDependencies:
       - ws
+
+  '@langchain/qdrant@0.1.3(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(typescript@5.9.2)':
+    dependencies:
+      '@langchain/core': 0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))
+      '@qdrant/js-client-rest': 1.15.1(typescript@5.9.2)
+      uuid: 10.0.0
+    transitivePeerDependencies:
+      - typescript
 
   '@langchain/textsplitters@0.1.0(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))':
     dependencies:
@@ -2728,6 +2798,11 @@ snapshots:
       - encoding
 
   '@levischuck/tiny-cbor@0.2.11': {}
+
+  '@mistralai/mistralai@1.10.0':
+    dependencies:
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.6(zod@3.25.76)
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     optional: true
@@ -2810,6 +2885,17 @@ snapshots:
   '@protobufjs/pool@1.1.0': {}
 
   '@protobufjs/utf8@1.1.0': {}
+
+  '@qdrant/js-client-rest@1.15.1(typescript@5.9.2)':
+    dependencies:
+      '@qdrant/openapi-typescript-fetch': 1.2.6
+      '@sevinf/maybe': 0.5.0
+      typescript: 5.9.2
+      undici: 6.21.3
+
+  '@qdrant/openapi-typescript-fetch@1.2.6': {}
+
+  '@sevinf/maybe@0.5.0': {}
 
   '@simplewebauthn/browser@13.1.2': {}
 
@@ -3298,7 +3384,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.12.1(debug@4.4.1))
+      retry-axios: 2.6.0(axios@1.12.1)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -3367,7 +3453,7 @@ snapshots:
 
   kysely@0.28.5: {}
 
-  langchain@0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3):
+  langchain@0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3):
     dependencies:
       '@langchain/core': 0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))
       '@langchain/openai': 0.6.11(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(ws@8.18.3)
@@ -3382,6 +3468,7 @@ snapshots:
       yaml: 2.8.1
       zod: 3.25.76
     optionalDependencies:
+      '@langchain/mistralai': 0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))
       axios: 1.12.1(debug@4.4.1)
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -3730,7 +3817,7 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  retry-axios@2.6.0(axios@1.12.1(debug@4.4.1)):
+  retry-axios@2.6.0(axios@1.12.1):
     dependencies:
       axios: 1.12.1(debug@4.4.1)
 
@@ -3887,6 +3974,8 @@ snapshots:
   undici-types@5.26.5: {}
 
   undici-types@6.21.0: {}
+
+  undici@6.21.3: {}
 
   universalify@0.2.0: {}
 
