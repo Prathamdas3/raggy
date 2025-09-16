@@ -14,20 +14,21 @@
 - [x] Save uploaded files to storage (temp + persistent)
 - [x] Add a worker and queueing system for file text extraction
 - [ ] Extract text from documents:
-  - [ ] PDFs → `Unstructured`, `PyMuPDF`, `pdfplumber`
+  - [x] PDFs → `Unstructured`, `PyMuPDF`, `pdfplumber`
   - [ ] DOCX → `python-docx` or `Unstructured`
   - [ ] TXT → read directly
 - [ ] Extract text from images/scanned PDFs → OCR:
   - [ ] Tesseract OCR
   - [ ] EasyOCR
   - [ ] PaddleOCR
-- [ ] Normalize text and save as structured `Document` objects with metadata
+- [ ] Extract text from the youtube video
+- [x] Normalize text and save as structured `Document` objects with metadata
 
 ---
 
 ## ✂️ Text Chunking & Metadata
-- [ ] Split extracted text into chunks (500-1000 tokens)
-- [ ] Add metadata for each chunk:
+- [x] Split extracted text into chunks (500-1000 tokens)
+- [x] Add metadata for each chunk:
   - [ ] Source file name
   - [ ] Page number / paragraph id
   - [ ] Chunk index
@@ -37,15 +38,15 @@
 ---
 
 ## 🔍 Embeddings & Vector Store
-- [ ] Choose open-source embedding model:
-  - [ ] `sentence-transformers/all-MiniLM-L6-v2`
+- [x] Choose open-source embedding model:
+  - [x] `sentence-transformers/all-MiniLM-L6-v2`
   - [ ] `BAAI/bge-base-en`
-- [ ] Compute embeddings for each chunk
-- [ ] Install vector DB (open-source):
+- [x] Compute embeddings for each chunk
+- [x] Install vector DB (open-source):
   - [ ] ChromaDB (local dev)
-  - [ ] Qdrant (production-ready)
+  - [x] Qdrant (production-ready)
   - [ ] Weaviate (optional)
-- [ ] Insert embeddings + metadata into vector DB
+- [x] Insert embeddings + metadata into vector DB
 - [ ] Validate retrieval by querying sample text
 
 ---

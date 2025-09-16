@@ -16,7 +16,9 @@
       "@/*": [
         "./src"
       ]
-    }
+    },
+    "rewriteRelativeImportExtensions": true,
+    "allowImportingTsExtensions": true
   },
   "exclude": [
     "node_modules"

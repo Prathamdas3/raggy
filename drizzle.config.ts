@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import { env } from 'src/configs/env.js';
+import { env } from './src/configs/env.ts';
 
 export default defineConfig({
   out: './drizzle',
@@ -8,4 +8,6 @@ export default defineConfig({
   dbCredentials: {
     url: env.DATABASE_URL!,
   },
+  verbose: true,
+  strict:true
 });
