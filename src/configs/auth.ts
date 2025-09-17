@@ -1,7 +1,7 @@
 import { betterAuth, } from 'better-auth'
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { database } from '../db/index.ts';
-import { user } from '../db/schema.ts';
+import { env } from './env.ts';
 
 export const auth = betterAuth({
     database: drizzleAdapter(database, {
@@ -21,20 +21,12 @@ export const auth = betterAuth({
     emailVerification: {
         sendOnSignUp: true,
     },
-    user: {
-        fields: {
-            name: 'first_name',
-        },
-        additionalFields: {
-            last_name: {
-                type: "string",
-                required: false,
-                defaultValue: null,
-                input: true
-            }
-
-        }
-    }
+    logger: {
+        level: 'debug',
+        disabled: false
+    },
+    baseURL: env.BETTER_AUTH_URL,
+    secret: env.BETTER_AUTH_SECRET
 })
 
 export type AuthType = {
