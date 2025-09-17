@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq";
-import { redis } from "../configs/redis.js";
+import { redis } from "../configs/redis.ts";
 import { tryCatch } from "src/utils/tryCatch.js";
 import { getVectorStore } from "src/configs/qdrant.js";
 

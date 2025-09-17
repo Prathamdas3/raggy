@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq"
-import { redis } from "../configs/redis.js"
+import { redis } from "../configs/redis.ts"
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters'
 import { tryCatch } from "src/utils/tryCatch.js";
@@ -38,9 +38,9 @@ const SplitingFunc = async (job: Job) => {
         throw new Error("Failed to split the texts content")
     }
 
- 
+
     const { error: EmbeddingQueueError } = await tryCatch(AddToEmbedingQueue(texts))
-    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content:texts }))
+    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content: texts }))
 
     if (EmbeddingQueueError) {
         console.log("Failed to add the data to embeding queue")

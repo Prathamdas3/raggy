@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq"
-import { redis } from "../configs/redis.js"
+import { redis } from "../configs/redis.ts"
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents"
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";

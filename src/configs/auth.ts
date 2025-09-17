@@ -1,22 +1,38 @@
 import { betterAuth, } from 'better-auth'
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { database } from '../db/index.ts';
+import { user } from '../db/schema.ts';
 
 export const auth = betterAuth({
     database: drizzleAdapter(database, {
-        provider: "pg"
-    }),
+        provider: "pg",
+    },),
     trustedOrigins: ["http://locahost:5173"],
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: true
     },
+    session: {
+        cookieCache: {
+            enabled: true,
+            maxAge: 5 * 60
+        }
+    },
+    emailVerification: {
+        sendOnSignUp: true,
+    },
     user: {
         fields: {
-            name: {
-                // Auto-populate name from first_name + last_name
-                transform: (user) => `${user.first_name} ${user.last_name || ''}`.trim()
+            name: 'first_name',
+        },
+        additionalFields: {
+            last_name: {
+                type: "string",
+                required: false,
+                defaultValue: null,
+                input: true
             }
+
         }
     }
 })

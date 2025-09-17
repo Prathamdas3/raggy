@@ -4,20 +4,21 @@ import { boolean, foreignKey, index, jsonb, pgEnum, pgTable, text, timestamp, uu
 export const senderEnum = pgEnum('sender', ['user', 'llm'])
 
 export const user = pgTable("user", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  first_name: text('first_name').notNull(),
-  last_name: text('last_name'),
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  last_name: text("last_name"),
 });
 
 export const session = pgTable("session", {
-  id: uuid("id").primaryKey(),
+  id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
   token: text("token").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -32,7 +33,7 @@ export const session = pgTable("session", {
 });
 
 export const account = pgTable("account", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
   userId: text("user_id")
@@ -52,7 +53,7 @@ export const account = pgTable("account", {
 });
 
 export const verification = pgTable("verification", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -65,7 +66,7 @@ export const verification = pgTable("verification", {
 
 export const chatsTable = pgTable('chats', {
   id: uuid('id').primaryKey().defaultRandom(),
-  user_id: uuid('user_id').notNull().references(() => user.id, { onDelete: "cascade" }),
+  user_id: text('user_id').notNull().references(() => user.id, { onDelete: "cascade" }),
   parent_id: uuid('parent_id'),
   chat_name: text('chat_name').notNull(),
   is_bookmarked: boolean('is_bookmarked').default(false),
@@ -83,7 +84,7 @@ export const chatsTable = pgTable('chats', {
 
 export const docsTable = pgTable("docs", {
   id: uuid('id').primaryKey().defaultRandom(),
-  user_id: uuid('user_id').notNull().references(() => user.id, { onDelete: "cascade" }),
+  user_id: text('user_id').notNull().references(() => user.id, { onDelete: "cascade" }),
   chat_id: uuid('chat_id').notNull().references(() => chatsTable.id, { onDelete: "cascade" }),
   parent_id: uuid('parent_id'),
   title: text('title').notNull(),
@@ -185,6 +186,17 @@ export const messageRelations = relations(messagesTable, ({ one, many }) => ({
   child_messages: many(messagesTable)
 }))
 
+export type user = typeof user.$inferSelect
+export type createUser = typeof user.$inferInsert
+
+export type chat = typeof chatsTable.$inferSelect
+export type createChat = typeof chatsTable.$inferInsert
+
+export type doc = typeof docsTable.$inferSelect
+export type createDoc = typeof docsTable.$inferInsert
+
+export type message = typeof messagesTable.$inferSelect
+export type createMessage = typeof messagesTable.$inferInsert
 
 
 //metadata type

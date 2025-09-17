@@ -1,6 +1,12 @@
-import { Hono } from "hono";
+import { createRouter } from "../../configs/app.ts"
 
-export const SummaryRouter = new Hono().get(c => {
+const router = createRouter()
+
+
+router.get(c => {
     c.status(200)
-    return c.json({body:"this is summary route"})
+    return c.json({ body: "this is summary route" })
 })
+
+
+export default router

@@ -9,5 +9,6 @@ export default defineConfig({
     url: env.DATABASE_URL!,
   },
   verbose: true,
-  strict:true
+  strict: true,
+  casing:"snake_case"
 });

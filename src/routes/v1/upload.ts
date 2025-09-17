@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { validator } from 'hono/validator'
 import path from "node:path";
@@ -7,6 +6,7 @@ import fs from 'fs'
 import { tryCatch } from "src/utils/tryCatch.js";
 import { randomUUID } from "node:crypto";
 import { AddToTextSplitingQueue } from "src/queues/text-spliter.js";
+import { createRouter } from "../../configs/app.ts";
 
 const schema = z.object({
     file: z.custom<File>((val) => val instanceof File, {
@@ -14,7 +14,9 @@ const schema = z.object({
     })
 })
 
-export const UploadRouter = new Hono()
+const router = createRouter()
+
+router
     .use(
         async (c, next) => {
             //this is to only allow data from the multipart content not anyother
@@ -97,3 +99,5 @@ export const UploadRouter = new Hono()
             return c.json({ body: "successfully uploaded the file" })
         }
     )
+
+export default router
