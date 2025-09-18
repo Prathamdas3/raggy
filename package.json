@@ -5,7 +5,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "workers":"tsx ./src/services" ,
+    "workers": "tsx ./src/services",
     "db:generate": "drizzle-kit generate",
     "db:clear": "tsx ./src/db/clear.ts",
     "db:reset": "npm run db:clear && npm run db:migrate",
@@ -33,7 +33,6 @@
     "pdf-parse": "^1.1.1",
     "pg": "^8.16.3",
     "pino": "^9.9.5",
-    "pino-http": "^10.5.0",
     "zod": "^4.1.8"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@ import app from './app.ts'
 import { env } from './configs/env.ts'
 import { config } from 'dotenv'
 
-config
+config()
 
 serve({
   fetch: app.fetch,

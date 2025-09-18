@@ -1,0 +1,30 @@
+- [ ] Set loggers
+- [ ] setup rate limiting
+- [ ] stream data
+- [ ] authflow
+- [ ] setup a small flow for pdf
+- [ ] generate text to audio with hugging face
+- [ ] Swagger docs
+- [ ] image and youtube video link
+- [ ] translation from any language to another
+- [ ] Generate interactive video from the content
+- [ ] Chat window
+- [ ] chat history
+- [ ] Feat: multiple chat support
+- [ ] Testing 
+- [ ] refresh the summary
+- [ ]  add linter and formater
+-----------------------------------------------------------
+- [x] setup a file loading ui with hono, rpc
+- [x] Set response schema for returns
+- [x] indexing the dbs
+- [x] setup vector db
+- [x] summary genaration
+- [x] protected route
+- [x] vector db langchain    
+- [x] working of the summary queue and produce the summary
+- [x] Api versioning
+- [x] set up reddis
+- [x] set up rabbit mq
+- [x] Send the doc id to queue worker so that can be added in the meta data
+- [x] Hook the doc entry functions in  upload endpoint

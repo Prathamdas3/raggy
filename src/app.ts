@@ -8,11 +8,15 @@ import query from './routes/v1/query.ts'
 import chat from './routes/v1/chat.ts'
 import { swaggerUI } from "@hono/swagger-ui";
 import { authMiddle } from "./middleware/auth.ts";
+import { PinoLogger } from "./middleware/logger.ts";
+
 
 const app = createApp()
     .basePath("/api")
     .use('/api/*', cors())
     .use(requestId())
+    .use(PinoLogger)
+
 
 const routes = [auth] as const;
 
@@ -21,7 +25,7 @@ routes.forEach((route) => {
 })
 
 app
-    // .use(authMiddle)
+    .use(authMiddle)
     .route('/v1/chats', chat)
     .route('/v1/upload', upload)
     .route('/v1/summary', summary)

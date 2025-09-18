@@ -14,6 +14,7 @@ const router = createRouter()
 router
     .get(async (c) => {
         const user = c.get('user')
+        
 
         if (!user) {
             return c.json(error("No user found", "Unauthorized"), 401)
