@@ -16,7 +16,7 @@ router
         const user = c.get('user')
 
         if (!user) {
-            return c.json(error("No user found 2", "Unauthorized"), 401)
+            return c.json(error("No user found", "Unauthorized"), 401)
         }
 
         const userId = user.id

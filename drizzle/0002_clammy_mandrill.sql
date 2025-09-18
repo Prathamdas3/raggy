@@ -1,0 +1,1 @@
+ALTER TABLE "chats" ADD CONSTRAINT "chats_chat_name_unique" UNIQUE("chat_name");

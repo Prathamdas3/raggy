@@ -27,6 +27,10 @@ export const createDocs = async (doc: createDoc) => {
     return await database.insert(docs).values(doc).returning()
 }
 
+export const updateDocs = async (docId: string, summary: string) => {
+    return await database.update(docs).set({ summary_text: summary }).where(eq(docs.id, docId))
+}
+
 export const createMessage = async (message: createMessageT) => {
     return await database.insert(messages).values(message).returning()
 }

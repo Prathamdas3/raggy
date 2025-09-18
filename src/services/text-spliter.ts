@@ -6,6 +6,7 @@ import { tryCatch } from "src/utils/tryCatch.js";
 import fs from 'fs'
 import { AddToEmbedingQueue } from "src/queues/embeding.js";
 import { AddToSummaryQueue } from "src/queues/summary.js";
+import { createDocs } from "../db/queries.ts";
 
 const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
@@ -20,6 +21,9 @@ const SplitingFunc = async (job: Job) => {
     }
 
     const filePath = job.data?.filepath
+    const chatId = job.data?.chatId
+    const userId = job.data?.userId
+    const title = job.data?.fileName
 
     //loading the pdf content
     const loader = new PDFLoader(filePath)
@@ -38,16 +42,37 @@ const SplitingFunc = async (job: Job) => {
         throw new Error("Failed to split the texts content")
     }
 
+    const { data, error: SaveDocsError } = await tryCatch(createDocs({ title, user_id: userId, chat_id: chatId, original_text: texts }))
 
-    const { error: EmbeddingQueueError } = await tryCatch(AddToEmbedingQueue(texts))
-    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content: texts }))
-
-    if (EmbeddingQueueError) {
-        console.log("Failed to add the data to embeding queue")
+    if (SaveDocsError) {
+        console.log("Failed to save the original text")
+        throw new Error("Failed to save the original text")
     }
+
+
+    const newTexts = texts.map(text => {
+        const metadata = text.metadata
+        const newMetadata = {
+            ...metadata,
+            chatId: chatId,
+            userId,
+            docId: data[0].id
+        }
+        text.metadata = newMetadata
+        return text
+    })
+
+
+    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content: newTexts, docId: data[0].id }))
 
     if (SummaryQueueError) {
         console.log("Failed to add the data to summary queue ")
+    }
+
+    const { error: EmbeddingQueueError } = await tryCatch(AddToEmbedingQueue(newTexts))
+
+    if (EmbeddingQueueError) {
+        console.log("Failed to add the data to embeding queue")
     }
 
     if (filePath && texts.length > 0) {

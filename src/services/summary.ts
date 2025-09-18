@@ -6,6 +6,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from "src/utils/tryCatch.js";
 import { summaryModel } from "src/configs/ai-model.js";
 import type { RunnableSequence } from "@langchain/core/runnables";
+import { updateDocs } from "../db/queries.ts";
 
 let stuffChain: RunnableSequence<Record<string, unknown>, string> | null = null
 
@@ -43,17 +44,21 @@ const SummaryFunc = async (job: Job) => {
         console.log("No content found")
         return null
     }
+    const docId = job.data?.docId
 
-    // console.log(content)
     const chain = await getStuff()
-    const { data, error } = await tryCatch(chain.invoke({ context: content }))
+    const { data, error: SummaryError } = await tryCatch(chain.invoke({ context: content }))
 
-    if (error) {
+    if (SummaryError) {
         console.log("Failed to generate the summarized docs")
         throw new Error("Failed to generate the summarized docs")
     }
-    console.log(data)
-    //store the data in the db and then stream them when a endpoint gets called
+
+    const { data: saveData, error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
+    if (SummarySaveError) {
+        console.log("Failed to save the summary data")
+        throw new Error("Failed to save the summary data")
+    }
 
     return null
 }

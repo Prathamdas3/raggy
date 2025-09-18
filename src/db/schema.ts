@@ -67,7 +67,7 @@ export const chatsTable = pgTable('chats', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: text('user_id').notNull().references(() => user.id, { onDelete: "cascade" }),
   parent_id: uuid('parent_id'),
-  chat_name: text('chat_name').notNull(),
+  chat_name: text('chat_name').notNull().unique(),
   is_bookmarked: boolean('is_bookmarked').default(false),
   created_at: timestamp('created_at').notNull().defaultNow(),
   updated_at: timestamp('updated_at').notNull().$onUpdate(() => new Date()),

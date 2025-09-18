@@ -1,7 +1,9 @@
 import { serve } from '@hono/node-server'
 import app from './app.ts'
 import { env } from './configs/env.ts'
+import { config } from 'dotenv'
 
+config
 
 serve({
   fetch: app.fetch,

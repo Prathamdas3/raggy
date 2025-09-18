@@ -16,7 +16,7 @@ export const SummaryQueue = new Queue('summary', {
     },
 })
 
-export async function AddToSummaryQueue(payload: { content: any}): Promise<{ id: string }> {
+export async function AddToSummaryQueue(payload: { content: any,docId:string}): Promise<{ id: string }> {
     const { data, error } = await tryCatch(SummaryQueue.add('summary', payload))
     if (error || !data?.id) {
         return { id: '' }

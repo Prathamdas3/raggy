@@ -16,7 +16,7 @@ export const TextSplitingQueue = new Queue('text-spliter', {
     },
 })
 
-export async function AddToTextSplitingQueue(payload: { filepath: string }): Promise<{ id: string }> {
+export async function AddToTextSplitingQueue(payload: { filepath: string, fileName: string, chatId: string, userId: string }): Promise<{ id: string }> {
     const { data, error } = await tryCatch(TextSplitingQueue.add('text-spliter', payload))
     if (error || !data?.id) {
         return { id: '' }
