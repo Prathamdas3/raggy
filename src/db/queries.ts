@@ -23,6 +23,10 @@ export const updateChatName = async (chatId: string, chat_name: string, userId: 
     return await database.update(chats).set({ chat_name: chat_name }).where(and(eq(chats.id, chatId,), eq(chats.user_id, userId)))
 }
 
+export const getDocsByChatId = async (chatId: string) => {
+    return await database.select().from(docs).where(eq(docs.chat_id, chatId))
+}
+
 export const createDocs = async (doc: createDoc) => {
     return await database.insert(docs).values(doc).returning()
 }
