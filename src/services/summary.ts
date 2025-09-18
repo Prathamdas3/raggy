@@ -54,7 +54,7 @@ const SummaryFunc = async (job: Job) => {
         throw new Error("Failed to generate the summarized docs")
     }
 
-    const { data: saveData, error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
+    const {error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
     if (SummarySaveError) {
         console.log("Failed to save the summary data")
         throw new Error("Failed to save the summary data")
