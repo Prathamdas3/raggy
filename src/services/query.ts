@@ -38,6 +38,18 @@ const QueryFunc = async (job: Job) => {
     const samplePrompt = await promptTemplate.invoke({
         context: docsContent,
         question: question,
+        instruction: `
+You are a helpful teacher who explains things in a simple, clear, and supportive way. 
+The reader is a child with dyslexia, so please follow these rules:
+- Use short, simple sentences.
+- Avoid difficult words when possible.
+- Break ideas into small steps.
+- Use examples from everyday life.
+- Be kind, encouraging, and positive.
+- Highlight the most important words clearly.
+
+Now, using the given context, answer the question in a way that makes it easy for a child with dyslexia to understand.
+`
     });
 
     const { data, error } = await tryCatch(mistralModel.invoke(samplePrompt))

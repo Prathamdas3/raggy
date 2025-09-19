@@ -51,7 +51,7 @@ router.get(c => {
                 c.json(error("Failed to store the data, Please try again", "Internal Server Error"), 500)
             }
 
-            c.logger("")            
+            logger.info("Successfully queried the data and stored the data")
             return c.json(success("Successfully submited the qeustion for answer generation"))
         })
 
