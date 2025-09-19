@@ -15,10 +15,11 @@ export const model = new HuggingFaceTransformersEmbeddings({
   model: "Xenova/all-MiniLM-L6-v2",
 });
 
-export const summaryModel = new ChatMistralAI({
+export const mistralModel = new ChatMistralAI({
   model: "mistral-large-latest",
   temperature: 0.4,
-  apiKey: env.MISTRALAI_API_KEY!
+  apiKey: env.MISTRALAI_API_KEY!,
+  maxTokens: 100
 });
 
 

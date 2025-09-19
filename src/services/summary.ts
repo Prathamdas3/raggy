@@ -4,7 +4,7 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents"
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from "src/utils/tryCatch.js";
-import { summaryModel } from "src/configs/ai-model.js";
+import { mistralModel as summaryModel } from "src/configs/ai-model.js";
 import type { RunnableSequence } from "@langchain/core/runnables";
 import { updateDocs } from "../db/queries.ts";
 
