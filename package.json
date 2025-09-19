@@ -15,6 +15,7 @@
     "db:down": "podman compose down"
   },
   "dependencies": {
+    "@hono-rate-limiter/redis": "^0.1.4",
     "@hono/node-server": "^1.19.2",
     "@hono/swagger-ui": "^0.5.2",
     "@huggingface/transformers": "^3.7.3",
@@ -28,8 +29,10 @@
     "dotenv": "^17.2.2",
     "drizzle-orm": "^0.44.5",
     "hono": "^4.9.7",
+    "hono-rate-limiter": "^0.4.2",
     "ioredis": "^5.7.0",
     "langchain": "^0.3.33",
+    "nodemailer": "^7.0.6",
     "pdf-parse": "^1.1.1",
     "pg": "^8.16.3",
     "pino": "^9.9.5",
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
+    "@types/nodemailer": "^7.0.1",
     "@types/pg": "^8.15.5",
     "drizzle-kit": "^0.31.4",
     "pino-pretty": "^13.1.1",

@@ -55,6 +55,7 @@ router
             }),
 
         async (c) => {
+            const logger = c.get('logger')
             const { file, chat_id } = c.req.valid('form')
             const user = c.get('user')
 
@@ -87,7 +88,7 @@ router
                     try {
                         await fs.promises.unlink(filePath)
                     } catch (unlinkErr) {
-                        console.error('Failed to clean up file:', unlinkErr)
+                        logger.error(`Failed to clean up file: ${unlinkErr}`)
                     }
                 }
 
@@ -98,7 +99,7 @@ router
             const { data } = await tryCatch(AddToTextSplitingQueue({ filepath: filePath, fileName, chatId: chat_id, userId }))
 
             if (!data?.id.trim()) {
-                console.log("failed to load the file to the queue")
+                logger.error("Failed to load the file to the queue")
             }
 
             return c.json(success("successfully uploaded the file"), 200)

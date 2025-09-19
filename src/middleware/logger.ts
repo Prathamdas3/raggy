@@ -1,46 +1,44 @@
 import { createMiddleware } from "hono/factory";
-import pino from 'pino'
-import { env } from '../configs/env.ts';
-import { getConnInfo } from '@hono/node-server/conninfo'
+import pino from "pino";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import { auth } from "../configs/auth.ts";
 
+// Optional custom levels
 const customLevels = {
-    logs: 35
-}
-
-const transports = pino.transport({
-    target: 'pino-pretty',
-    options: { destination: 1, colorize: true },
-})
+    logs: 35,
+};
 
 export const PinoLogger = createMiddleware(async (c, next) => {
-    c.env.incoming.id = c.var.requestId;
-    const ip = getConnInfo(c).remote.address
-    const requestId = c.get('requestId')
-    const userId = (await auth.api.getSession({ headers: c.req.raw.headers }))?.user.id || null
+    const ip = getConnInfo(c).remote.address;
+    const requestId = c.get("requestId"); // from hono/request-id
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    const userId = session?.user.id ?? null;
 
-    c.set('logger', pino({
-        transport: transports,
-        customLevels: customLevels,
-        level: env.LEVEL || "info",
+    const logger = pino({
+        customLevels,
+        transport: {
+            target: 'pino-pretty',
+            options: {
+                colorize: true
+            }
+        },
         timestamp: pino.stdTimeFunctions.isoTime,
         enabled: true,
         formatters: {
-            bindings: (bindings) => {
-                return {
-                    pid: bindings.pid,
-                    host: bindings.hostname
-                }
-            },
-            level: (label) => {
-                return { level: label.toUpperCase() }
-            }
+            bindings: (bindings) => ({
+                pid: bindings.pid,
+                host: bindings.hostname,
+            }),
+            level: (label) => ({ level: label.toUpperCase() }),
         },
         base: {
-            ip: ip,
-            requestId: requestId,
-            userId:userId
+            ip,
+            requestId,
+            userId,
         },
-    }))
+    });
+
+    c.set("logger", logger);
+
     await next();
-})
+});

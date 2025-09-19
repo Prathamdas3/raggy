@@ -1,7 +1,4 @@
 - [ ] Set loggers
-- [ ] setup rate limiting
-- [ ] stream data
-- [ ] authflow
 - [ ] setup a small flow for pdf
 - [ ] generate text to audio with hugging face
 - [ ] Swagger docs
@@ -15,6 +12,9 @@
 - [ ] refresh the summary
 - [ ]  add linter and formater
 -----------------------------------------------------------
+- [x] setup rate limiting
+- [x] stream data
+- [x] authflow
 - [x] setup a file loading ui with hono, rpc
 - [x] Set response schema for returns
 - [x] indexing the dbs

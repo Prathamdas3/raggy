@@ -9,12 +9,14 @@ import chat from './routes/v1/chat.ts'
 import { swaggerUI } from "@hono/swagger-ui";
 import { authMiddle } from "./middleware/auth.ts";
 import { PinoLogger } from "./middleware/logger.ts";
+import { rateLimitRag } from "./configs/rate-limit.ts";
 
 
 const app = createApp()
     .basePath("/api")
     .use('/api/*', cors())
     .use(requestId())
+    .use(rateLimitRag)
     .use(PinoLogger)
 
 
