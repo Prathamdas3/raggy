@@ -43,6 +43,10 @@ export const updateMessage = async (newMessage: string, chatId: string, parentId
     return await database.update(messages).set({ content: newMessage, parent_message_id: messages.id }).where(and(eq(messages.chat_id, chatId), parentId === null ? isNull(messages.parent_message_id) : eq(messages.parent_message_id, parentId)))
 }
 
-export const getMessagesByParentId = async (parentId: string | null, chatId: string) => {
+export const getMessagesByParentId = async (chatId: string, parentId: string | null) => {
     return await database.select().from(messages).where(and(eq(messages.chat_id, chatId), parentId === null ? isNull(messages.parent_message_id) : eq(messages.parent_message_id, parentId)))
+}
+
+export const getAnswerMessage = async (chatId: string, questionId: string) => {
+    return await database.select().from(messages).where(and(eq(messages.chat_id, chatId), eq(messages.question_id, questionId)))
 }

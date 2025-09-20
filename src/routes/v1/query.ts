@@ -4,7 +4,7 @@ import z from "zod"
 import { error, success } from "src/utils/response.js"
 import { tryCatch } from "src/utils/tryCatch.js"
 import { AddToQueryQueue } from "src/queues/querying.js"
-import { createMessage } from "src/db/queries.js"
+import { createMessage, getAnswerMessage } from "src/db/queries.js"
 
 const schema = z.object({
     question: z.string().min(1, "Question can't be empty")
@@ -12,11 +12,7 @@ const schema = z.object({
 
 const router = createRouter()
 
-router.get(c => {
-    c.status(200)
-    return c.json({ body: "this is query route" })
-}
-)
+router
     .post("/:chatId", validator('json', (value, c) => {
         const parsed = schema.safeParse(value)
 
@@ -37,23 +33,41 @@ router.get(c => {
             }
             const userId = user.id
 
-            const { error: QueryAddingError } = await tryCatch(AddToQueryQueue({ chatId, userId, question }))
+            const { data: details, error: QueryDbStoring } = await tryCatch(createMessage({ sender: "user", chat_id: chatId, content: question }))
+
+            if (QueryDbStoring) {
+                logger.error("Failed to store the question to db")
+                return c.json(error("Failed to store the data, Please try again", "Internal Server Error"), 500)
+            }
+
+            const { error: QueryAddingError } = await tryCatch(AddToQueryQueue({ chatId, userId, question, questionId: details[0].question_id }))
 
             if (QueryAddingError) {
                 logger.error("Failed to add payload to the query queue")
 
             }
 
-            const { error: QueryDbStoring } = await tryCatch(createMessage({ sender: "user", chat_id: chatId, content: question }))
-
-            if (QueryDbStoring) {
-                logger.error("Failed to store the question to db")
-                c.json(error("Failed to store the data, Please try again", "Internal Server Error"), 500)
-            }
-
             logger.info("Successfully queried the data and stored the data")
-            return c.json(success("Successfully submited the qeustion for answer generation"))
-        })
+            return c.json(success({ message: "Successfully submited the qeustion for answer generation", question_id: details[0].question_id }))
+        }
+    )
+    .get('/:chat_id/:question_id', async (c) => {
+        const logger = c.get("logger")
+        const { question_id, chat_id } = c.req.param()
+        if (!question_id.trim() || !chat_id.trim()) {
+            logger.error("No chat_id or question_id found")
+            return c.json(error("No question id or chat id found", "Invalid Input"), 400)
+        }
 
+        const { data, error: getAnswerError } = await tryCatch(getAnswerMessage(chat_id, question_id))
+
+        if (getAnswerError) {
+            logger.error(`Failed to fetch the answer for the chat_id:${chat_id} and question_id:${question_id}`)
+            return c.json(error("Failed to fetch the answer", "Internal Server Error"), 500)
+        }
+
+        logger.info("Successfully fetched the answer")
+        return c.json(success({ content: data[0].content, answer_id: data[0].id }), 200)
+    })
 
 export default router

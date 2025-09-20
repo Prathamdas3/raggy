@@ -2,7 +2,7 @@ import { Queue } from "bullmq";
 import { tryCatch } from "src/utils/tryCatch.js";
 import { redis } from 'src/configs/redis.js'
 
-export const QueryQueue = new Queue('querying', {
+export const QueryQueue = new Queue('audio', {
     connection: redis,
     defaultJobOptions: {
         removeOnComplete: {
@@ -16,8 +16,8 @@ export const QueryQueue = new Queue('querying', {
     }
 })
 
-export async function AddToQueryQueue(payload: { chatId: string, userId: string, question: string, questionId: string | null }): Promise<{ id: string }> {
-    const { data, error } = await tryCatch(QueryQueue.add('querying', payload))
+export async function AddToAudioQueue(payload: { answerId: string, content: string }): Promise<{ id: string }> {
+    const { data, error } = await tryCatch(QueryQueue.add('audio', payload))
 
     if (error || !data?.id) {
         return { id: '' }

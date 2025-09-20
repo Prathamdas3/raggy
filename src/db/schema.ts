@@ -105,6 +105,7 @@ export const messagesTable = pgTable("messages", {
   id: uuid("id").primaryKey().defaultRandom(),
   chat_id: uuid("chat_id").notNull().references(() => chatsTable.id, { onDelete: "cascade" }),
   parent_message_id: uuid("parent_message_id"),
+  question_id: uuid('question_id'),
   sender: senderEnum('sender').notNull(),
   metadata: jsonb('metadata'),
   content: text('content').notNull(),
@@ -114,11 +115,16 @@ export const messagesTable = pgTable("messages", {
 }, (self) => [
   foreignKey({
     columns: [self.parent_message_id],
-    foreignColumns: [self.id]
+    foreignColumns: [self.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [self.question_id],
+    foreignColumns: [self.id],
   }).onDelete("cascade"),
   index("messages_chat_id_idx").on(self.chat_id),
   index("messages_created_at_idx").on(self.created_at),
   index("messages_chat_created_idx").on(self.chat_id, self.created_at),
+  index("message_question_id").on(self.question_id)
 ])
 
 

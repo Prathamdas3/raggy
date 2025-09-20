@@ -1,7 +1,7 @@
 import { success, error } from "../../utils/response.ts";
 import { createRouter } from "../../configs/app.ts";
 import { tryCatch } from "../../utils/tryCatch.ts";
-import { bookmarkChat, createChat, deleteChat, getChatsByUserId, updateChatName } from "../../db/queries.ts";
+import { bookmarkChat, createChat, deleteChat, getChatsByUserId, getMessagesByParentId, updateChatName } from "../../db/queries.ts";
 import { validator } from "hono/validator";
 import z from "zod";
 
@@ -14,7 +14,6 @@ const router = createRouter()
 router
     .get(async (c) => {
         const user = c.get('user')
-        
 
         if (!user) {
             return c.json(error("No user found", "Unauthorized"), 401)
@@ -117,6 +116,25 @@ router
     )
 
 router
+    .get("/:chatId", async (c) => {
+        const logger = c.get("logger")
+        const { chatId } = c.req.param()
+
+        if (!chatId.trim()) {
+            logger.error("No chat id found to get the messages")
+            return c.json(error("No chat Id found", "Invalid Input"), 400)
+        }
+
+        const { data, error: getChatsError } = await tryCatch(getMessagesByParentId(chatId, null))
+
+        if (getChatsError) {
+            logger.error(`Failed to get all the messages for the chat_id:${chatId}`)
+            return c.json(error("Failed to fetch all the messages"))
+        }
+
+        logger.info(`Successfully fetched all the messages for the chat_id:${chatId}`)
+        return c.json(success(data), 200)
+    })
     .patch('/:chatId',
         async (c) => {
             const user = c.get('user')

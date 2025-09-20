@@ -5,6 +5,7 @@ import { mistralModel } from 'src/configs/ai-model.js'
 import { pull } from "langchain/hub";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from 'src/utils/tryCatch.js';
+import { createMessage } from 'src/db/queries.js';
 
 let prompt: ChatPromptTemplate<any, any> | null = null
 
@@ -16,9 +17,9 @@ const getPrompt = async () => {
 }
 
 const QueryFunc = async (job: Job) => {
-    const { userId, chatId, question } = job?.data
+    const { userId, chatId, question, questionId } = job?.data
 
-    if (!userId.trim() || !chatId.trim() || !question.trim()) {
+    if (!userId.trim() || !chatId.trim() || !question.trim() || !questionId.trim()) {
         console.log("chatId, userId, question any of them is empty")
         return null
     }
@@ -56,9 +57,17 @@ Now, using the given context, answer the question in a way that makes it easy fo
 
     if (error) {
         console.log("Failed to generate the answer for the question")
+        // throw new Error("Failed to generate the answer")
     }
 
-    console.log(data?.content)
+    const content = data?.content as string
+
+    const { error: ContentSaveDbError } = await tryCatch(createMessage({ chat_id: chatId, sender: "llm", content: content, question_id: questionId }))
+
+    if (ContentSaveDbError) {
+        console.log("Failed to store the answer in the db")
+    }
+
     return null
 }
 
