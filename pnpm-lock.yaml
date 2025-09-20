@@ -56,6 +56,9 @@ importers:
       ioredis:
         specifier: ^5.7.0
         version: 5.7.0
+      kokoro-js:
+        specifier: ^1.2.1
+        version: 1.2.1
       langchain:
         specifier: ^0.3.33
         version: 0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3)
@@ -2019,6 +2022,9 @@ packages:
   jws@3.2.2:
     resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
 
+  kokoro-js@1.2.1:
+    resolution: {integrity: sha512-oq0HZJWis3t8lERkMJh84WLU86dpYD0EuBPtqYnLlQzyFP1OkyBRDcweAqCfhNOpltyN9j/azp1H6uuC47gShw==}
+
   kysely@0.28.5:
     resolution: {integrity: sha512-rlB0I/c6FBDWPcQoDtkxi9zIvpmnV5xoIalfCMSMCa7nuA6VGA3F54TW9mEgX4DVf10sXAWCF5fDbamI/5ZpKA==}
     engines: {node: '>=20.0.0'}
@@ -2318,6 +2324,9 @@ packages:
 
   pgpass@1.0.5:
     resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
+
+  phonemizer@1.2.1:
+    resolution: {integrity: sha512-v0KJ4mi2T4Q7eJQ0W15Xd4G9k4kICSXE8bpDeJ8jisL4RyJhNWsweKTOi88QXFc4r4LZlz5jVL5lCHhkpdT71A==}
 
   pino-abstract-transport@2.0.0:
     resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
@@ -4465,6 +4474,11 @@ snapshots:
       jwa: 1.4.2
       safe-buffer: 5.2.1
 
+  kokoro-js@1.2.1:
+    dependencies:
+      '@huggingface/transformers': 3.7.3
+      phonemizer: 1.2.1
+
   kysely@0.28.5: {}
 
   langchain@0.3.33(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8)))(@langchain/mistralai@0.2.1(@langchain/core@0.3.75(openai@5.12.2(ws@8.18.3)(zod@4.1.8))))(axios@1.12.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.8))(ws@8.18.3):
@@ -4701,6 +4715,8 @@ snapshots:
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
+
+  phonemizer@1.2.1: {}
 
   pino-abstract-transport@2.0.0:
     dependencies:

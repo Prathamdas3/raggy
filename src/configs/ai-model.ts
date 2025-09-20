@@ -1,6 +1,7 @@
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { env } from "./env.js";
+import { pipeline } from '@huggingface/transformers'
 // import { HuggingFaceInference } from "@langchain/community/llms/hf";
 // import { MistralAIEmbeddings } from "@langchain/mistralai";
 
@@ -22,11 +23,13 @@ export const mistralModel = new ChatMistralAI({
   maxTokens: 100
 });
 
+// export const audioModel = pipeline(
+//   "text-to-speech",
+//   "onnx-community/Kokoro-82M-v1.0-ONNX",
+//   {
+//     device: "auto"
+//   },
+// )
 
-// new HuggingFaceInference({
-//   model: "facebook/bart-large-cnn",
-//   apiKey: huggingface_api_key from the env,
-//   maxRetries: 3,
-// })
 
 

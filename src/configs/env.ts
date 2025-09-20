@@ -23,8 +23,9 @@ const EnvSchema = z.object({
     .refine((val) => !isNaN(val), { message: "PORT must be a number" }),
   MAILTRAP_AUTH_USER: z.email(),
   MAILTRAP_AUTH_PASS: z.string(),
-  SUMMARY_INSTRUCTION: z.string(),
-  QUERY_INSTRUCTION: z.string()
+  SUMMARY_INSTRUCTION: z.string().optional(),
+  QUERY_INSTRUCTION: z.string().optional(),
+  HUGGINGFACEHUB_API_KEY: z.string().optional()
 });
 
 const parsed = EnvSchema.safeParse(process.env!)

@@ -1,7 +1,7 @@
 import { database } from "./index.ts";
 import { chatsTable as chats, docsTable as docs, messagesTable as messages } from "./schema.ts";
 import type { createChat as createChatT, createDoc, createMessage as createMessageT } from "./schema.ts";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, asc } from "drizzle-orm";
 
 export const createChat = async (chat: createChatT) => {
     return await database.insert(chats).values(chat).returning()
@@ -44,7 +44,7 @@ export const updateMessage = async (newMessage: string, chatId: string, parentId
 }
 
 export const getMessagesByParentId = async (chatId: string, parentId: string | null) => {
-    return await database.select().from(messages).where(and(eq(messages.chat_id, chatId), parentId === null ? isNull(messages.parent_message_id) : eq(messages.parent_message_id, parentId)))
+    return await database.select().from(messages).where(and(eq(messages.chat_id, chatId), parentId === null ? isNull(messages.parent_message_id) : eq(messages.parent_message_id, parentId))).orderBy(asc(messages.created_at))
 }
 
 export const getAnswerMessage = async (chatId: string, questionId: string) => {
