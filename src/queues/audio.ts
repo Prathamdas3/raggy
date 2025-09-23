@@ -16,7 +16,7 @@ export const QueryQueue = new Queue('audio', {
     }
 })
 
-export async function AddToAudioQueue(payload: { answerId: string, content: string }): Promise<{ id: string }> {
+export async function AddToAudioQueue(payload: { answerId: string, type: "chat" | "message" }): Promise<{ id: string }> {
     const { data, error } = await tryCatch(QueryQueue.add('audio', payload))
 
     if (error || !data?.id) {

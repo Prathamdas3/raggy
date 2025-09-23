@@ -7,6 +7,7 @@ import { tryCatch } from "src/utils/tryCatch.js";
 import { mistralModel as summaryModel } from "src/configs/ai-model.js";
 import type { RunnableSequence } from "@langchain/core/runnables";
 import { updateDocs } from "../db/queries.ts";
+import { AddToAudioQueue } from "src/queues/audio.js";
 
 let stuffChain: RunnableSequence<Record<string, unknown>, string> | null = null
 
@@ -54,10 +55,17 @@ const SummaryFunc = async (job: Job) => {
         throw new Error("Failed to generate the summarized docs")
     }
 
-    const {error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
+    const { error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
     if (SummarySaveError) {
         console.log("Failed to save the summary data")
         throw new Error("Failed to save the summary data")
+    }
+
+    const { error: AudioQueueError } = await tryCatch(AddToAudioQueue({ answerId: docId, type: "chat" }))
+
+    if (AudioQueueError) {
+        console.log("Failed to add the summary id in the audio queue for further processing")
+        throw new Error("Failed to add the id in the audio queue")
     }
 
     return null

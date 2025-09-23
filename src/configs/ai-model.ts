@@ -10,7 +10,7 @@ export const mistralModel = new ChatMistralAI({
   model: "mistral-large-latest",
   temperature: 0.4,
   apiKey: env.MISTRALAI_API_KEY!,
-  maxTokens: 100
+  // maxTokens: 100
 });
 
 // import { pipeline } from '@huggingface/transformers'

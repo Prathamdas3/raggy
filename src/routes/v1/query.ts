@@ -67,7 +67,7 @@ router
         }
 
         logger.info("Successfully fetched the answer")
-        return c.json(success({ content: data[0].content, answer_id: data[0].id }), 200)
+        return c.json(success({ content: data?.content, answer_id: data?.id }), 200)
     })
 
 export default router

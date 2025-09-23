@@ -89,6 +89,7 @@ export const docsTable = pgTable("docs", {
   title: text('title').notNull(),
   original_text: jsonb('original_text'),
   summary_text: text('summary_text'),
+  audio_url: text("audio_url"),
   created_at: timestamp('created_at').notNull().defaultNow(),
   updated_at: timestamp('updated_at').notNull().$onUpdate(() => new Date()),
   deleted_at: timestamp('deleted_at', { mode: "date" })
@@ -108,6 +109,7 @@ export const messagesTable = pgTable("messages", {
   question_id: uuid('question_id'),
   sender: senderEnum('sender').notNull(),
   metadata: jsonb('metadata'),
+  audio_url: text('audio_url'),
   content: text('content').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow(),
   updated_at: timestamp('updated_at').notNull().$onUpdate(() => new Date()),

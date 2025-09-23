@@ -6,6 +6,7 @@ import { pull } from "langchain/hub";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from 'src/utils/tryCatch.js';
 import { createMessage } from 'src/db/queries.js';
+import { AddToAudioQueue } from 'src/queues/audio.js';
 
 let prompt: ChatPromptTemplate<any, any> | null = null
 
@@ -62,12 +63,19 @@ Now, using the given context, answer the question in a way that makes it easy fo
 
     const content = data?.content as string
 
-    const { error: ContentSaveDbError } = await tryCatch(createMessage({ chat_id: chatId, sender: "llm", content: content, question_id: questionId }))
+    const { data: answer, error: ContentSaveDbError } = await tryCatch(createMessage({ chat_id: chatId, sender: "llm", content: content, question_id: questionId }))
 
     if (ContentSaveDbError) {
         console.log("Failed to store the answer in the db")
+        throw new Error("Failed to store the answer")
     }
 
+    const { error: AudioQueueError } = await tryCatch(AddToAudioQueue({ answerId: answer[0].id, type: "message" }))
+
+    if (AudioQueueError) {
+        console.log("Failed to add the answerId to the audio queue for the further processing")
+        throw new Error("Failed to add the answerId in the audio queue")
+    }
     return null
 }
 

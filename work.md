@@ -1,17 +1,20 @@
+- [ ] add supabase and eventually move to r2 for the storing of the audio
 - [ ] Set loggers
-- [ ] setup a small flow for pdf
-- [ ] generate text to audio with hugging face
+- [ ] add more loggers everywhere
+- [ ] add more checks
 - [ ] Swagger docs
+- [ ] setup a small flow for pdf
 - [ ] image and youtube video link
 - [ ] translation from any language to another
 - [ ] Generate interactive video from the content
 - [ ] Chat window
 - [ ] chat history
-- [ ] Feat: multiple chat support
 - [ ] Testing 
 - [ ] refresh the summary
 - [ ]  add linter and formater
 -----------------------------------------------------------
+- [x] Feat: multiple chat support
+- [x] generate text to audio with hugging face
 - [x] setup rate limiting
 - [x] stream data
 - [x] authflow
