@@ -2,11 +2,13 @@ import { Job, Worker } from "bullmq";
 import { redis } from "../configs/redis.ts";
 import { tryCatch } from "src/utils/tryCatch.js";
 import { getVectorStore } from "src/configs/qdrant.js";
+import { createLogger } from "src/configs/pino.js";
 
+const logger = createLogger()
 
 const embedingFunc = async (job: Job) => {
     if (!job.data?.content || job.data.content.length === 0) {
-        console.log("No text content found");
+        logger.error("No text content found");
         return null;
     }
 
@@ -23,7 +25,7 @@ const embedingFunc = async (job: Job) => {
     );
 
     if (error) {
-        console.error("❌ Failed to store embeddings:", error);
+        logger.error(`❌ Failed to store embeddings: ${error}`);
         throw new Error("Failed to add documents to Qdrant");
     }
 
@@ -35,9 +37,9 @@ export const EmbedingWorker = new Worker("embeding", embedingFunc, {
 });
 
 EmbedingWorker.on("ready", () => {
-    console.log("Started the worker embeding");
+    logger.info("Started the worker embeding");
 });
 
 EmbedingWorker.on("error", (error) => {
-    console.error("Error detected in embeding:", error.message);
+    logger.error(`Error detected in embeding: ${error.message}`);
 });

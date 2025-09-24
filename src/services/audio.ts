@@ -8,6 +8,9 @@ import { tryCatch } from 'src/utils/tryCatch.js';
 import path from 'node:path';
 import fs from 'fs'
 import { randomUUID } from 'node:crypto';
+import { createLogger } from 'src/configs/pino.js';
+
+const logger = createLogger()
 
 const createCleanText = async (text: string): Promise<string> => {
     const html = await marked.parse(text)
@@ -26,7 +29,7 @@ const getTTS = async () => {
         TTS = await KokoroTTS.from_pretrained(model_id, {
             dtype: "q8", // Options: "fp32", "fp16", "q8", "q4", "q4f16"
         });
-        console.log("TTS init")
+        logger.info("TTS init")
     }
     return TTS
 }
@@ -34,7 +37,7 @@ const getTTS = async () => {
 const AudioFunc = async (job: Job<{ id: string, type: "chat" | "message" }>) => {
     const { id, type } = job.data
     if (!id.trim() || !type.trim()) {
-        console.log("No id or type found")
+        logger.error("No id or type found")
         return null
     }
 
@@ -67,7 +70,7 @@ const AudioFunc = async (job: Job<{ id: string, type: "chat" | "message" }>) => 
     }
 
     if (!text.trim()) {
-        console.log("No text found for the audio generation")
+        logger.error("No text found for the audio generation")
     }
 
     const audio = await tts.generate(text, {
@@ -77,26 +80,26 @@ const AudioFunc = async (job: Job<{ id: string, type: "chat" | "message" }>) => 
     const { error } = await tryCatch(audio.save(filePath))
 
     if (error) {
-        console.log(`Failed to save the audio with filepath ${filePath}`)
+        logger.error(`Failed to save the audio with filepath ${filePath}`)
         try {
             await fs.promises.unlink(filePath)
         } catch (unlinkErr) {
-            console.log(`Failed to clean up file: ${unlinkErr}`)
+            logger.error(`Failed to clean up file: ${unlinkErr}`)
         }
         throw new Error("Failed to save the audio")
     }
 
     //add the logic of the supabase store or r2 store here
-    
+
     if (type === "chat") {
         const { error } = await tryCatch(addAudioLink(id, filePath))
         if (error) {
-            console.log("Failed to add the audio link for the summary")
+            logger.error("Failed to add the audio link for the summary")
         }
     } else if (type == "message") {
         const { error } = await tryCatch(addMessageAudioLink(id, filePath))
         if (error) {
-            console.log("Failed to add the audio link for the answer")
+            logger.error("Failed to add the audio link for the answer")
         }
     }
     //then unlink the file from the temporary audio storage
@@ -107,9 +110,9 @@ const AudioFunc = async (job: Job<{ id: string, type: "chat" | "message" }>) => 
 export const AudioWorker = new Worker('audio', AudioFunc, { connection: redis })
 
 AudioWorker.on("ready", () => {
-    console.log("Started the worker for audio")
+    logger.info("Started the worker for audio")
 })
 
 AudioWorker.on("error", (error) => {
-    console.log("Error detected in audio worker" + error.message)
+    logger.error("Error detected in audio worker" + error.message)
 })

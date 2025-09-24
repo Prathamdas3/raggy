@@ -22,6 +22,7 @@ router
         return parsed.data
     }),
         async (c) => {
+            // this is to get the answer of a question
             const logger = c.get("logger")
             const { question } = c.req.valid('json')
             const { chatId } = c.req.param()
@@ -52,6 +53,7 @@ router
         }
     )
     .get('/:chat_id/:question_id', async (c) => {
+        //This is to get a perticular answer for a particular question
         const logger = c.get("logger")
         const { question_id, chat_id } = c.req.param()
         if (!question_id.trim() || !chat_id.trim()) {

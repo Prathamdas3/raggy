@@ -7,6 +7,9 @@ import fs from 'fs'
 import { AddToEmbedingQueue } from "src/queues/embeding.js";
 import { AddToSummaryQueue } from "src/queues/summary.js";
 import { createDocs } from "../db/queries.ts";
+import { createLogger } from "src/configs/pino.js";
+
+const logger=createLogger()
 
 const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
@@ -16,7 +19,7 @@ const splitter = new RecursiveCharacterTextSplitter({
 
 const SplitingFunc = async (job: Job) => {
     if (!job.data?.filepath.trim()) {
-        console.log("No filepath present")
+        logger.error("No filepath present")
         return null
     }
 
@@ -30,7 +33,7 @@ const SplitingFunc = async (job: Job) => {
     const { data: docs, error: docsError } = await tryCatch(loader.load())
 
     if (docsError) {
-        console.log("Failed to load the pdf content")
+        logger.error("Failed to load the pdf content")
         throw new Error("Failed to load the pdf content")
     }
 
@@ -38,14 +41,14 @@ const SplitingFunc = async (job: Job) => {
     const { data: texts, error: textsError } = await tryCatch(splitter.splitDocuments(docs))
 
     if (textsError) {
-        console.log("Failed to split the texts content")
+        logger.error("Failed to split the texts content")
         throw new Error("Failed to split the texts content")
     }
 
     const { data, error: SaveDocsError } = await tryCatch(createDocs({ title, user_id: userId, chat_id: chatId, original_text: texts }))
 
     if (SaveDocsError) {
-        console.log("Failed to save the original text")
+        logger.error("Failed to save the original text")
         throw new Error("Failed to save the original text")
     }
 
@@ -66,13 +69,13 @@ const SplitingFunc = async (job: Job) => {
     const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content: newTexts, docId: data[0].id }))
 
     if (SummaryQueueError) {
-        console.log("Failed to add the data to summary queue ")
+        logger.error("Failed to add the data to summary queue ")
     }
 
     const { error: EmbeddingQueueError } = await tryCatch(AddToEmbedingQueue(newTexts))
 
     if (EmbeddingQueueError) {
-        console.log("Failed to add the data to embeding queue")
+        logger.error("Failed to add the data to embeding queue")
     }
 
     if (filePath && texts.length > 0) {
@@ -80,7 +83,7 @@ const SplitingFunc = async (job: Job) => {
             //before removing the file just store the texts inthe db so that it can be used later on
             await fs.promises.unlink(filePath)
         } catch (unlinkErr) {
-            console.error('Failed to clean up file:', unlinkErr)
+            logger.error(`Failed to clean up file: ${unlinkErr}`)
         }
     }
 
@@ -90,9 +93,9 @@ const SplitingFunc = async (job: Job) => {
 export const TextSplitingWorker = new Worker('text-spliter', SplitingFunc, { connection: redis })
 
 TextSplitingWorker.on("ready", () => {
-    console.log("Started the worker text-spliter")
+    logger.info("Started the worker text-spliter")
 })
 
 TextSplitingWorker.on("error", (error) => {
-    console.log("Error detected in text-spliter" + error.message)
+    logger.error("Error detected in text-spliter" + error.message)
 })

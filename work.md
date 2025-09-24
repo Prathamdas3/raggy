@@ -1,18 +1,19 @@
+- [ ] convert the audio format from .wav to .mp3
 - [ ] add supabase and eventually move to r2 for the storing of the audio
-- [ ] Set loggers
-- [ ] add more loggers everywhere
-- [ ] add more checks
 - [ ] Swagger docs
 - [ ] setup a small flow for pdf
+- [ ] add linter and formater
+- [ ] refresh the summary
+- [ ] chat history
+- [ ] Testing 
 - [ ] image and youtube video link
 - [ ] translation from any language to another
 - [ ] Generate interactive video from the content
-- [ ] Chat window
-- [ ] chat history
-- [ ] Testing 
-- [ ] refresh the summary
-- [ ]  add linter and formater
 -----------------------------------------------------------
+- [X] Chat window
+- [x] add more loggers everywhere
+- [x] add more checks
+- [x] Set loggers
 - [x] Feat: multiple chat support
 - [x] generate text to audio with hugging face
 - [x] setup rate limiting

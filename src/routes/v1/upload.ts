@@ -17,7 +17,7 @@ const schema = z.object({
 })
 
 const router = createRouter()
-
+// This route handles uploading of documents
 router
     .use(
         async (c, next) => {

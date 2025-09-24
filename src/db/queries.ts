@@ -18,11 +18,11 @@ export const deleteChat = async (chatId: string, userId: string) => {
 }
 
 export const bookmarkChat = async (chatId: string, bookmark: boolean, userId: string) => {
-    return await database.update(chats).set({ is_bookmarked: bookmark }).where(and(eq(chats.id, chatId), eq(chats.user_id, userId)))
+    return await database.update(chats).set({ is_bookmarked: bookmark }).where(and(eq(chats.id, chatId), eq(chats.user_id, userId))).returning()
 }
 
 export const updateChatName = async (chatId: string, chat_name: string, userId: string) => {
-    return await database.update(chats).set({ chat_name: chat_name }).where(and(eq(chats.id, chatId,), eq(chats.user_id, userId)))
+    return await database.update(chats).set({ chat_name: chat_name }).where(and(eq(chats.id, chatId,), eq(chats.user_id, userId))).returning()
 }
 
 //docs

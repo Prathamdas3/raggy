@@ -1,11 +1,12 @@
 import { error, success } from "../../utils/response.ts"
 import { createRouter } from "../../configs/app.ts"
 import { tryCatch } from "src/utils/tryCatch.js"
-import { getAnswerById, getDocsByChatId } from "src/db/queries.js"
+import {  getDocsByChatId } from "src/db/queries.js"
 
 const router = createRouter()
 
 router.get('/:chatId', async c => {
+    //This is for getting the summary of an uploaded docs in the chat
     const logger = c.get('logger')
     const { chatId } = c.req.param()
 

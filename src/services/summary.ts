@@ -8,6 +8,9 @@ import { mistralModel as summaryModel } from "src/configs/ai-model.js";
 import type { RunnableSequence } from "@langchain/core/runnables";
 import { updateDocs } from "../db/queries.ts";
 import { AddToAudioQueue } from "src/queues/audio.js";
+import { createLogger } from "src/configs/pino.js";
+
+const logger = createLogger()
 
 let stuffChain: RunnableSequence<Record<string, unknown>, string> | null = null
 
@@ -33,7 +36,7 @@ Now, write the summary as if you are explaining to a dyslexic child. End with a 
         stuffChain = await createStuffDocumentsChain({
             llm: summaryModel, outputParser, prompt,
         })
-        console.log("stuff chain initialized ✅");
+        logger.info("stuff chain initialized ✅");
     }
     return stuffChain
 }
@@ -42,7 +45,7 @@ Now, write the summary as if you are explaining to a dyslexic child. End with a 
 const SummaryFunc = async (job: Job) => {
     const content = job.data?.content
     if (content.length === 0) {
-        console.log("No content found")
+        logger.error("No content found")
         return null
     }
     const docId = job.data?.docId
@@ -51,20 +54,20 @@ const SummaryFunc = async (job: Job) => {
     const { data, error: SummaryError } = await tryCatch(chain.invoke({ context: content }))
 
     if (SummaryError) {
-        console.log("Failed to generate the summarized docs")
+        logger.error("Failed to generate the summarized docs")
         throw new Error("Failed to generate the summarized docs")
     }
 
     const { error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
     if (SummarySaveError) {
-        console.log("Failed to save the summary data")
+        logger.error("Failed to save the summary data")
         throw new Error("Failed to save the summary data")
     }
 
     const { error: AudioQueueError } = await tryCatch(AddToAudioQueue({ answerId: docId, type: "chat" }))
 
     if (AudioQueueError) {
-        console.log("Failed to add the summary id in the audio queue for further processing")
+        logger.error("Failed to add the summary id in the audio queue for further processing")
         throw new Error("Failed to add the id in the audio queue")
     }
 
@@ -74,11 +77,11 @@ const SummaryFunc = async (job: Job) => {
 export const SummaryWorker = new Worker('summary', SummaryFunc, { connection: redis })
 
 SummaryWorker.on("ready", () => {
-    console.log("Started the worker summary")
+    logger.info("Started the worker summary")
 })
 
 SummaryWorker.on("error", (error) => {
-    console.log("Error detected in summary" + error.message)
+    logger.error("Error detected in summary" + error.message)
 })
 
 

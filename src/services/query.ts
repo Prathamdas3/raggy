@@ -7,7 +7,9 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from 'src/utils/tryCatch.js';
 import { createMessage } from 'src/db/queries.js';
 import { AddToAudioQueue } from 'src/queues/audio.js';
+import { createLogger } from 'src/configs/pino.js';
 
+const logger = createLogger()
 let prompt: ChatPromptTemplate<any, any> | null = null
 
 const getPrompt = async () => {
@@ -21,7 +23,7 @@ const QueryFunc = async (job: Job) => {
     const { userId, chatId, question, questionId } = job?.data
 
     if (!userId.trim() || !chatId.trim() || !question.trim() || !questionId.trim()) {
-        console.log("chatId, userId, question any of them is empty")
+        logger.error("chatId, userId, question any of them is empty")
         return null
     }
 
@@ -57,8 +59,8 @@ Now, using the given context, answer the question in a way that makes it easy fo
     const { data, error } = await tryCatch(mistralModel.invoke(samplePrompt))
 
     if (error) {
-        console.log("Failed to generate the answer for the question")
-        // throw new Error("Failed to generate the answer")
+        logger.error("Failed to generate the answer for the question")
+        throw new Error("Failed to generate the answer")
     }
 
     const content = data?.content as string
@@ -66,14 +68,14 @@ Now, using the given context, answer the question in a way that makes it easy fo
     const { data: answer, error: ContentSaveDbError } = await tryCatch(createMessage({ chat_id: chatId, sender: "llm", content: content, question_id: questionId }))
 
     if (ContentSaveDbError) {
-        console.log("Failed to store the answer in the db")
+        logger.error("Failed to store the answer in the db")
         throw new Error("Failed to store the answer")
     }
 
     const { error: AudioQueueError } = await tryCatch(AddToAudioQueue({ answerId: answer[0].id, type: "message" }))
 
     if (AudioQueueError) {
-        console.log("Failed to add the answerId to the audio queue for the further processing")
+        logger.error("Failed to add the answerId to the audio queue for the further processing")
         throw new Error("Failed to add the answerId in the audio queue")
     }
     return null
@@ -84,9 +86,9 @@ Now, using the given context, answer the question in a way that makes it easy fo
 export const QueryWorker = new Worker('querying', QueryFunc, { connection: redis })
 
 QueryWorker.on("ready", () => {
-    console.log("Started the worker for query")
+    logger.info("Started the worker for query")
 })
 
 QueryWorker.on("error", (error) => {
-    console.log("Error detected in query" + error.message)
+    logger.error("Error detected in query" + error.message)
 })
