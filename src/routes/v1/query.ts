@@ -41,7 +41,7 @@ router
                 return c.json(error("Failed to store the data, Please try again", "Internal Server Error"), 500)
             }
 
-            const { error: QueryAddingError } = await tryCatch(AddToQueryQueue({ chatId, userId, question, questionId: details[0].question_id }))
+            const { error: QueryAddingError } = await tryCatch(AddToQueryQueue({ chatId, userId, question, questionId: details[0].id }))
 
             if (QueryAddingError) {
                 logger.error("Failed to add payload to the query queue")
@@ -49,7 +49,7 @@ router
             }
 
             logger.info("Successfully queried the data and stored the data")
-            return c.json(success({ message: "Successfully submited the qeustion for answer generation", question_id: details[0].question_id }))
+            return c.json(success({ message: "Successfully submited the qeustion for answer generation", question_id: details[0].id }))
         }
     )
     .get('/:chat_id/:question_id', async (c) => {

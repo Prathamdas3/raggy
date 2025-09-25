@@ -25,7 +25,8 @@ const EnvSchema = z.object({
   MAILTRAP_AUTH_PASS: z.string(),
   SUMMARY_INSTRUCTION: z.string().optional(),
   QUERY_INSTRUCTION: z.string().optional(),
-  HUGGINGFACEHUB_API_KEY: z.string().optional()
+  HUGGINGFACEHUB_API_KEY: z.string().optional(),
+  GROQ_API_KEY:z.string()
 });
 
 const parsed = EnvSchema.safeParse(process.env!)

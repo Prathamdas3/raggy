@@ -66,7 +66,7 @@ const SplitingFunc = async (job: Job) => {
     })
 
 
-    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content: newTexts, docId: data[0].id }))
+    const { error: SummaryQueueError } = await tryCatch(AddToSummaryQueue({ content: newTexts, docId: data[0].chat_id }))
 
     if (SummaryQueueError) {
         logger.error("Failed to add the data to summary queue ")

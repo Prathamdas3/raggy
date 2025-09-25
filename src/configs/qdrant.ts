@@ -1,7 +1,7 @@
 import type { EmbeddingsInterface } from "@langchain/core/embeddings";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import { env } from "./env.js";
-import { model } from "./ai-model.js";
+import { embedingModel as model } from "./ai-model.js";
 
 class CustomEmbeddings implements EmbeddingsInterface {
     async embedDocuments(texts: string[]): Promise<number[][]> {

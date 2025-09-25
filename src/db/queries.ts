@@ -35,8 +35,8 @@ export const createDocs = async (doc: createDoc) => {
     return await database.insert(docs).values(doc).returning()
 }
 
-export const updateDocs = async (docId: string, summary: string) => {
-    return await database.update(docs).set({ summary_text: summary }).where(eq(docs.id, docId))
+export const updateDocs = async (chatId: string, summary: string) => {
+    return await database.update(docs).set({ summary_text: summary }).where(eq(docs.chat_id, chatId)).returning()
 }
 
 export const addAudioLink = async (docId: string, link: string) => {

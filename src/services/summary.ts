@@ -4,7 +4,7 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents"
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from "src/utils/tryCatch.js";
-import { mistralModel as summaryModel } from "src/configs/ai-model.js";
+import { model as summaryModel } from "src/configs/ai-model.js";
 import type { RunnableSequence } from "@langchain/core/runnables";
 import { updateDocs } from "../db/queries.ts";
 import { AddToAudioQueue } from "src/queues/audio.js";
@@ -54,14 +54,19 @@ const SummaryFunc = async (job: Job) => {
     const { data, error: SummaryError } = await tryCatch(chain.invoke({ context: content }))
 
     if (SummaryError) {
-        logger.error("Failed to generate the summarized docs")
+        logger.error(`Failed to generate the summarized docs:${SummaryError.message}`)
         throw new Error("Failed to generate the summarized docs")
     }
 
-    const { error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
+    const { data:updatedSummaryList,error: SummarySaveError } = await tryCatch(updateDocs(docId, data))
     if (SummarySaveError) {
         logger.error("Failed to save the summary data")
         throw new Error("Failed to save the summary data")
+    }
+
+    if(updatedSummaryList.length===0){
+        logger.error("Chat does not exists")
+        throw new Error("No chat exists")
     }
 
     const { error: AudioQueueError } = await tryCatch(AddToAudioQueue({ answerId: docId, type: "chat" }))

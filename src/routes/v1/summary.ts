@@ -19,7 +19,7 @@ router.get('/:chatId', async c => {
 
     const text = summary?.summary_text || ''
 
-    logger.info("Successfully got the summary data")
+    // logger.info("Successfully got the summary data")
     return c.json(success({ summary: text, doc_id: summary?.id }))
 })
 

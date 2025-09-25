@@ -34,11 +34,11 @@ const getTTS = async () => {
     return TTS
 }
 
-const AudioFunc = async (job: Job<{ id: string, type: "chat" | "message" }>) => {
-    const { id, type } = job.data
+const AudioFunc = async (job: Job<{ answerId: string, type: "chat" | "message" }>) => {
+    const { answerId:id, type } = job.data
     if (!id.trim() || !type.trim()) {
         logger.error("No id or type found")
-        return null
+        throw new Error('NO id found or type found')
     }
 
     const tts = await getTTS()
@@ -72,6 +72,7 @@ const AudioFunc = async (job: Job<{ id: string, type: "chat" | "message" }>) => 
     if (!text.trim()) {
         logger.error("No text found for the audio generation")
     }
+
 
     const audio = await tts.generate(text, {
         voice: "af_bella",

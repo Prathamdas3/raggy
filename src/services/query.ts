@@ -1,7 +1,7 @@
 import { Job, Worker } from 'bullmq'
 import { redis } from '../configs/redis.ts'
 import { getVectorStore } from 'src/configs/qdrant.js'
-import { mistralModel } from 'src/configs/ai-model.js'
+import { model } from 'src/configs/ai-model.js'
 import { pull } from "langchain/hub";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tryCatch } from 'src/utils/tryCatch.js';
@@ -56,7 +56,7 @@ Now, using the given context, answer the question in a way that makes it easy fo
 `
     });
 
-    const { data, error } = await tryCatch(mistralModel.invoke(samplePrompt))
+    const { data, error } = await tryCatch(model.invoke(samplePrompt))
 
     if (error) {
         logger.error("Failed to generate the answer for the question")

@@ -1,8 +1,8 @@
 import { createMiddleware } from 'hono/factory'
-import { auth, type AuthType } from '../configs/auth.ts'
-import { error } from '..//utils/response.ts'
+import { auth } from '../configs/auth.ts'
+import { error } from '../utils/response.ts'
 
-export const authMiddle = createMiddleware<{ Variables: AuthType }>(async (c, next) => {
+export const authMiddle = createMiddleware(async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
 
     if (!session) {
