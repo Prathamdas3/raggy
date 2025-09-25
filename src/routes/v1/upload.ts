@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { AddToTextSplitingQueue } from "src/queues/text-spliter.js";
 import { createRouter } from "../../configs/app.ts";
 import { error, success } from "../../utils/response.ts";
+import { getDocsByChatId } from "src/db/queries.js";
 
 const schema = z.object({
     file: z.custom<File>((val) => val instanceof File, {
@@ -62,6 +63,13 @@ router
             if (!user) {
                 return c.json(error("No user found", "Unauthorized"), 401)
             }
+
+            const {data:oldDoc,error:oldDocError}=await tryCatch(getDocsByChatId(chat_id))
+
+            if(oldDocError||!oldDoc){
+                return c.json(error("This chat already has a docs attach to it, every chat can have only one doc attach to it"))
+            }
+
 
             const fileName = file.name
             const userId = user.id

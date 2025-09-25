@@ -93,9 +93,12 @@ const AudioFunc = async (job: Job<{ answerId: string, type: "chat" | "message" }
     //add the logic of the supabase store or r2 store here
 
     if (type === "chat") {
-        const { error } = await tryCatch(addAudioLink(id, filePath))
+        const { data,error } = await tryCatch(addAudioLink(id, filePath))
         if (error) {
             logger.error("Failed to add the audio link for the summary")
+        }
+        if(data?.length===0){
+            logger.error("Audio url already exists")
         }
     } else if (type == "message") {
         const { error } = await tryCatch(addMessageAudioLink(id, filePath))

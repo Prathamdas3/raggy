@@ -40,7 +40,7 @@ export const updateDocs = async (chatId: string, summary: string) => {
 }
 
 export const addAudioLink = async (docId: string, link: string) => {
-    return await database.update(docs).set({ audio_url: link }).where(eq(docs.id, docId))
+    return await database.update(docs).set({ audio_url: link }).where(eq(docs.chat_id, docId)).returning()
 }
 
 export const getAudioLinkForSummary = async (chatId: string) => {
