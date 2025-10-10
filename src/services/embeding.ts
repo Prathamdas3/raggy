@@ -1,45 +1,43 @@
-import { Job, Worker } from "bullmq";
-import { redis } from "../configs/redis.ts";
-import { tryCatch } from "src/utils/tryCatch.js";
-import { getVectorStore } from "src/configs/qdrant.js";
+import { type Job, Worker } from "bullmq";
 import { createLogger } from "src/configs/pino.js";
+import { getVectorStore } from "src/configs/qdrant.js";
+import { tryCatch } from "src/utils/tryCatch.js";
+import { redis } from "../configs/redis.ts";
 
-const logger = createLogger()
+const logger = createLogger();
 
 const embedingFunc = async (job: Job) => {
-    if (!job.data?.content || job.data.content.length === 0) {
-        logger.error("No text content found");
-        return null;
-    }
+	if (!job.data?.content || job.data.content.length === 0) {
+		logger.error("No text content found");
+		return null;
+	}
 
-    const content = job.data.content.map((details: any) => ({
-        pageContent: details.pageContent,
-        metadata: details.metadata || {},
-    }));
+	const content = job.data.content.map((details: any) => ({
+		pageContent: details.pageContent,
+		metadata: details.metadata || {},
+	}));
 
-    const vectorStore = await getVectorStore()
+	const vectorStore = await getVectorStore();
 
-    // store documents directly → Qdrant will call embeddings internally
-    const { error } = await tryCatch(
-        vectorStore.addDocuments(content)
-    );
+	// store documents directly → Qdrant will call embeddings internally
+	const { error } = await tryCatch(vectorStore.addDocuments(content));
 
-    if (error) {
-        logger.error(`❌ Failed to store embeddings: ${error}`);
-        throw new Error("Failed to add documents to Qdrant");
-    }
+	if (error) {
+		logger.error(`❌ Failed to store embeddings: ${error}`);
+		throw new Error("Failed to add documents to Qdrant");
+	}
 
-    return null;
+	return null;
 };
 
 export const EmbedingWorker = new Worker("embeding", embedingFunc, {
-    connection: redis,
+	connection: redis,
 });
 
 EmbedingWorker.on("ready", () => {
-    logger.info("Started the worker embeding");
+	logger.info("Started the worker embeding");
 });
 
 EmbedingWorker.on("error", (error) => {
-    logger.error(`Error detected in embeding: ${error.message}`);
+	logger.error(`Error detected in embeding: ${error.message}`);
 });

@@ -1,5 +1,5 @@
-import './text-spliter.ts'
-import './embeding.ts'
-import './summary.ts'
-import './query.ts'
-import './audio.ts'
+import "./text-spliter.ts";
+import "./embeding.ts";
+import "./summary.ts";
+import "./query.ts";
+import "./audio.ts";

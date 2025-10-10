@@ -1,48 +1,53 @@
-import { Job, Worker } from 'bullmq'
-import { redis } from '../configs/redis.ts'
-import { getVectorStore } from 'src/configs/qdrant.js'
-import { model } from 'src/configs/ai-model.js'
+import type { ChatPromptTemplate } from "@langchain/core/prompts";
+import { type Job, Worker } from "bullmq";
 import { pull } from "langchain/hub";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { tryCatch } from 'src/utils/tryCatch.js';
-import { createMessage } from 'src/db/queries.js';
-import { AddToAudioQueue } from 'src/queues/audio.js';
-import { createLogger } from 'src/configs/pino.js';
+import { model } from "src/configs/ai-model.js";
+import { createLogger } from "src/configs/pino.js";
+import { getVectorStore } from "src/configs/qdrant.js";
+import { createMessage } from "src/db/queries.js";
+import { AddToAudioQueue } from "src/queues/audio.js";
+import { tryCatch } from "src/utils/tryCatch.js";
+import { redis } from "../configs/redis.ts";
 
-const logger = createLogger()
-let prompt: ChatPromptTemplate<any, any> | null = null
+const logger = createLogger();
+let prompt: ChatPromptTemplate<any, any> | null = null;
 
 const getPrompt = async () => {
-    if (!prompt) {
-        prompt = await pull<ChatPromptTemplate>("rlm/rag-prompt");
-    }
-    return prompt
-}
+	if (!prompt) {
+		prompt = await pull<ChatPromptTemplate>("rlm/rag-prompt");
+	}
+	return prompt;
+};
 
 const QueryFunc = async (job: Job) => {
-    const { userId, chatId, question, questionId } = job?.data
+	const { userId, chatId, question, questionId } = job.data;
 
-    if (!userId.trim() || !chatId.trim() || !question.trim() || !questionId.trim()) {
-        logger.error("chatId, userId, question any of them is empty")
-        return null
-    }
+	if (
+		!userId.trim() ||
+		!chatId.trim() ||
+		!question.trim() ||
+		!questionId.trim()
+	) {
+		logger.error("chatId, userId, question any of them is empty");
+		return null;
+	}
 
-    const filter = {
-        must: [
-            { key: "metadata.chatId", match: { value: chatId } },
-            { key: "metadata.userId", match: { value: userId } }
-        ],
-    }
+	const filter = {
+		must: [
+			{ key: "metadata.chatId", match: { value: chatId } },
+			{ key: "metadata.userId", match: { value: userId } },
+		],
+	};
 
-    const vectorStore = await getVectorStore()
-    const retrievedDocs = await vectorStore.similaritySearch(question, 2, filter)
-    const docsContent = retrievedDocs.map((doc) => doc.pageContent).join("\n");
-    const promptTemplate = await getPrompt()
+	const vectorStore = await getVectorStore();
+	const retrievedDocs = await vectorStore.similaritySearch(question, 2, filter);
+	const docsContent = retrievedDocs.map((doc) => doc.pageContent).join("\n");
+	const promptTemplate = await getPrompt();
 
-    const samplePrompt = await promptTemplate.invoke({
-        context: docsContent,
-        question: question,
-        instruction: `
+	const samplePrompt = await promptTemplate.invoke({
+		context: docsContent,
+		question: question,
+		instruction: `
 You are a helpful teacher who explains things in a simple, clear, and supportive way. 
 The reader is a child with dyslexia, so please follow these rules:
 - Use short, simple sentences.
@@ -53,42 +58,53 @@ The reader is a child with dyslexia, so please follow these rules:
 - Highlight the most important words clearly.
 
 Now, using the given context, answer the question in a way that makes it easy for a child with dyslexia to understand.
-`
-    });
+`,
+	});
 
-    const { data, error } = await tryCatch(model.invoke(samplePrompt))
+	const { data, error } = await tryCatch(model.invoke(samplePrompt));
 
-    if (error) {
-        logger.error("Failed to generate the answer for the question")
-        throw new Error("Failed to generate the answer")
-    }
+	if (error) {
+		logger.error("Failed to generate the answer for the question");
+		throw new Error("Failed to generate the answer");
+	}
 
-    const content = data?.content as string
+	const content = data?.content as string;
 
-    const { data: answer, error: ContentSaveDbError } = await tryCatch(createMessage({ chat_id: chatId, sender: "llm", content: content, question_id: questionId }))
+	const { data: answer, error: ContentSaveDbError } = await tryCatch(
+		createMessage({
+			chat_id: chatId,
+			sender: "llm",
+			content: content,
+			question_id: questionId,
+		}),
+	);
 
-    if (ContentSaveDbError) {
-        logger.error("Failed to store the answer in the db")
-        throw new Error("Failed to store the answer")
-    }
+	if (ContentSaveDbError) {
+		logger.error("Failed to store the answer in the db");
+		throw new Error("Failed to store the answer");
+	}
 
-    const { error: AudioQueueError } = await tryCatch(AddToAudioQueue({ answerId: answer[0].id, type: "message" }))
+	const { error: AudioQueueError } = await tryCatch(
+		AddToAudioQueue({ answerId: answer[0].id, type: "message" }),
+	);
 
-    if (AudioQueueError) {
-        logger.error("Failed to add the answerId to the audio queue for the further processing")
-        throw new Error("Failed to add the answerId in the audio queue")
-    }
-    return null
-}
+	if (AudioQueueError) {
+		logger.error(
+			"Failed to add the answerId to the audio queue for the further processing",
+		);
+		throw new Error("Failed to add the answerId in the audio queue");
+	}
+	return null;
+};
 
-
-
-export const QueryWorker = new Worker('querying', QueryFunc, { connection: redis })
+export const QueryWorker = new Worker("querying", QueryFunc, {
+	connection: redis,
+});
 
 QueryWorker.on("ready", () => {
-    logger.info("Started the worker for query")
-})
+	logger.info("Started the worker for query");
+});
 
 QueryWorker.on("error", (error) => {
-    logger.error("Error detected in query" + error.message)
-})
+	logger.error(`Error detected in query ${error.message}`);
+});
