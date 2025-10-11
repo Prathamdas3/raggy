@@ -1,0 +1,13 @@
+[project]
+name = "whisper-ai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.118.3",
+    "openai-whisper>=20250625",
+    "pydantic>=2.12.0",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.37.0",
+]
