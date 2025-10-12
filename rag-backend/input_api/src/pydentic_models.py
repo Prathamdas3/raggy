@@ -15,6 +15,3 @@ class ErrorResponse(BaseModel):
     message: str
     code: Optional[int] = None
     details: Optional[Any] = None
-
-
-

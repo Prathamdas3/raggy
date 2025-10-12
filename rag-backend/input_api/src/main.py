@@ -36,12 +36,10 @@ async def check():
 
 @api_router.post("/file", status_code=202)
 async def upload_file(
-    chat_id: str = Form(...),
-    user_id: str = Form(...),
-    file: UploadFile = File(...)
+    chat_id: str = Form(...), user_id: str = Form(...), file: UploadFile = File(...)
 ):
     logger.info(f"Received file: {file.filename}")
-    
+
     try:
         file_type = await detect_file_type(file)
         file_path = await save_temp_file(file)
@@ -52,7 +50,7 @@ async def upload_file(
                 f"local path {file_path}"
             )
             # await extract_text_from_othertypes.delay(file_path, file_type)
-            
+
         elif file_type in ALLOWED_IMAGE_TYPES:
             logger.info(
                 f"Processing image file: {file.filename} of type {file_type} "
@@ -60,7 +58,7 @@ async def upload_file(
             )
             # add to image queue
             pass
-            
+
         elif file_type in ALLOWED_AUDIO_TYPES:
             logger.info(
                 f"Processing audio file: {file.filename} of type {file_type} "
@@ -68,7 +66,7 @@ async def upload_file(
             )
             # add to audio queue
             pass
-            
+
         elif file_type in ALLOWED_VIDEO_TYPES:
             logger.info(
                 f"Processing video file: {file.filename} of type {file_type} "
@@ -76,7 +74,7 @@ async def upload_file(
             )
             # add to video queue
             pass
-            
+
         else:
             pass
             # raise APIError("Unsupported file type", status_code=400)
@@ -87,7 +85,7 @@ async def upload_file(
             status="accepted",
             message="File processed successfully",
         )
-        
+
     except ValueError as ve:
         logger.error(f"Validation error saving file {file.filename}: {ve}")
         raise APIError(str(ve), status_code=400)
@@ -99,7 +97,7 @@ async def upload_file(
     except HTTPException as e:
         logger.error(f"HTTP error processing file {file.filename}: {e.detail}")
         raise APIError(e.detail, status_code=e.status_code)
-    
+
     except APIError:
         # Re-raise APIError exceptions to be handled by the exception handler
         raise
@@ -112,11 +110,11 @@ async def upload_file(
 @api_router.get("/yt")
 async def process_youtube_link(link: str, user_id: str, chat_id: str):
     logger.info(f"Processing YouTube link: {link}")
-    
+
     if not YT_REGEX.match(link):
         logger.error(f"Invalid YouTube link: {link}")
         raise APIError("Invalid YouTube link", status_code=400)
-    
+
     logger.success(f"YouTube link {link} processed successfully")
     return SuccessResponse(
         data={"link": link},
