@@ -1,13 +1,17 @@
 [project]
-name = "whisper-ai"
+name = "input_api"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "celery>=5.5.3",
     "fastapi>=0.118.3",
     "openai-whisper>=20250625",
     "pydantic>=2.12.0",
-    "sqlalchemy>=2.0.44",
+    "pymupdf>=1.26.5",
+    "python-magic>=0.4.27",
+    "python-multipart>=0.0.20",
+    "redis>=6.4.0",
     "uvicorn>=0.37.0",
 ]
