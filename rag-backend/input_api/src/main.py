@@ -4,12 +4,8 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form
 from pydentic_models import SuccessResponse
 from utils.response import APIError, api_error_handler
 from utils.logger import get_logger
-from utils.file import detect_file_type, save_temp_file, cleanup_temp_files
+from utils.file import handle_file, cleanup_temp_files
 from constants import (
-    ALLOWED_AUDIO_TYPES,
-    ALLOWED_DOC_TYPES,
-    ALLOWED_IMAGE_TYPES,
-    ALLOWED_VIDEO_TYPES,
     YT_REGEX,
 )
 
@@ -41,47 +37,10 @@ async def upload_file(
     logger.info(f"Received file: {file.filename}")
 
     try:
-        file_type = await detect_file_type(file)
-        file_path = await save_temp_file(file)
-
-        if file_type in ALLOWED_DOC_TYPES:
-            logger.info(
-                f"Processing document file: {file.filename} of type {file_type} "
-                f"local path {file_path}"
-            )
-            # await extract_text_from_othertypes.delay(file_path, file_type)
-
-        elif file_type in ALLOWED_IMAGE_TYPES:
-            logger.info(
-                f"Processing image file: {file.filename} of type {file_type} "
-                f"local path {file_path}"
-            )
-            # add to image queue
-            pass
-
-        elif file_type in ALLOWED_AUDIO_TYPES:
-            logger.info(
-                f"Processing audio file: {file.filename} of type {file_type} "
-                f"local path {file_path}"
-            )
-            # add to audio queue
-            pass
-
-        elif file_type in ALLOWED_VIDEO_TYPES:
-            logger.info(
-                f"Processing video file: {file.filename} of type {file_type} "
-                f"local path {file_path}"
-            )
-            # add to video queue
-            pass
-
-        else:
-            pass
-            # raise APIError("Unsupported file type", status_code=400)
-
-        logger.info(f"File {file.filename} processed as type {file_type}")
+        await handle_file(file)
+        logger.info(f"File {file.filename} processed successfully")
         return SuccessResponse(
-            data={"filename": file.filename, "file_type": file_type},
+            data={"filename": file.filename},
             status="accepted",
             message="File processed successfully",
         )

@@ -6,12 +6,16 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "celery>=5.5.3",
+    "docx2python>=3.5.0",
     "fastapi>=0.118.3",
+    "langchain-text-splitters>=0.3.11",
     "openai-whisper>=20250625",
     "pydantic>=2.12.0",
     "pymupdf>=1.26.5",
+    "python-docx>=1.2.0",
     "python-magic>=0.4.27",
     "python-multipart>=0.0.20",
+    "python-pptx>=1.0.2",
     "redis>=6.4.0",
     "uvicorn>=0.37.0",
 ]
