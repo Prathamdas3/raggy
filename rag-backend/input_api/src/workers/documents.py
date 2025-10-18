@@ -1,3 +1,4 @@
+from utils.files.delete import delete_file
 from lib.celery import celery
 from lib.pydentic_models import  ErrorResponse
 from lib.logger import get_logger
@@ -201,6 +202,15 @@ def extract_text_from_othertypes(self, file_path: str, file_type: str):
             )
 
         logger.info(f"Text extraction completed: {file_path}")
+
+        try:
+            import asyncio
+            logger.info(f"Deleting file after extraction: {file_path}")
+            asyncio.run(delete_file(file_path))
+            logger.info(f"File deleted successfully: {file_path}")
+        except Exception as de:
+            # Log warning but don't fail - extraction succeeded
+            logger.warning(f"Failed to delete file: {str(de)}")
         return {
             "status": "success",
             "message": "Text extracted successfully",
