@@ -7,7 +7,7 @@ import asyncio
 from fastapi import UploadFile, File
 from utils.files.compress import compress_video
 from utils.response import APIError
-from utils.logger import get_logger
+from lib.logger import get_logger
 from constants import  ALLOWED_VIDEO_TYPES
 
 logger = get_logger("utils/file/save")

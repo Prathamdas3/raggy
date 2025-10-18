@@ -1,8 +1,8 @@
 from fastapi import UploadFile, File, HTTPException
 from utils.files.save import save_temp_file
-from utils.extractors.audio_video import extract_text_from_wav
-from utils.extractors.others import extract_text_from_othertypes
-from utils.logger import get_logger
+from workers.audio_video import extract_text_from_wav
+from workers.others import extract_text_from_othertypes
+from lib.logger import get_logger
 from constants import (
     ALLOWED_AUDIO_TYPES,
     ALLOWED_DOC_TYPES,

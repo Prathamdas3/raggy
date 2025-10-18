@@ -1,6 +1,6 @@
-from utils.celery import celery
+from lib.celery import celery
 from pydentic_models import  ErrorResponse
-from utils.logger import get_logger
+from lib.logger import get_logger
 import fitz  # pymupdf
 import os
 from docx import Document

@@ -1,5 +1,5 @@
-from utils.celery import celery
-from utils.logger import get_logger
+from lib.celery import celery
+from lib.logger import get_logger
 
 logger = get_logger("worker")
 

@@ -1,6 +1,6 @@
 from pathlib import Path
 from utils.response import APIError
-from utils.logger import get_logger
+from lib.logger import get_logger
 import asyncio
 import subprocess
 from uuid import uuid4

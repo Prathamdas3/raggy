@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import asyncio
 from pathlib import Path
-from utils.logger import get_logger
+from lib.logger import get_logger
 
 logger = get_logger("utils/files/clean")
 TEMP_DIR = Path("temp")

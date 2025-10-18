@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union
 from utils.response import APIError
-from utils.logger import get_logger
+from lib.logger import get_logger
 import os
 logger = get_logger("utils/files/delete")
 

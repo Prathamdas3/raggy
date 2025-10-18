@@ -2,10 +2,13 @@ import re
 
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg",
+    "image/jpg",
     "image/png",
-    "image/tiff",
-    "image/bmp",
     "image/webp",
+    "image/bmp",
+    "image/gif",
+    "image/tiff",
+    "image/x-icon",
 }
 
 ALLOWED_AUDIO_TYPES = {

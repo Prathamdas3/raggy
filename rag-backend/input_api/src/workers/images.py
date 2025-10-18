@@ -1,4 +1,4 @@
-from utils.celery import celery
+from input_api.src.lib.celery import celery
 
 
 @celery.task

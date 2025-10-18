@@ -1,10 +1,10 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form
-from utils.whisper import get_whisper_model
+from lib.whisper import get_whisper_model
 from pydentic_models import SuccessResponse
 from utils.response import APIError, api_error_handler
-from utils.logger import get_logger
+from lib.logger import get_logger
 from utils.files.file import handle_file
 from utils.files.clean import cleanup_temp_files
 from constants import (

@@ -2,8 +2,8 @@
 Whisper Model Singleton
 Manages a single instance of the Whisper model to avoid loading it multiple times.
 """
-import whisper
-from utils.logger import get_logger
+import whisper 
+from lib.logger import get_logger
 
 logger = get_logger("whisper_model")
 
