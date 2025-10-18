@@ -71,8 +71,8 @@ async def upload_file(
         raise APIError("Unexpected server error", status_code=500, details=str(e))
 
 
-@api_router.post("/yt",status_code=200)
-async def process_youtube_link(req:YTRequestModel):
+@api_router.post("/yt", status_code=200)
+async def process_youtube_link(req: YTRequestModel):
     logger.info(f"Processing YouTube link: {req.link}")
 
     if not YT_REGEX.match(req.link):
@@ -81,21 +81,24 @@ async def process_youtube_link(req:YTRequestModel):
 
     try:
         logger.info(f"Queuing YouTube link for processing: {req.link}")
-        task=extract_text_from_yt_link.delay(req.link)
+        task = extract_text_from_yt_link.delay(req.link)
         logger.info(f"Queued YouTube link task {task.id} for processing: {req.link}")
 
         logger.info(f"YouTube link {req.link} processed successfully")
         return SuccessResponse(
-        data={"link": req.link},
-        status="accepted",
-        message="YouTube link processed successfully",
-        )  
+            data={"link": req.link},
+            status="accepted",
+            message="YouTube link processed successfully",
+        )
     except Exception as e:
-        logger.error(f"Failed to queue YouTube link {req.link} for processing: {str(e)}")
-        raise APIError("Failed to queue YouTube link for processing", status_code=500, details=str(e))
-
-    
-    
+        logger.error(
+            f"Failed to queue YouTube link {req.link} for processing: {str(e)}"
+        )
+        raise APIError(
+            "Failed to queue YouTube link for processing",
+            status_code=500,
+            details=str(e),
+        )
 
 
 app.include_router(api_router)
