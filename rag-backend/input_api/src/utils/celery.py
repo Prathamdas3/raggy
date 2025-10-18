@@ -8,5 +8,6 @@ celery = Celery(
 
 
 celery.autodiscover_tasks([
-    "utils.extractors.others"
+    "utils.extractors.others",
+    "utils.extractors.audio_video",
 ])

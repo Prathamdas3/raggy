@@ -1,10 +1,12 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form
+from utils.whisper import get_whisper_model
 from pydentic_models import SuccessResponse
 from utils.response import APIError, api_error_handler
 from utils.logger import get_logger
-from utils.file import handle_file, cleanup_temp_files
+from utils.files.file import handle_file
+from utils.files.clean import cleanup_temp_files
 from constants import (
     YT_REGEX,
 )
@@ -16,6 +18,7 @@ logger = get_logger("main")
 async def lifespan(app: FastAPI):
     logger.info("Starting up the server events")
     asyncio.create_task(cleanup_temp_files())
+    get_whisper_model("base")
     yield
     logger.info("Shutting down the server events")
 

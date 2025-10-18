@@ -199,10 +199,6 @@ def extract_text_from_othertypes(self, file_path: str, file_type: str):
                 message=f"Unsupported file type: {file_type}",
                 code=400
             )
-        
-        if(len(text.strip())!=0):
-            splited_texts = text_splitter.split_text(text)
-
 
         logger.info(f"Text extraction completed: {file_path}")
         return {
