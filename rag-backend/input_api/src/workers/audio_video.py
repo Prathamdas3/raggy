@@ -1,4 +1,3 @@
-import asyncio
 from utils.response import APIError
 from lib.celery import celery
 from lib.logger import get_logger
@@ -8,7 +7,7 @@ from utils.converters.wav_to_text import transcribe_audio
 logger=get_logger("utils/extractors/audio_video")
 
 @celery.task(bind=True)
-async def extract_text_from_wav(self, file_path: str, file_type: str) -> dict:
+def extract_text_from_wav(self, file_path: str, file_type: str) -> dict:
     """
     Celery task to convert audio/video to WAV and transcribe to text.
     
@@ -34,12 +33,12 @@ async def extract_text_from_wav(self, file_path: str, file_type: str) -> dict:
     logger.info(f"File: {file_path}, Type: {file_type}")
     
     wav_file_path = None
-    
+    import asyncio 
     try:
         # ===== Step 1: Convert to WAV =====
         logger.info("Step 1: Converting audio/video to WAV format")
         try:
-            wav_file_path = await convert_audio_video_to_wav(file_path, file_type)
+            wav_file_path = asyncio.run(convert_audio_video_to_wav(file_path, file_type))
             logger.info(f"Conversion successful. WAV path: {wav_file_path}")
         except APIError as ae:
             logger.error(f"WAV conversion failed: {ae.message}")
@@ -62,7 +61,7 @@ async def extract_text_from_wav(self, file_path: str, file_type: str) -> dict:
         logger.info("Step 2: Transcribing WAV audio to text")
         try:
             # Run async transcription in sync context
-            transcribed_text = asyncio.run(transcribe_audio(wav_file_path))
+            transcribed_text =asyncio.run(transcribe_audio(wav_file_path))
             logger.info(f"Transcription successful. Text length: {len(transcribed_text)} characters")
         except APIError as ae:
             logger.error(f"Transcription failed: {ae.message}")

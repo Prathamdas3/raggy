@@ -8,6 +8,8 @@ celery = Celery(
 
 
 celery.autodiscover_tasks([
-    "workers.others",
+    "workers.documents",
     "workers.audio_video",
+    "workers.images",
+    "workers.yt"
 ])

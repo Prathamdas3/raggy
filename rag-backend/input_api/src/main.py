@@ -1,8 +1,10 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form
+from lib.pydentic_models import YTRequestModel
+from workers.yt import extract_text_from_yt_link
 from lib.whisper import get_whisper_model
-from pydentic_models import SuccessResponse
+from lib.pydentic_models import SuccessResponse
 from utils.response import APIError, api_error_handler
 from lib.logger import get_logger
 from utils.files.file import handle_file
@@ -69,20 +71,31 @@ async def upload_file(
         raise APIError("Unexpected server error", status_code=500, details=str(e))
 
 
-@api_router.get("/yt")
-async def process_youtube_link(link: str, user_id: str, chat_id: str):
-    logger.info(f"Processing YouTube link: {link}")
+@api_router.post("/yt",status_code=200)
+async def process_youtube_link(req:YTRequestModel):
+    logger.info(f"Processing YouTube link: {req.link}")
 
-    if not YT_REGEX.match(link):
-        logger.error(f"Invalid YouTube link: {link}")
+    if not YT_REGEX.match(req.link):
+        logger.error(f"Invalid YouTube link: {req.link}")
         raise APIError("Invalid YouTube link", status_code=400)
 
-    logger.success(f"YouTube link {link} processed successfully")
-    return SuccessResponse(
-        data={"link": link},
+    try:
+        logger.info(f"Queuing YouTube link for processing: {req.link}")
+        task=extract_text_from_yt_link.delay(req.link)
+        logger.info(f"Queued YouTube link task {task.id} for processing: {req.link}")
+
+        logger.info(f"YouTube link {req.link} processed successfully")
+        return SuccessResponse(
+        data={"link": req.link},
         status="accepted",
         message="YouTube link processed successfully",
-    )
+        )  
+    except Exception as e:
+        logger.error(f"Failed to queue YouTube link {req.link} for processing: {str(e)}")
+        raise APIError("Failed to queue YouTube link for processing", status_code=500, details=str(e))
+
+    
+    
 
 
 app.include_router(api_router)

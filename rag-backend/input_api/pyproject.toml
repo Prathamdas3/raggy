@@ -13,6 +13,7 @@ dependencies = [
     "openai-whisper>=20250625",
     "pydantic>=2.12.0",
     "pymupdf>=1.26.5",
+    "pytesseract>=0.3.13",
     "python-docx>=1.2.0",
     "python-magic>=0.4.27",
     "python-multipart>=0.0.20",
@@ -20,4 +21,5 @@ dependencies = [
     "redis>=6.4.0",
     "transformers>=4.57.1",
     "uvicorn>=0.37.0",
+    "yt-dlp>=2025.10.14",
 ]

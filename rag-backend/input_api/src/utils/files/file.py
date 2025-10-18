@@ -1,7 +1,8 @@
 from fastapi import UploadFile, File, HTTPException
 from utils.files.save import save_temp_file
+from workers.images import extract_text_from_image_task
 from workers.audio_video import extract_text_from_wav
-from workers.others import extract_text_from_othertypes
+from workers.documents import extract_text_from_othertypes
 from lib.logger import get_logger
 from constants import (
     ALLOWED_AUDIO_TYPES,
@@ -71,15 +72,24 @@ async def handle_file(
         
         # Image Files
         if mime_type in ALLOWED_IMAGE_TYPES:
-            logger.info(f"Image file detected: {file.filename}")
-            return {
-                "filename": file.filename,
-                "type": "image",
-                "mime_type": mime_type,
-                "file_path": str(file_path),
-                "user_id": user_id,
-                "chat_id": chat_id
-            }
+            try:
+                
+                logger.info(f"Queueing image OCR extraction task for: {file.filename}")
+                task = extract_text_from_image_task.delay(str(file_path), mime_type)
+                logger.info(f"Queued OCR extraction task {task.id} for image file: {file.filename}")
+                
+                return {
+                    "filename": file.filename,
+                    "type": "image",
+                    "mime_type": mime_type,
+                    "file_path": str(file_path),
+                    "task_id": task.id,
+                }
+            except Exception as e:
+                logger.error(f"Failed to queue image OCR task for {file.filename}: {str(e)}")
+                raise RuntimeError(f"Failed to queue image for processing: {str(e)}")
+        
+
         
         # Audio Files
         elif mime_type in ALLOWED_AUDIO_TYPES:
@@ -87,7 +97,7 @@ async def handle_file(
             
             try:
                 logger.info(f"Queueing audio transcription task for: {file.filename}")
-                task = await extract_text_from_wav.delay(str(file_path), mime_type)
+                task = extract_text_from_wav.delay(str(file_path), mime_type)
                 logger.info(f"Queued transcription task {task.id} for audio file: {file.filename}")
                 
                 return {
@@ -107,7 +117,7 @@ async def handle_file(
             
             try:
                 logger.info(f"Queueing video transcription task for: {file.filename}")
-                task = await extract_text_from_wav.delay(str(file_path), mime_type)
+                task = extract_text_from_wav.delay(str(file_path), mime_type)
                 logger.info(f"Queued transcription task {task.id} for video file: {file.filename}")
                 
                 return {

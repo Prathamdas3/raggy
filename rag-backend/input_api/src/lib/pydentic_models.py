@@ -15,3 +15,9 @@ class ErrorResponse(BaseModel):
     message: str
     code: Optional[int] = None
     details: Optional[Any] = None
+
+
+class YTRequestModel(BaseModel):
+    link: str
+    user_id: str
+    chat_id: str
