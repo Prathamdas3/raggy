@@ -8,5 +8,5 @@ celery = Celery(
 
 
 celery.autodiscover_tasks(
-    ["workers.documents", "workers.audio_video", "workers.images", "workers.yt"]
+    ["workers.documents", "workers.audio_video", "workers.images", "workers.yt","workers.text_splitter"]
 )
