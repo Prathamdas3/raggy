@@ -110,7 +110,6 @@ export const docsTable = pgTable(
 			.notNull()
 			.references(() => chatsTable.id, { onDelete: "cascade" }),
 		parent_id: uuid("parent_id"),
-		title: text("title").notNull(),
 		original_text: jsonb("original_text"),
 		summary_text: text("summary_text"),
 		audio_url: text("audio_url"),

@@ -35,7 +35,7 @@ async def check():
     return {"status": "ok"}
 
 
-@api_router.post("/file", status_code=202)
+@api_router.post("/v1/file", status_code=202)
 async def upload_file(
     chat_id: str = Form(...), user_id: str = Form(...), file: UploadFile = File(...)
 ):
@@ -71,7 +71,7 @@ async def upload_file(
         raise APIError("Unexpected server error", status_code=500, details=str(e))
 
 
-@api_router.post("/yt", status_code=200)
+@api_router.post("/v1/yt", status_code=200)
 async def process_youtube_link(req: YTRequestModel):
     logger.info(f"Processing YouTube link: {req.link}")
 

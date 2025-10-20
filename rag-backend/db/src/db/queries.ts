@@ -63,7 +63,7 @@ export const updateChatName = async (
 
 //docs
 
-export const getDocsByChatId = async (chatId: string) => {
+export const getDocsByChatIdForSummary = async (chatId: string) => {
 	return (
 		await database
 			.select({
@@ -75,6 +75,16 @@ export const getDocsByChatId = async (chatId: string) => {
 			.where(eq(docs.chat_id, chatId))
 	).find(({ chat_id }) => chat_id === chatId);
 };
+
+export const getDocsByChatIdForOriginalText = async (chatId: string) => {
+	return (
+		await database.select({
+			original_text: docs.original_text,
+			id: docs.id,
+			chat_id: docs.chat_id,
+		}).from(docs).where(eq(docs.chat_id, chatId))
+	).find(({ chat_id }) => chat_id === chatId);
+}
 
 export const createDocs = async (doc: createDoc) => {
 	return await database.insert(docs).values(doc).returning();

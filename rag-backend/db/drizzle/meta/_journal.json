@@ -8,6 +8,13 @@
       "when": 1760711225282,
       "tag": "0000_serious_wolf_cub",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760960863180,
+      "tag": "0001_lean_silhouette",
+      "breakpoints": true
     }
   ]
 }
