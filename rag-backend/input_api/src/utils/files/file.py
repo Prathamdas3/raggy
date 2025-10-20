@@ -147,7 +147,9 @@ async def handle_file(chat_id: str, user_id: str, file: UploadFile = File(...)) 
                 logger.info(
                     f"Queueing document text extraction task for: {file.filename}"
                 )
-                task = extract_text_from_othertypes.delay(str(file_path), mime_type,user_id,chat_id)
+                task = extract_text_from_othertypes.delay(
+                    str(file_path), mime_type, user_id, chat_id
+                )
                 logger.info(
                     f"Queued extraction task {task.id} for document file: {file.filename}"
                 )

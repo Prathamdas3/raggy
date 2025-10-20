@@ -12,3 +12,4 @@ wheels/
 app.log
 logs/
 *.log
+.env

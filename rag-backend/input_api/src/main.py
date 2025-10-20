@@ -12,7 +12,9 @@ from utils.files.clean import cleanup_temp_files
 from constants import (
     YT_REGEX,
 )
+from dotenv import load_dotenv
 
+load_dotenv()
 logger = get_logger("main")
 
 
@@ -42,7 +44,7 @@ async def upload_file(
     logger.info(f"Received file: {file.filename}")
 
     try:
-        await handle_file(file=file,chat_id=chat_id,user_id=user_id)
+        await handle_file(file=file, chat_id=chat_id, user_id=user_id)
         logger.info(f"File {file.filename} processed successfully")
         return SuccessResponse(
             data={"filename": file.filename},
@@ -81,7 +83,9 @@ async def process_youtube_link(req: YTRequestModel):
 
     try:
         logger.info(f"Queuing YouTube link for processing: {req.link}")
-        task = extract_text_from_yt_link.delay(link=req.link,chat_id=req.chat_id,user_id=req.user_id)
+        task = extract_text_from_yt_link.delay(
+            link=req.link, chat_id=req.chat_id, user_id=req.user_id
+        )
         logger.info(f"Queued YouTube link task {task.id} for processing: {req.link}")
 
         logger.info(f"YouTube link {req.link} processed successfully")

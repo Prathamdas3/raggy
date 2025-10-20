@@ -46,7 +46,7 @@ router
             }))
 
             if (dbDocStoreError) {
-                return c.json(error("Failed to store document", "Database Error"), 500)
+                return c.json(error(`Failed to store document, ${dbDocStoreError.message}`, "Database Error"), 500)
             }
 
             return c.json(success("Stored the data successfully", "Document stored successfully", "Success"), 201)

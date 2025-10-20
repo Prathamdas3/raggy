@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar, Optional
+from typing import Any, Generic, List, TypeVar, Optional
 from pydantic import BaseModel
 
 T = TypeVar("T")
@@ -21,3 +21,26 @@ class YTRequestModel(BaseModel):
     link: str
     user_id: str
     chat_id: str
+
+
+class ChunkMetadata(BaseModel):
+    """Metadata for each chunk"""
+
+    user_id: str
+    chat_id: str
+    chunk_index: int
+
+
+class ChunkData(BaseModel):
+    """Individual chunk structure"""
+
+    content: str
+    metadata: ChunkMetadata
+
+
+class SendChunksRequest(BaseModel):
+    """Request model to send chunks to docs API"""
+
+    user_id: str
+    chat_id: str
+    original_text: List[ChunkData]
