@@ -68,7 +68,7 @@ export const getDocsByChatIdForSummary = async (chatId: string) => {
 		await database
 			.select({
 				summary_text: docs.summary_text,
-				id: docs.id,
+				doc_id: docs.id,
 				chat_id: docs.chat_id,
 			})
 			.from(docs)
@@ -80,11 +80,20 @@ export const getDocsByChatIdForOriginalText = async (chatId: string) => {
 	return (
 		await database.select({
 			original_text: docs.original_text,
-			id: docs.id,
+			doc_id: docs.id,
 			chat_id: docs.chat_id,
 		}).from(docs).where(eq(docs.chat_id, chatId))
 	).find(({ chat_id }) => chat_id === chatId);
 }
+
+export const getAudioLinkForSummary = async (chatId: string) => {
+	return (
+		await database
+			.select({ doc_id: docs.id, chat_id: docs.chat_id, audio_url: docs.audio_url })
+			.from(docs)
+			.where(eq(docs.chat_id, chatId))
+	).find(({ chat_id }) => chat_id === chatId);
+};
 
 export const createDocs = async (doc: createDoc) => {
 	return await database.insert(docs).values(doc).returning();
@@ -104,15 +113,6 @@ export const addAudioLink = async (docId: string, link: string) => {
 		.set({ audio_url: link })
 		.where(eq(docs.chat_id, docId))
 		.returning();
-};
-
-export const getAudioLinkForSummary = async (chatId: string) => {
-	return (
-		await database
-			.select({ id: docs.id, chat_id: docs.chat_id, audio_url: docs.audio_url })
-			.from(docs)
-			.where(eq(docs.chat_id, chatId))
-	).find(({ chat_id }) => chat_id === chatId);
 };
 
 //messages

@@ -2,7 +2,7 @@ import { createRouter } from "../../config/app.ts"
 import z from 'zod'
 import { error, success } from "src/config/response.js"
 import { validator } from "hono/validator"
-import { addAudioLink, createDocs, getDocsByChatIdForOriginalText, updateDocs } from "src/db/queries.js"
+import { addAudioLink, createDocs, getAudioLinkForSummary, getDocsByChatIdForOriginalText, getDocsByChatIdForSummary, updateDocs } from "src/db/queries.js"
 import { tryCatch } from "src/config/trycatch.js"
 
 const schema = z.object({
@@ -10,10 +10,10 @@ const schema = z.object({
     user_id: z.string().min(1, "user_id must be more than 1 character"),
     original_text: z.array(z.object({
         content: z.string().min(10, "content must be more than 10 character"),
-        metadata:z.object({
-            user_id:z.string().min(1, "user_id in metadata must be more than 1 character"),
-            chat_id:z.string().min(1, "chat_id in metadata must be more than 1 character"), 
-            chunk_index:z.number().nonnegative()
+        metadata: z.object({
+            user_id: z.string().min(1, "user_id in metadata must be more than 1 character"),
+            chat_id: z.string().min(1, "chat_id in metadata must be more than 1 character"),
+            chunk_index: z.number().nonnegative()
         })
     })),
 })
@@ -31,7 +31,7 @@ router
         validator("json", (value, c) => {
             const { data, success, error: errorDetails } = schema.safeParse(value)
             if (!success) {
-                const prittyError=z.prettifyError(errorDetails)
+                const prittyError = z.prettifyError(errorDetails)
                 return c.json(error(prittyError, "Invalid Input"), 400)
             }
 
@@ -83,7 +83,7 @@ router
 
 
 router.
-    get("/:chatId", async (c) => {
+    get("/:chatId/original-text", async (c) => {
         const { chatId } = c.req.param();
         const { data: doc, error: dbDocFetchError } = await tryCatch(getDocsByChatIdForOriginalText(chatId));
         if (dbDocFetchError) {
@@ -91,4 +91,21 @@ router.
         }
         return c.json(success(doc, "Fetched the document successfully", "Success"), 200);
     })
+    .get("/:chatId/summary-text", async (c) => {
+        const { chatId } = c.req.param();
+        const { data, error: dbDocFetchError } = await tryCatch(getDocsByChatIdForSummary(chatId))
+        if (dbDocFetchError) {
+            return c.json(error("Failed to fetch document summary", "Database Error"), 500);
+        }
+        return c.json(success(data, "Fetched the document summary successfully", "Success"), 200);
+    })
+    .get("/:chatId/audio-url", async (c) => {
+        const { chatId } = c.req.param();
+        const { data, error: dbDocFetchError } = await tryCatch(getAudioLinkForSummary(chatId))
+        if (dbDocFetchError) {
+            return c.json(error("Failed to fetch document audio URL", "Database Error"), 500);
+        }
+        return c.json(success(data, "Fetched the document audio URL successfully", "Success"), 200);
+    })
+
 export default router;

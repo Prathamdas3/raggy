@@ -11,7 +11,7 @@ PORT: 8000
 -> for handling files: {
 type:"POST", 
 route:"/api/v1/file",
-body:{
+request-body:{
     chat_id:string,
     user_id:string,
     file:File
@@ -21,7 +21,7 @@ body:{
 -> for handling yt link: {
 type:"POST",
 route:"/api/v1/yt",
-body:{
+request-body:{
     chat_id:string,
     user_id:string,
     link:string
@@ -34,17 +34,61 @@ PORT: 9000
 -> for checking the db server: {
     type:"GET",
     route:"/api"
-    }
+}
 
--> for geting original docs text: {
-        type:"GET",
-        route:"/api/v1/docs/:chatId",
-        }
+-> for getting original docs text: {
+    type:"GET",
+    route:"/api/v1/docs/:chatId/original-text",
+    response:{
+    status: "Success";
+    message: string;
+    data: {
+        original_text: Array<{
+        content: string;
+        metadata: {
+            chat_id: string;
+            user_id: string;
+            chunk_index: number;
+        };
+        }>;
+    doc_id: string;
+    chat_id: string;
+  };
+}
+}
+
+-> for getting summary text:{
+    type:"GET",
+    route:"/api/v1/docs/:chatId/summary-text",
+    response:{
+        status: "Success";
+        message: string;
+        data: {
+            summary_text: string;
+            doc_id: string;
+            chat_id: string;
+        };
+};
+}
+
+-> for getting audio url:{
+    type:"GET",
+    route:"/api/v1/docs/:chatId/audio-url",
+    response:{
+        status: "Success",
+        message: string;
+        data: {
+            id: string;
+            chat_id: string;
+            audio_url: string;
+        };
+};
+}
 
 -> for uploading original docs text: {
     type:"POST",
     route:"/api/v1/docs",
-    body:{
+    request-body:{
         chat_id:string,
         user_id:string,
         original_text:{
@@ -56,23 +100,33 @@ PORT: 9000
             }
         }[]
     }
-    }
+}
 
 -> for updating summary text: {
     type:"PATCH",
     route:"/api/v1/docs",
-    body:{
+    request-body:{
         chat_id:string,
         summary_text:string
+    },
+    response:{
+        status:"Success",
+        message:string,
+        data:string
     }
 }
 
 -> for updating the audio url: {
     type:"PATCH",
     route:"/api/v1/docs",
-    body:{
+    request-body:{
         chat_id:string,
         audio_url:url
+    },
+    response:{
+        status:"Success",
+        message:string,
+        data:string
     }
 }
 ```
