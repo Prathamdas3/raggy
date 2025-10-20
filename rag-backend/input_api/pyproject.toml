@@ -10,7 +10,6 @@ dependencies = [
     "fastapi>=0.118.3",
     "httpx>=0.28.1",
     "langchain-text-splitters>=0.3.11",
-    "moviepy>=2.2.1",
     "openai-whisper>=20250625",
     "pydantic>=2.12.0",
     "pymupdf>=1.26.5",

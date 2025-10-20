@@ -1,0 +1,6 @@
+.env
+logs/
+*.log
+.venv
+.ruff_cache/
+.DS_Store
