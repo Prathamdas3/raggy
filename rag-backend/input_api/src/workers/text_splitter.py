@@ -166,16 +166,42 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
             logger.info(
                 f"Text splitting task completed successfully. Chunks: {len(chunks_with_metadata)}"
             )
-            return {
+
+            try:
+                from workers.db.summary_generate import send_request_for_summary_generation
+                logger.info("Starting summary generation request task queuing")
+                summary_task = send_request_for_summary_generation.delay(
+                user_id=user_id,chat_id=chat_id,summary=text
+                )
+                logger.info(
+                f"Queued summary generation task {summary_task.id} for the splitted text"
+                ) 
+                return {
                 "status": "success",
-                "message": "Text split successfully with metadata and queued for db storing",
+                "message": "Text split successfully with metadata and queued for db storing and summary generation",
                 "code": 200,
                 "data": {
                     "chunks": chunks_with_metadata,
                     "chunk_count": len(chunks_with_metadata),
                     "original_text_length": len(text),
-                },
-            }
+                     },
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to queue summary generation task: {str(e)}")
+                return {
+                    "status": "partial_success",
+                    "message": "Text splited successfully but failed to queue for summary generation",
+                    "code": 206,
+                    "data": {
+                        "chunks": chunks_with_metadata,
+                        "chunk_count": len(chunks_with_metadata),
+                        "original_text_length": len(text),
+                    },
+                    "summary_store_error": str(e),
+                }
+            
+            
         except Exception as e:
             logger.error(f"Failed to queue for storing the text chunks in db")
             return {
@@ -185,6 +211,7 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                 "store_error": str(e),
             }
 
+            
     except Exception as e:
         logger.exception(f"Unexpected error in text splitting task: {str(e)}")
         return {

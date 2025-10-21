@@ -9,6 +9,7 @@
 [ ] verctor store setup 
 [ ] rag builder 
 
+[ ] migrate to langchain 1.0 from langchain_classic
 [ ] add logs in the db system
 [ ] add a custom check to check the incoming chat_id or the user_id really exits or not for every subsystem
 [ ] monitory system in the cli so that every logs appear properly in the terminal( way later)

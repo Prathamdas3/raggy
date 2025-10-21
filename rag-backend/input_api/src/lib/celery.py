@@ -14,6 +14,7 @@ celery.autodiscover_tasks(
         "workers.images",
         "workers.yt",
         "workers.text_splitter",
-        "workers.db.store_text_worker"
+        "workers.db.store_text_worker",
+        "workers.db.summary_generate"
     ]
 )

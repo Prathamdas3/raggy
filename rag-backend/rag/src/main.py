@@ -1,8 +1,10 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, APIRouter
-from lib.pydentic import QuestionRequest, SendChunksRequest, SuccessResponse, SummaryRequest
+from lib.pydentic import QuestionRequest, SuccessResponse, SummaryRequest, ChunkData
+from typing import List
 from lib.logger import get_logger
 from utils.response import APIError, api_error_handler
+from workers.summary import generate_summary
 
 load_dotenv()
 logger = get_logger("main")
@@ -41,9 +43,9 @@ async def create_summary(data: SummaryRequest):
             logger.error("original_text is empty")
             raise APIError("original_text cannot be empty",status_code=400)
         
-        from workers.summary import generate_summary_task
+
         logger.info(f"Submitting summary generation task for user: {user_id}, chat: {chat_id}")
-        task = generate_summary_task.delay(original_text=original_text,user_id=user_id,chat_id=chat_id)
+        task = generate_summary.delay(original_text=original_text,user_id=user_id,chat_id=chat_id)
 
         logger.info(f"Summary generation task submitted with task ID: {task.id}")
         return SuccessResponse(
@@ -60,7 +62,7 @@ async def create_summary(data: SummaryRequest):
 
 
 @api_router.post("/v1/save", status_code=202)
-async def save_to_qdrant(data: SendChunksRequest):
+async def save_to_qdrant(data: List[ChunkData]):
     pass
 
 
@@ -77,4 +79,4 @@ if __name__ == "__main__":
     import uvicorn
 
     logger.info("Starting Uvicorn server on port 8300")
-    uvicorn.run(app, host="0.0.0.0", port=8300,reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8300,reload=True)

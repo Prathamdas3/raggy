@@ -6,6 +6,7 @@ PORT: 8000
 -> for checking input server: {
     type: "GET",
     route: "/api" 
+    code:200
 }
 
 -> for handling files: {
@@ -29,6 +30,42 @@ request-body:{
 ```
 
 ```js
+PORT:8300
+-> for checking the db server:{
+    type: "GET",
+    route:"/api"
+}
+
+-> for initiation for the summary:{
+    type: "POST",
+    route:"/api/v1/summary",
+    request-body:{
+        chat_id:string,
+        user_id:string,
+        original_text:string
+    },
+    response-body:{
+        status:"accepted",
+        message:string,
+        data:{
+            task_id:string
+        }
+    },
+    code:200
+}
+
+-> for saving data in vector store:{
+    type: "POST",
+    route: "/api/v1/save",
+    request-body:{
+       
+    }
+}
+```
+
+
+
+```js
 // db interface
 PORT: 9000
 -> for checking the db server: {
@@ -39,7 +76,7 @@ PORT: 9000
 -> for getting original docs text: {
     type:"GET",
     route:"/api/v1/docs/:chatId/original-text",
-    response:{
+    response-body:{
     status: "Success";
     message: string;
     data: {
@@ -51,16 +88,17 @@ PORT: 9000
             chunk_index: number;
         };
         }>;
-    doc_id: string;
-    chat_id: string;
-  };
-}
+        doc_id: string;
+        chat_id: string;
+        };
+    },
+    code:200
 }
 
 -> for getting summary text:{
     type:"GET",
     route:"/api/v1/docs/:chatId/summary-text",
-    response:{
+    response-body:{
         status: "Success";
         message: string;
         data: {
@@ -68,13 +106,14 @@ PORT: 9000
             doc_id: string;
             chat_id: string;
         };
-};
+    };
+    code:200
 }
 
 -> for getting audio url:{
     type:"GET",
     route:"/api/v1/docs/:chatId/audio-url",
-    response:{
+    response-body:{
         status: "Success",
         message: string;
         data: {
@@ -82,7 +121,8 @@ PORT: 9000
             chat_id: string;
             audio_url: string;
         };
-};
+    };
+    code:200
 }
 
 -> for uploading original docs text: {
@@ -99,7 +139,8 @@ PORT: 9000
                 chunk_index:number
             }
         }[]
-    }
+    },
+    code:201
 }
 
 -> for updating summary text: {
@@ -109,11 +150,12 @@ PORT: 9000
         chat_id:string,
         summary_text:string
     },
-    response:{
+    response-body:{
         status:"Success",
         message:string,
         data:string
-    }
+    },
+    code:200
 }
 
 -> for updating the audio url: {
@@ -123,10 +165,11 @@ PORT: 9000
         chat_id:string,
         audio_url:url
     },
-    response:{
+    response-body:{
         status:"Success",
         message:string,
         data:string
-    }
+    },
+    code:200
 }
 ```

@@ -15,22 +15,22 @@ DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
 logger.info(f"Docs API URL: {DOCS_API_URL}")
 
 
-async def send_patch_request(url, user_id, chat_id, summary_text):
+async def send_patch_request(url, chat_id:str, summary_text:str):
     try:
         async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
             response = await client.patch(
                 url,
-                json={"user_id": user_id, "chat_id": chat_id, "summary": summary_text},
+                json={"chat_id": chat_id, "summary": summary_text},
                 headers={"Content-Type": "application/json"},
             )
 
             logger.info(f"Docs API responded with status code: {response.status_code}")
             if response.status_code == 200:
-                logger.info("Chunks accepted by docs API (201 Created)")
+                logger.info("Chunks accepted by docs API (200 Created)")
                 return {
                     "status": "success",
                     "message": "Chunks created in docs API",
-                    "code": 201,
+                    "code": 200,
                     "data": response.json(),
                 }
 
