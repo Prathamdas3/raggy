@@ -86,7 +86,7 @@ async def store_original_text(user_id:str,chat_id:str,chunks:List[ChunkData]) ->
         try:
             logger.info(f"Sending request to docs API: {DOCS_API_URL}")
             url=f"{DOCS_API_URL}/docs"
-            print(url)
+     
             async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
                 response = await client.post(
                     url,

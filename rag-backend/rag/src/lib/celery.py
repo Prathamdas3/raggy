@@ -8,7 +8,5 @@ celery = Celery(
 
 
 celery.autodiscover_tasks(
-    [
-
-    ]
+    ["workers.summary", "workers.qdrant", "workers.db.store_summary", "workers.audio"]
 )

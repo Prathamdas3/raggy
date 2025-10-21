@@ -1,0 +1,236 @@
+from lib.celery import celery
+from lib.logger import get_logger
+from dotenv import load_dotenv
+import os
+from langchain_huggingface.llms import HuggingFacePipeline
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    pipeline,
+    BitsAndBytesConfig,
+)
+import torch
+from langchain_core.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+
+load_dotenv()
+logger = get_logger("workers/summary")
+
+MODEL_ID = os.getenv("SUMMARY_MODEL_ID")
+MODEL_PROMPT = os.getenv("SUMMARY_MODEL_PROMPT")
+
+# ===== Model Initialization with Error Handling =====
+tokenizer = None
+model = None
+pipe = None
+hf = None
+chain = None
+
+try:
+    # Validate environment variables
+    if not MODEL_ID:
+        raise ValueError("SUMMARY_MODEL_ID environment variable not set")
+    if not MODEL_PROMPT:
+        raise ValueError("SUMMARY_MODEL_PROMPT environment variable not set")
+
+    logger.info(f"Loading model: {MODEL_ID}")
+
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID, quantization_config=quantization_config, device_map="auto"
+    )
+
+    pipe = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        max_length=512,
+        temperature=0.3,
+    )
+
+    hf = HuggingFacePipeline(pipeline=pipe)
+    prompt = PromptTemplate.from_template(MODEL_PROMPT)
+    chain = create_stuff_documents_chain(llm=hf, prompt=prompt)
+
+    logger.info("Model loaded and chain created successfully")
+
+except Exception as e:
+    logger.error(f"Failed to initialize model: {str(e)}")
+    logger.error("Summary generation will not be available")
+
+
+@celery.task(bind=True)
+def generate_summary(
+    self, original_text: str, user_id: str = None, chat_id: str = None
+):
+    """
+    Generate summary from text content.
+
+    Args:
+        original_text: Plain text string to summarize
+        user_id: Optional user ID for tracking
+        chat_id: Optional chat ID for tracking
+
+    Returns:
+        dict: {"status": "success"/"error", "data": summary, "message": "...", "code": 200/400/500}
+    """
+    logger.info("Starting summary generation task")
+    logger.info(f"User: {user_id}, Chat: {chat_id}")
+
+    try:
+        # ===== Check Model Availability =====
+        if chain is None:
+            logger.error("Model chain is not initialized")
+            return {
+                "status": "error",
+                "message": "Summary model is not available - initialization failed",
+                "code": 500,
+                "data": None,
+            }
+
+        # ===== Input Validation =====
+        if not original_text:
+            logger.error("Empty text provided")
+            return {
+                "status": "error",
+                "message": "No text provided for summary generation",
+                "code": 400,
+                "data": None,
+            }
+
+        if not isinstance(original_text, str):
+            logger.error(f"Invalid text type: {type(original_text)}, expected string")
+            return {
+                "status": "error",
+                "message": f"Text must be a string, received: {type(original_text)}",
+                "code": 400,
+                "data": None,
+            }
+
+        # Strip whitespace
+        original_text = original_text.strip()
+
+        if not original_text:
+            logger.error("Text is empty after stripping whitespace")
+            return {
+                "status": "error",
+                "message": "Text cannot be empty or only whitespace",
+                "code": 400,
+                "data": None,
+            }
+
+        text_length = len(original_text)
+        logger.info(f"Processing text of length: {text_length} characters")
+
+        # ===== Validate Content Length =====
+        if text_length > 100000:  # 100k character limit
+            logger.warning(
+                f"Content very long ({text_length} chars), truncating to 100k"
+            )
+            original_text = original_text[:100000]
+            text_length = 100000
+
+        if text_length < 10:
+            logger.warning(f"Content very short ({text_length} chars)")
+            return {
+                "status": "error",
+                "message": "Text too short for meaningful summary (minimum 10 characters)",
+                "code": 400,
+                "data": None,
+            }
+
+        # ===== Generate Summary =====
+        try:
+            logger.info("Generating summary using language model")
+
+            summary = chain.invoke({"context": original_text})
+
+            # Validate summary
+            if not summary:
+                logger.error("Summary generation returned empty result")
+                return {
+                    "status": "error",
+                    "message": "Summary generation returned empty result",
+                    "code": 500,
+                    "data": None,
+                }
+
+            if not isinstance(summary, str):
+                logger.warning(f"Summary is not string: {type(summary)}, converting")
+                summary = str(summary)
+
+            summary = summary.strip()
+
+            if not summary:
+                logger.error("Summary is empty after stripping")
+                return {
+                    "status": "error",
+                    "message": "Summary generation produced empty text",
+                    "code": 500,
+                    "data": None,
+                }
+
+            logger.info(
+                f"Summary generation successful. Length: {len(summary)} characters"
+            )
+
+            try:
+                from workers.db.store_summary import store_summary_to_db
+
+                logger.info("Storing summary to database")
+                task_data=store_summary_to_db.delay(user_id=user_id,chat_id=chat_id,summary=summary)
+                # queueing the audio generation task
+                logger.info(f"Summary stored to database with task ID: {task_data.id}")
+
+                return {
+                "status": "success",
+                "message": "Summary generated and stored successfully",
+                "code": 200,
+                "data": {
+                    "summary": summary,
+                    "original_length": text_length,
+                    "summary_length": len(summary),
+                },
+                }
+            except Exception as e:
+                logger.error(f"Failed to store summary to database: {str(e)}")
+                return {
+                    "status":"partial_success",
+                    "message":"Summary generated but failed to store in database",
+                    "code":206,
+                    "store_error":str(e)
+                }
+        except torch.cuda.OutOfMemoryError:
+            logger.error("CUDA out of memory error during summary generation")
+            return {
+                "status": "error",
+                "message": "GPU out of memory - try reducing input size",
+                "code": 500,
+                "data": None,
+            }
+
+        except Exception as e:
+            logger.exception(f"Error during summary generation: {str(e)}")
+            return {
+                "status": "error",
+                "message": f"Error during summary generation: {str(e)}",
+                "code": 500,
+                "data": None,
+            }
+
+    except Exception as e:
+        logger.exception(f"Unexpected error in generate_summary task: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Unexpected error during summary generation: {str(e)}",
+            "code": 500,
+            "data": None,
+        }
