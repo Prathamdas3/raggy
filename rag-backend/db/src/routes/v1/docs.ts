@@ -61,6 +61,11 @@ router
             return data
         }), async (c) => {
             const { chat_id, summary_text, audio_url } = c.req.valid("json")
+         
+            if( !summary_text && !audio_url ) {
+                return c.json(error("Either summary_text or audio_url must be provided", "Invalid Input"), 400)
+            }
+
 
             if (summary_text) {
                 const { error: dbDocSummaryUpdateError } = await tryCatch(updateDocs(chat_id, summary_text))

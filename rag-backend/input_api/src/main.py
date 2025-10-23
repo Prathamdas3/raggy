@@ -21,10 +21,28 @@ logger = get_logger("main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting up the server events")
-    asyncio.create_task(cleanup_temp_files())
-    get_whisper_model("base")
+    cleanup_task = asyncio.create_task(cleanup_temp_files())
+    try:
+        logger.info("Pre-loading Whisper model...")
+        # Run model loading in thread to avoid blocking
+        await asyncio.to_thread(get_whisper_model,"base")
+        logger.info("Whisper model pre-loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to pre-load Whisper model: {str(e)}")
+        logger.warning("Whisper model will be lazy-loaded on first use")
+        
     yield
-    logger.info("Shutting down the server events")
+    # ===== Shutdown =====
+    logger.info("Shutting down the server...")
+    
+    # Cancel cleanup task
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        logger.info("Cleanup task cancelled")
+    
+    logger.info("Server shutdown complete")
 
 
 app = FastAPI(lifespan=lifespan)

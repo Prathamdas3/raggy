@@ -1,4 +1,4 @@
-from typing import Generic, List, TypeVar, Optional,Any
+from typing import Generic, List, TypeVar, Optional, Any
 from pydantic import BaseModel
 
 T = TypeVar("T")
@@ -15,6 +15,7 @@ class ErrorResponse(BaseModel):
     message: str
     code: Optional[int] = None
     details: Optional[Any] = None
+
 
 class ChunkMetadata(BaseModel):
     """Metadata for each chunk"""

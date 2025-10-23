@@ -7,6 +7,4 @@ celery = Celery(
 )
 
 
-celery.autodiscover_tasks(
-    ["workers.summary", "workers.db.store_summary"]
-)
+celery.autodiscover_tasks(["workers.summary", "workers.db.store_summary"])

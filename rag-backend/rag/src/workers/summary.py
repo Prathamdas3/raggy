@@ -1,7 +1,7 @@
 from lib.celery import celery
 from lib.logger import get_logger
-from lib.model import get_chain
-import torch
+from lib.model import get_response
+
 logger = get_logger("workers/summary")
 
 
@@ -22,19 +22,8 @@ def generate_summary(
     """
     logger.info("Starting summary generation task")
     logger.info(f"User: {user_id}, Chat: {chat_id}")
-    chain=get_chain()
 
     try:
-        # ===== Check Model Availability =====
-        if chain is None:
-            logger.error("Model chain is not initialized")
-            return {
-                "status": "error",
-                "message": "Summary model is not available - initialization failed",
-                "code": 500,
-                "data": None,
-            }
-
         # ===== Input Validation =====
         if not original_text:
             logger.error("Empty text provided")
@@ -90,7 +79,7 @@ def generate_summary(
         try:
             logger.info("Generating summary using language model")
 
-            summary = chain.invoke({"context": original_text})
+            summary = get_response(query=original_text)
 
             # Validate summary
             if not summary:
@@ -124,43 +113,46 @@ def generate_summary(
             try:
                 from workers.db.store_summary import store_summary_to_db
 
+                if not summary or len(summary) == 0:
+                    logger.error("Summary text is empty, cannot store to database")
+                    return {
+                        "status": "error",
+                        "message": "Summary text is empty, cannot store to database",
+                        "code": 500,
+                        "data": None,
+                    }
+
+
                 logger.info("Storing summary to database")
-                task_data=store_summary_to_db.delay(user_id=user_id,chat_id=chat_id,summary=summary)
+                task_data = store_summary_to_db.delay(
+                    user_id=user_id, chat_id=chat_id, summary=summary
+                )
                 # queueing the audio generation task
                 logger.info(f"Summary stored to database with task ID: {task_data.id}")
 
                 return {
-                "status": "success",
-                "message": "Summary generated and stored successfully",
-                "code": 200,
-                "data": {
-                    "summary": summary,
-                    "original_length": text_length,
-                    "summary_length": len(summary),
-                },
+                    "status": "success",
+                    "message": "Summary generated and stored successfully",
+                    "code": 200,
+                    "data": {
+                        "summary": summary,
+                        "original_length": text_length,
+                        "summary_length": len(summary),
+                    },
                 }
             except Exception as e:
                 logger.error(f"Failed to store summary to database: {str(e)}")
                 return {
-                    "status":"partial_success",
-                    "message":"Summary generated but failed to store in database",
-                    "code":206,
-                    "store_error":str(e)
+                    "status": "partial_success",
+                    "message": "Summary generated but failed to store in database",
+                    "code": 206,
+                    "store_error": str(e),
                 }
-        except torch.cuda.OutOfMemoryError:
-            logger.error("CUDA out of memory error during summary generation")
-            return {
-                "status": "error",
-                "message": "GPU out of memory - try reducing input size",
-                "code": 500,
-                "data": None,
-            }
-
         except Exception as e:
-            logger.exception(f"Error during summary generation: {str(e)}")
+            logger.error(f"Summary generation failed: {str(e)}")
             return {
                 "status": "error",
-                "message": f"Error during summary generation: {str(e)}",
+                "message": f"Summary generation failed: {str(e)}",
                 "code": 500,
                 "data": None,
             }

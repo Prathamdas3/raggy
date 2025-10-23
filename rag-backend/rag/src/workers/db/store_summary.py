@@ -1,6 +1,6 @@
 from lib.logger import get_logger
 from lib.celery import celery
-from lib.pydentic import SummaryStore
+
 from dotenv import load_dotenv
 import os
 import httpx
@@ -15,12 +15,12 @@ DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
 logger.info(f"Docs API URL: {DOCS_API_URL}")
 
 
-async def send_patch_request(url, chat_id:str, summary_text:str):
+async def send_patch_request(url, chat_id: str, summary_text: str):
     try:
         async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
             response = await client.patch(
                 url,
-                json={"chat_id": chat_id, "summary": summary_text},
+                json={"chat_id": chat_id, "summary_text": summary_text},
                 headers={"Content-Type": "application/json"},
             )
 
@@ -79,31 +79,27 @@ async def send_patch_request(url, chat_id:str, summary_text:str):
 
 
 @celery.task(bind=True)
-def store_summary_to_db(self, data: SummaryStore):
+def store_summary_to_db(self, user_id: str, chat_id: str, summary: str):
     try:
-        if not data:
-            logger.error("Empty data provided")
+        if not user_id or not chat_id or not summary:
+            logger.error("Invalid parameters for store_summary_to_db task")
             return {
                 "status": "error",
-                "message": "No data provided for summary generation",
+                "message": "user_id, chat_id, and summary are required",
                 "code": 400,
                 "data": None,
             }
-
-        if not isinstance(data, SummaryStore):
-            logger.error(f"Invalid data type: {type(data)}")
+        
+        if summary.strip() == "" or chat_id.strip() == "":
+            logger.error("Summary text is empty after stripping")
             return {
                 "status": "error",
-                "message": "Invalid data type",
+                "message": "summary text cannot be empty",
                 "code": 400,
                 "data": None,
             }
 
         try:
-            user_id = data.user_id
-            chat_id = data.chat_id
-            summary_text = data.summary
-
             logger.info(f"Processing request for user: {user_id}, chat: {chat_id}")
         except Exception as e:
             logger.error(f"Error accessing fields from SendChunksRequest: {str(e)}")
@@ -132,7 +128,7 @@ def store_summary_to_db(self, data: SummaryStore):
                 "data": None,
             }
 
-        if not summary_text:
+        if not summary:
             logger.error("original_text is empty")
             return {
                 "status": "error",
@@ -141,7 +137,7 @@ def store_summary_to_db(self, data: SummaryStore):
                 "data": None,
             }
 
-        if len(summary_text) == 0:
+        if len(summary) == 0:
             logger.error("original_text has no chunks")
             return {
                 "status": "error",
@@ -150,7 +146,7 @@ def store_summary_to_db(self, data: SummaryStore):
                 "data": None,
             }
 
-        logger.info(f"Processing {len(summary_text)} chunks")
+        logger.info(f"Processing {len(summary)} chunks")
 
         try:
             import asyncio
@@ -160,7 +156,7 @@ def store_summary_to_db(self, data: SummaryStore):
             )
             url = f"{DOCS_API_URL}/docs"
             response = asyncio.run(
-                send_patch_request(url, user_id, chat_id, summary_text)
+                send_patch_request(url, chat_id= chat_id,summary_text= summary)
             )
             logger.info("Summary successfully sent to docs API")
             return {
