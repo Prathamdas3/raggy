@@ -4,6 +4,7 @@ from lib.pydentic import QuestionRequest, SuccessResponse, SummaryRequest, Chunk
 from typing import List
 from lib.logger import get_logger
 from lib.model import get_model
+from lib.minio import initialize_minio
 from utils.response import APIError, api_error_handler
 from workers.summary import generate_summary
 from contextlib import asynccontextmanager
@@ -24,6 +25,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to pre-load model: {str(e)}")
         logger.warning("Model will be lazy-loaded on first use")
+
+    logger.info("🚀 Starting up FastAPI application...")
+    try:
+        initialize_minio()
+        logger.info("✓ MinIO initialized successfully")
+    except Exception as e:
+        logger.error(f"✗ Failed to initialize MinIO: {e}")
+
     yield
 
     # ===== Shutdown =====
@@ -88,6 +97,10 @@ async def create_summary(data: SummaryRequest):
 
 @api_router.post("/v1/save", status_code=202)
 async def save_to_qdrant(data: List[ChunkData]):
+    if not isinstance(data,List[ChunkData]):
+        logger.error("Invalid data format for saving to Qdrant")
+        raise APIError("Invalid data format for saving to Qdrant", status_code=400)
+        
     pass
 
 
@@ -105,4 +118,4 @@ if __name__ == "__main__":
     import uvicorn
 
     logger.info("Starting Uvicorn server on port 8300")
-    uvicorn.run("main:app", host="0.0.0.0", port=8300, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8400, reload=True)

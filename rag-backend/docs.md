@@ -2,7 +2,7 @@
 
 ```js
 // server input
-PORT: 8000
+PORT: 8200
 -> for checking input server: {
     type: "GET",
     route: "/api" 
@@ -30,7 +30,7 @@ request-body:{
 ```
 
 ```js
-PORT:8300
+PORT:8400
 -> for checking the db server:{
     type: "GET",
     route:"/api"
@@ -67,7 +67,7 @@ PORT:8300
 
 ```js
 // db interface
-PORT: 9000
+PORT: 8800
 -> for checking the db server: {
     type:"GET",
     route:"/api"
