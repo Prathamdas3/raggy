@@ -7,7 +7,7 @@ import httpx
 from utils.response import APIError
 
 load_dotenv()
-logger = get_logger("workers/db/store_summary")
+logger = get_logger("workers/db/store_audio")
 
 DOCS_API_URL = os.getenv("DOCS_API_URL")
 DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
@@ -15,21 +15,21 @@ DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
 logger.info(f"Docs API URL: {DOCS_API_URL}")
 
 
-async def send_patch_request(url, chat_id: str, summary_text: str):
+async def send_patch_request(url, chat_id: str, audio_url: str):
     try:
         async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
             response = await client.patch(
                 url,
-                json={"chat_id": chat_id, "summary_text": summary_text},
+                json={"chat_id": chat_id, "audio_url": audio_url},
                 headers={"Content-Type": "application/json"},
             )
 
             logger.info(f"Docs API responded with status code: {response.status_code}")
             if response.status_code == 200:
-                logger.info("Chunks accepted by docs API (200 Created)")
+                logger.info("Audio URL accepted by docs API (200 OK)")
                 return {
                     "status": "success",
-                    "message": "Chunks created in docs API",
+                    "message": "Audio URL saved in docs API",
                     "code": 200,
                     "data": response.json(),
                 }
@@ -79,42 +79,22 @@ async def send_patch_request(url, chat_id: str, summary_text: str):
 
 
 @celery.task(bind=True)
-def store_summary_to_db(self, user_id: str, chat_id: str, summary: str):
+def store_audio_to_db(self, chat_id: str, audio_url: str):
     try:
-        if not user_id or not chat_id or not summary:
-            logger.error("Invalid parameters for store_summary_to_db task")
+        if not chat_id or not audio_url:
+            logger.error("Invalid parameters for store_audio_to_db task")
             return {
                 "status": "error",
-                "message": "user_id, chat_id, and summary are required",
+                "message": "user_id, chat_id, and audio_url are required",
                 "code": 400,
                 "data": None,
             }
 
-        if summary.strip() == "" or chat_id.strip() == "":
-            logger.error("Summary text is empty after stripping")
+        if audio_url.strip() == "" or chat_id.strip() == "":
+            logger.error("Audio URL is empty after stripping")
             return {
                 "status": "error",
-                "message": "summary text cannot be empty",
-                "code": 400,
-                "data": None,
-            }
-
-        try:
-            logger.info(f"Processing request for user: {user_id}, chat: {chat_id}")
-        except Exception as e:
-            logger.error(f"Error accessing fields from SendChunksRequest: {str(e)}")
-            return {
-                "status": "error",
-                "message": "Invalid SendChunksRequest structure",
-                "code": 400,
-                "data": None,
-            }
-
-        if not user_id:
-            logger.error("user_id is empty")
-            return {
-                "status": "error",
-                "message": "user_id cannot be empty",
+                "message": "audio_url cannot be empty",
                 "code": 400,
                 "data": None,
             }
@@ -128,54 +108,54 @@ def store_summary_to_db(self, user_id: str, chat_id: str, summary: str):
                 "data": None,
             }
 
-        if not summary:
-            logger.error("original_text is empty")
+        if not audio_url:
+            logger.error("audio_url is empty")
             return {
                 "status": "error",
-                "message": "original_text list is empty",
+                "message": "audio_url is empty",
                 "code": 400,
                 "data": None,
             }
 
-        if len(summary) == 0:
-            logger.error("original_text has no chunks")
+        if len(audio_url) == 0:
+            logger.error("audio_url has no content")
             return {
                 "status": "error",
-                "message": "original_text must contain at least one chunk",
+                "message": "audio_url must contain valid URL",
                 "code": 400,
                 "data": None,
             }
 
-        logger.info(f"Processing {len(summary)} chunks")
+        logger.info(f"Processing audio URL for chat: {chat_id}")
 
         try:
             import asyncio
 
-            logger.info(
-                f"Sending summary to docs API for storage. User: {user_id}, Chat: {chat_id}"
-            )
+            logger.info(f"Sending audio URL to docs API for storage.  Chat: {chat_id}")
             url = f"{DOCS_API_URL}/docs"
             response = asyncio.run(
-                send_patch_request(url, chat_id=chat_id, summary_text=summary)
+                send_patch_request(url, chat_id=chat_id, audio_url=audio_url)
             )
-            logger.info("Summary successfully sent to docs API")
+            logger.info("Audio URL successfully sent to docs API")
             return {
                 "status": "success",
-                "message": "Summary stored successfully",
+                "message": "Audio URL stored successfully",
                 "code": 200,
                 "data": response,
             }
         except APIError as api_err:
-            logger.error(f"APIError while sending summary to docs API: {str(api_err)}")
+            logger.error(
+                f"APIError while sending audio URL to docs API: {str(api_err)}"
+            )
             return {
                 "status": "error",
-                "message": f"Failed to store summary: {str(api_err)}",
+                "message": f"Failed to store audio URL: {str(api_err)}",
                 "code": api_err.status_code,
                 "data": None,
             }
     except Exception as e:
         logger.exception(
-            f"Unexpected error while sending summary to docs API: {str(e)}"
+            f"Unexpected error while sending audio URL to docs API: {str(e)}"
         )
         return {
             "status": "error",

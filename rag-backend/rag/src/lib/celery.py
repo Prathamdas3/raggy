@@ -7,4 +7,12 @@ celery = Celery(
 )
 
 
-celery.autodiscover_tasks(["workers.summary", "workers.db.store_summary"])
+celery.autodiscover_tasks(
+    [
+        "workers.summary",
+        "workers.db.store_summary",
+        "workers.db.store_audio",
+        "workers.upload_audio_minio",
+        "workers.audio"
+    ]
+)

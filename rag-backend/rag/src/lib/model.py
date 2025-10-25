@@ -66,7 +66,7 @@ def _initialize_model():
                 typical_p=0.95,
                 do_sample=False,
                 repetition_penalty=1.03,
-               huggingfacehub_api_token=HUGGINGFACE_API_TOKEN
+                huggingfacehub_api_token=HUGGINGFACE_API_TOKEN,
             )
             logger.info("HuggingFace endpoint created successfully")
         except Exception as e:

@@ -97,10 +97,10 @@ async def create_summary(data: SummaryRequest):
 
 @api_router.post("/v1/save", status_code=202)
 async def save_to_qdrant(data: List[ChunkData]):
-    if not isinstance(data,List[ChunkData]):
+    if not isinstance(data, List[ChunkData]):
         logger.error("Invalid data format for saving to Qdrant")
         raise APIError("Invalid data format for saving to Qdrant", status_code=400)
-        
+
     pass
 
 
