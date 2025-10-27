@@ -76,7 +76,12 @@ def send_request_for_summary_generation(self,user_id:str,chat_id:str,summary:str
     try:
         if not user_id or not chat_id or not summary:
             logger.error("Missing required parameters for summary generation request")
-            raise ValueError("user_id, chat_id, and summary must be provided")
+            return {
+                "status":"error",
+                "message":"user_id, chat_id, and summary are required parameters",
+                "code":400,
+                "data":"Missing the chat_id, user_id or summary"
+            } 
         import asyncio
         logger.info(f"Initiating summary generation request for user_id: {user_id}, chat_id: {chat_id}")
         response=asyncio.run(request_summary_generation(user_id,chat_id,summary))

@@ -6,7 +6,7 @@ import threading
 import os
 
 T = TypeVar("T")
-logger = get_logger("lib/minio_client")
+logger = get_logger("lib/minio")
 
 # MinIO Configuration from environment variables
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "localhost:9000")

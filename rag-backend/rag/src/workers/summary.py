@@ -123,7 +123,7 @@ def generate_summary(
                     )
                 else:
                     # Trigger audio generation task
-                   
+
                     audio_task_result = convert_text_to_audio.delay(
                         text=summary, chat_id=chat_id
                     )

@@ -15,6 +15,7 @@ celery.autodiscover_tasks(
         "workers.yt",
         "workers.text_splitter",
         "workers.db.store_text_worker",
-        "workers.db.summary_generate"
+        "workers.db.summary_generate",
+        "workers.db.store_vector_storage",
     ]
 )

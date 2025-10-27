@@ -13,6 +13,8 @@ celery.autodiscover_tasks(
         "workers.db.store_summary",
         "workers.db.store_audio",
         "workers.upload_audio_minio",
-        "workers.audio"
+        "workers.audio",
+        "workers.vectors.set_data",
+        # "woerkers.vectors.get_data",
     ]
 )

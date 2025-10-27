@@ -167,18 +167,38 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                 f"Text splitting task completed successfully. Chunks: {len(chunks_with_metadata)}"
             )
 
+            # try:
+            #     from workers.db.summary_generate import send_request_for_summary_generation
+            #     logger.info("Starting summary generation request task queuing")
+            #     summary_task = send_request_for_summary_generation.delay(
+            #     user_id=user_id,chat_id=chat_id,summary=text
+            #     )
+            #     logger.info(
+            #     f"Queued summary generation task {summary_task.id} for the splitted text"
+            #     ) 
+            # except Exception as e:
+            #     logger.error(f"Failed to queue summary generation task: {str(e)}")
+            #     return {
+            #         "status": "partial_success",
+            #         "message": "Text splited successfully but failed to queue for summary generation",
+            #         "code": 206,
+            #         "data": {
+            #             "chunks": chunks_with_metadata,
+            #             "chunk_count": len(chunks_with_metadata),
+            #             "original_text_length": len(text),
+            #         },
+            #         "summary_store_error": str(e),
+            #     }
+            
             try:
-                from workers.db.summary_generate import send_request_for_summary_generation
-                logger.info("Starting summary generation request task queuing")
-                summary_task = send_request_for_summary_generation.delay(
-                user_id=user_id,chat_id=chat_id,summary=text
-                )
+                from workers.db.store_vector_storage import save_chunks_to_vectorstore
+                logger.info("Starting vector store saving task queuing")
+                vector_task = save_chunks_to_vectorstore.delay(chunks=chunks_with_metadata)
                 logger.info(
-                f"Queued summary generation task {summary_task.id} for the splitted text"
-                ) 
+                f"Queued vector store saving task {vector_task.id} for the splitted text chunks")
                 return {
                 "status": "success",
-                "message": "Text split successfully with metadata and queued for db storing and summary generation",
+                "message": "Text split successfully with metadata and queued for db storing and summary generation also vector store saving",
                 "code": 200,
                 "data": {
                     "chunks": chunks_with_metadata,
@@ -186,19 +206,18 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                     "original_text_length": len(text),
                      },
                 }
-
             except Exception as e:
-                logger.error(f"Failed to queue summary generation task: {str(e)}")
+                logger.error(f"Failed to queue vector store saving task: {str(e)}")
                 return {
                     "status": "partial_success",
-                    "message": "Text splited successfully but failed to queue for summary generation",
+                    "message": "Text splited successfully but failed to queue for vector store saving",
                     "code": 206,
                     "data": {
                         "chunks": chunks_with_metadata,
                         "chunk_count": len(chunks_with_metadata),
                         "original_text_length": len(text),
                     },
-                    "summary_store_error": str(e),
+                    "vector_store_error": str(e),
                 }
             
             

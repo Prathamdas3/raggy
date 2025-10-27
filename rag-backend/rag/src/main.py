@@ -1,10 +1,17 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, APIRouter
-from lib.pydentic import QuestionRequest, SuccessResponse, SummaryRequest, ChunkData
+from lib.pydentic import (
+    QuestionRequest,
+    SaveToQdrantRequest,
+    SuccessResponse,
+    SummaryRequest,
+    ChunkData,
+)
 from typing import List
 from lib.logger import get_logger
 from lib.model import get_model
 from lib.minio import initialize_minio
+from lib.qdrant import initialize_qdrant
 from utils.response import APIError, api_error_handler
 from workers.summary import generate_summary
 from contextlib import asynccontextmanager
@@ -32,6 +39,13 @@ async def lifespan(app: FastAPI):
         logger.info("✓ MinIO initialized successfully")
     except Exception as e:
         logger.error(f"✗ Failed to initialize MinIO: {e}")
+
+    logger.info("Vector initialization Starting...")
+    try:
+        initialize_qdrant()
+        logger.info("✓ Qdrant initialized successfully")
+    except Exception as e:
+        logger.error(f"✗ Failed to initialize Qdrant: {e}")
 
     yield
 
@@ -96,12 +110,84 @@ async def create_summary(data: SummaryRequest):
 
 
 @api_router.post("/v1/save", status_code=202)
-async def save_to_qdrant(data: List[ChunkData]):
-    if not isinstance(data, List[ChunkData]):
-        logger.error("Invalid data format for saving to Qdrant")
-        raise APIError("Invalid data format for saving to Qdrant", status_code=400)
+async def save_to_qdrant(request: SaveToQdrantRequest):
+    """
+    Save chunks to Qdrant vector store asynchronously.
 
-    pass
+    Args:
+        request: SaveToQdrantRequest containing list of chunks
+
+    Returns:
+        SaveToQdrantResponse with task ID and status
+
+    Raises:
+        APIError: If validation fails or task cannot be queued
+    """
+    try:
+        logger.info(f"Received request to save {len(request.chunks)} chunks to Qdrant")
+
+        # Validate request
+        if not request.chunks:
+            logger.error("Empty chunks list provided")
+            raise APIError("Chunks list cannot be empty", status_code=400)
+
+        chunk_count = len(request.chunks)
+
+        # Log basic info about the request
+        first_chunk = request.chunks[0]
+        logger.info(
+            f"First chunk - User: {first_chunk.metadata.user_id}, Chat: {first_chunk.metadata.chat_id}"
+        )
+        logger.info(f"Total chunks to save: {chunk_count}")
+
+        # Prepare data for Celery task
+        chunks_data = []
+        for chunk in request.chunks:
+            chunks_data.append(
+                {
+                    "content": chunk.content,
+                    "metadata": {
+                        "user_id": chunk.metadata.user_id,
+                        "chat_id": chunk.metadata.chat_id,
+                        "chunk_index": chunk.metadata.chunk_index,
+                    },
+                }
+            )
+
+        # Trigger Celery task
+        try:
+            from workers.vectors.set_data import save_chunks_to_vectorstore
+
+            task_result = save_chunks_to_vectorstore.delay(chunks_data)
+
+            logger.info(f"✓ Task queued successfully. Task ID: {task_result.id}")
+
+            return SuccessResponse(
+                data={"task_id": task_result.id},
+                status="accepted",
+                message="Chunks save task queued successfully",
+            )
+
+        except Exception as task_error:
+            logger.error(f"✗ Failed to queue task: {str(task_error)}")
+            raise APIError(
+                f"Failed to queue task for vector store save: {str(task_error)}",
+                status_code=500,
+            )
+
+    except APIError:
+        # Re-raise APIError as-is
+        raise
+
+    except ValueError as ve:
+        logger.error(f"Validation error: {str(ve)}")
+        raise APIError(f"Validation error: {str(ve)}", status_code=400)
+
+    except Exception as e:
+        logger.exception(f"✗ Unexpected error in save_to_qdrant endpoint: {str(e)}")
+        raise APIError(
+            f"Unexpected error while processing request: {str(e)}", status_code=500
+        )
 
 
 @api_router.post("/v1/generate-answer", status_code=202)
