@@ -192,9 +192,7 @@ async def save_to_qdrant(request: SaveToQdrantRequest):
 
 @api_router.post("/v1/generate-answer", status_code=202)
 async def create_question_to_answer(data: QuestionRequest):
-    # create summary of the original text
-    # create audio of the summary text
-    # save both the audio and summary to the db
+
     pass
 
 
