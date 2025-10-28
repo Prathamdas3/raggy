@@ -30,6 +30,7 @@ request-body:{
 ```
 
 ```js
+// rag
 PORT:8400
 -> for checking the db server:{
     type: "GET",
@@ -73,6 +74,7 @@ PORT: 8800
     route:"/api"
 }
 
+// docs
 -> for getting original docs text: {
     type:"GET",
     route:"/api/v1/docs/:chatId/original-text",
@@ -171,5 +173,84 @@ PORT: 8800
         data:string
     },
     code:200
+}
+
+// query
+-> for getting the answer: {
+    type:"GET",
+    route:"/api/v1/query/:chat_id/:question_id",
+    response-body:{
+        status:"Success",
+        message:string,
+        data:{
+            content: string;
+            id: string;
+            chat_id: string;
+            question_id: string | null;
+        } 
+    }
+}
+
+-> for getting the answer audio: {
+    type:"GET",
+    route:"/api/v1/query/:chat_id/:question_id",
+    response-body:{
+        status:"Success",
+        message:string,
+        data:{
+            id: string;
+            audio_url: string | null;
+            question_id: string | null;
+        }
+    }
+}
+
+
+-> for creating question: {
+    type:"POST",
+    route:"/api/v1/query",
+    request-body:{
+        chat_id:string,
+        content:string,
+    },
+    response-body:{
+        status:"Success",
+        message:string,
+        data:{
+            question_id:string
+        }
+    }
+}
+
+-> for creating answer:{
+    type:"POST",
+    route:"/api/v1/query/:question_id",
+    request-body:{
+        chat_id:string,
+        content:string
+    },
+    response-body:{
+        status:"Success",
+        message:string,
+        data:string
+    }
+}
+
+-> for updating the audio for answer:{
+    type:"PATCH",
+    route:"/api/v1/query/:question_id",
+    request-body:{
+        chat_id:string,
+        link:string
+    },
+    response-body:{
+        status:"Success",
+        message:string,
+        data:{
+            question_id:string,
+            chat_id:string,
+            link:string
+        }
+    }
 }
 ```

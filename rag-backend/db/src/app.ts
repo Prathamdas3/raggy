@@ -1,6 +1,7 @@
 import { requestId } from "hono/request-id";
 import { createApp } from "./config/app.ts";
 import docsRouter from "./routes/v1/docs.ts";
+import queryRouter from './routes/v1/query.ts'
 
 const app = createApp()
 	.basePath("/api")
@@ -12,5 +13,6 @@ app.get("/", (c) => {
 });
 
 app.route("/v1/docs", docsRouter)
+app.route("/v1/query",queryRouter)
 
 export default app;

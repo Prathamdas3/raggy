@@ -139,11 +139,11 @@ export const updateMessage = async (
 		);
 };
 
-export const addMessageAudioLink = async (messageId: string, link: string) => {
+export const addMessageAudioLink = async ({ question_id, link, chat_id }: { question_id: string, link: string, chat_id: string }) => {
 	return await database
 		.update(messages)
 		.set({ audio_url: link })
-		.where(eq(messages.id, messageId));
+		.where(and(eq(messages.question_id, question_id), eq(messages.chat_id, chat_id), eq(messages.sender, "llm"))).returning();
 };
 
 export const getMessagesByParentId = async (
@@ -197,20 +197,20 @@ export const getAnswerById = async (answerId: string) => {
 	).find(({ id }) => id === answerId);
 };
 
-export const getAudioLinkForAnswer = async (
-	answerId: string,
+export const getAudioLinkForAnswer = async ({ question_id, chatId }: {
+	question_id: string,
 	chatId: string,
-) => {
+}) => {
 	return (
 		await database
-			.select({ id: messages.id, audio_url: messages.audio_url })
+			.select({ id: messages.id, audio_url: messages.audio_url, question_id: messages.question_id })
 			.from(messages)
 			.where(
 				and(
-					eq(messages.id, answerId),
+					eq(messages.question_id, question_id),
 					eq(messages.sender, "llm"),
 					eq(messages.chat_id, chatId),
 				),
 			)
-	).find(({ id }) => id === answerId);
+	).find((message) => message.question_id === question_id);
 };
