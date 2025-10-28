@@ -6,29 +6,31 @@ import httpx
 from utils.response import APIError
 
 load_dotenv()
-logger = get_logger("workers/db/store_audio")
+logger=get_logger("Workers/db/store_answer")
 
 DOCS_API_URL = os.getenv("DOCS_API_URL")
 DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
 
 logger.info(f"Docs API URL: {DOCS_API_URL}")
 
-
-async def send_patch_request(url, chat_id: str, audio_url: str):
-    try:
+async def send_post_request(url,chat_id:str, content:str):
+    try: 
         async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
-            response = await client.patch(
+            response=await client.post(
                 url,
-                json={"chat_id": chat_id, "audio_url": audio_url},
+                json={
+                    "chat_id":chat_id,
+                    "content":content
+                },
                 headers={"Content-Type": "application/json"},
             )
 
-            logger.info(f" API responded with status code: {response.status_code}")
+            logger.info(f"API response with status code: {response.status_code}")
             if response.status_code == 200:
-                logger.info("Audio URL accepted by API (200 OK)")
+                logger.info("Chunks accepted by docs API (200 Created)")
                 return {
                     "status": "success",
-                    "message": "Audio URL saved in docs API",
+                    "message": "Chunks created in docs API",
                     "code": 200,
                     "data": response.json(),
                 }
@@ -75,60 +77,58 @@ async def send_patch_request(url, chat_id: str, audio_url: str):
             status_code=500,
             details=f"Request error: {str(re)}",
         )
-
-
+    
 @celery.task(bind=True)
-def store_audio_to_db(self, chat_id: str, audio_url: str):
+def store_answer_to_db(self,chat_id:str,question_id:str,content:str):
     try:
-        if not chat_id or not audio_url:
-            logger.error("Invalid parameters for store_audio_to_db task")
+        if not chat_id or not question_id or not content:
+            logger.error("Invalid parameters for store_answer_to_db")
+            return {
+                "status":"error",
+                "message":"chat_id, question_id, content are required",
+                "code":400,
+                "data":None
+            }
+        
+        if content.strip()=="" or chat_id.strip()=="" or question_id.strip()=="":
+            logger.error("parameters is empty after stripping")
+
             return {
                 "status": "error",
-                "message": "user_id, chat_id, and audio_url are required",
+                "message": "question_id or content or chat_id cannot be empty",
                 "code": 400,
                 "data": None,
             }
-
-        if audio_url.strip() == "" or chat_id.strip() == "":
-            logger.error("Empty parameter after stripping")
-            return {
-                "status": "error",
-                "message": "audio_url cannot be empty",
-                "code": 400,
-                "data": None,
-            }
-
-
-        logger.info(f"Processing audio URL for chat: {chat_id}")
-
-        try:
+        
+        try: 
             import asyncio
 
-            logger.info(f"Sending audio URL to docs API for storage.  Chat: {chat_id}")
-            url = f"{DOCS_API_URL}/docs"
-            response = asyncio.run(
-                send_patch_request(url, chat_id=chat_id, audio_url=audio_url)
+            logger.info(
+                f"Sending answer to the api to store. question_id:{question_id}, chat_id:{chat_id} and content:{content}"
             )
-            logger.info("Audio URL successfully sent to docs API")
+
+            url=f"{DOCS_API_URL}/query/{question_id}"
+            response=asyncio.run(
+                send_post_request(url,chat_id=chat_id,content=content)
+            )
+            logger.info("Answer successfully sent to the api")
             return {
-                "status": "success",
-                "message": "Audio URL stored successfully",
-                "code": 200,
-                "data": response,
+                "status":"success",
+                "message":"Answer stored successfully",
+                "code":200,
+                "data":response
             }
         except APIError as api_err:
-            logger.error(
-                f"APIError while sending audio URL to docs API: {str(api_err)}"
-            )
+            logger.error(f"APIError while sending summary to docs API: {str(api_err)}")
             return {
                 "status": "error",
-                "message": f"Failed to store audio URL: {str(api_err)}",
+                "message": f"Failed to store summary: {str(api_err)}",
                 "code": api_err.status_code,
                 "data": None,
             }
     except Exception as e:
         logger.exception(
-            f"Unexpected error while sending audio URL to docs API: {str(e)}"
+            f"Unexpected error while sending summary to docs API: {str(e)}"
         )
         return {
             "status": "error",

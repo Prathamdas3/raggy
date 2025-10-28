@@ -1,6 +1,5 @@
 from lib.logger import get_logger
 from lib.celery import celery
-
 from dotenv import load_dotenv
 import os
 import httpx
@@ -94,59 +93,12 @@ def store_summary_to_db(self, user_id: str, chat_id: str, summary: str):
             logger.error("Summary text is empty after stripping")
             return {
                 "status": "error",
-                "message": "summary text cannot be empty",
+                "message": "summary text or chat_id cannot be empty",
                 "code": 400,
                 "data": None,
             }
 
-        try:
-            logger.info(f"Processing request for user: {user_id}, chat: {chat_id}")
-        except Exception as e:
-            logger.error(f"Error accessing fields from SendChunksRequest: {str(e)}")
-            return {
-                "status": "error",
-                "message": "Invalid SendChunksRequest structure",
-                "code": 400,
-                "data": None,
-            }
-
-        if not user_id:
-            logger.error("user_id is empty")
-            return {
-                "status": "error",
-                "message": "user_id cannot be empty",
-                "code": 400,
-                "data": None,
-            }
-
-        if not chat_id:
-            logger.error("chat_id is empty")
-            return {
-                "status": "error",
-                "message": "chat_id cannot be empty",
-                "code": 400,
-                "data": None,
-            }
-
-        if not summary:
-            logger.error("original_text is empty")
-            return {
-                "status": "error",
-                "message": "original_text list is empty",
-                "code": 400,
-                "data": None,
-            }
-
-        if len(summary) == 0:
-            logger.error("original_text has no chunks")
-            return {
-                "status": "error",
-                "message": "original_text must contain at least one chunk",
-                "code": 400,
-                "data": None,
-            }
-
-        logger.info(f"Processing {len(summary)} chunks")
+        logger.info(f"Processing summary storing ")
 
         try:
             import asyncio

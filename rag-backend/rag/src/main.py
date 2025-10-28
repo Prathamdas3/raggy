@@ -192,10 +192,45 @@ async def save_to_qdrant(request: SaveToQdrantRequest):
 
 @api_router.post("/v1/generate-answer", status_code=202)
 async def create_question_to_answer(data: QuestionRequest):
+    try:
+        if not data:
+            logger.error("No data provided for answer generation")
+            raise APIError("No data provided",status_code=400)
+        if not isinstance(data,QuestionRequest):
+            logger.error("Invalid data format for answer generation")
+            raise APIError("Invalid data fromat for answer generation",status_code=400)
 
-    pass
+        question=data.question
+        user_id=data.user_id
+        chat_id=data.chat_id
+        question_id=data.question_id
 
+        if not user_id or user_id.strip()=="":
+            logger.error("user_id is empty")
+            raise APIError("user_id cannot be empty",status_code=400)
 
+        if not chat_id or chat_id.strip()=="":
+            logger.error("chat_id is empty")
+            raise APIError("chat_id can not be empty",status_code=400)
+    
+        if not question_id or question_id.strip()=="":
+            logger.error("question_id is empty")
+            raise APIError("question_id can not be empty",status_code=400)
+    
+        if not question or question.strip()=="":
+            logger.error("question is empty")
+            raise APIError("question can not be empty",status_code=400)
+
+        logger.info(f"Sumitting answer generation for the question_id:{question_id} and the question is {question}")
+    
+    except APIError:
+        raise
+    except Exception as e:
+        logger.exception(f"Unexpected error in create_question_to_answer endpoint: {str(e)}")
+        raise APIError(
+            f"Unexpected error during answer generation: {str(e)}",status_code=500
+        )
+    
 app.include_router(api_router)
 
 if __name__ == "__main__":

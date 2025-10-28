@@ -3,11 +3,12 @@
 [X] call the delete file function after the extraction of the text in the other file for the other workers section 
 [X] start with the db storing and calling the db interface
 
-[ ] Summary generation 
-[ ] Audio converter
+[x] Summary generation 
+[x] Audio converter
 
-[ ] verctor store setup 
+[x] verctor store setup
 [ ] rag builder 
+[ ] delete minio files when the chat is deleted  
 
 [ ] migrate to langchain 1.0 from langchain_classic
 [ ] add logs in the db system

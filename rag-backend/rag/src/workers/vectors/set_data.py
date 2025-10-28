@@ -162,7 +162,6 @@ def save_chunks_to_vectorstore(self, chunks: List[Dict[str, Any]]):
             return {
                 "success": True,
                 "error": None,
-
                 "saved_count": len(document_ids),
                 "total_requested": len(chunks),
             }

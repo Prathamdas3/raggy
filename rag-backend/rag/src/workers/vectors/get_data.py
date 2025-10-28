@@ -4,7 +4,6 @@ from lib.qdrant import get_vector_store
 
 logger = get_logger("workers/vectors/get_data")
 
-
 @celery.task(bind=True, max_retries=3)
 def search_chunks_in_vectorstore(
     self, query: str, user_id: str = None, chat_id: str = None, k: int = 5

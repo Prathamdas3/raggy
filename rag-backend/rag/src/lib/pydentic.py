@@ -73,6 +73,7 @@ class QuestionRequest(BaseModel):
 
     user_id: str
     chat_id: str
+    question_id: str
     question: str
 
 
