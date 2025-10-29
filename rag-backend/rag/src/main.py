@@ -222,6 +222,16 @@ async def create_question_to_answer(data: QuestionRequest):
             raise APIError("question can not be empty",status_code=400)
 
         logger.info(f"Sumitting answer generation for the question_id:{question_id} and the question is {question}")
+        try:
+            from workers.query import handle_query
+            print(len(question))
+            response=handle_query.delay(user_id=user_id,chat_id=chat_id,question=question,question_id=question_id)
+
+            logger.info("Submited for answer generation queue")
+            return SuccessResponse(data={"task_id":response.id},            status="accepted",
+            message="answer generation task submitted successfully")
+        except Exception as e:
+            raise APIError(f"Failed to load the data into the queue: {str(e)}",status_code=500)
     
     except APIError:
         raise

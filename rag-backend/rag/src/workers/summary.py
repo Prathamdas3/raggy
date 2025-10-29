@@ -119,7 +119,7 @@ def generate_summary(
 
                 if not chat_id:
                     logger.warning(
-                        "user_id or chat_id missing, skipping audio generation"
+                        " chat_id missing, skipping audio generation"
                     )
                 else:
                     # Trigger audio generation task

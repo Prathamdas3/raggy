@@ -9,14 +9,16 @@ celery = Celery(
 
 celery.autodiscover_tasks(
     [
-        "workers.summary",
+        "workers.audio",
+        "workers.answer_audio",
         "workers.db.store_summary",
         "workers.db.store_audio",
-        "workers.upload_audio_minio",
-        "workers.audio",
-        "workers.vectors.set_data",
-        "woerkers.vectors.get_data",
         "workers.db.store_answer",
-        "workers.db.store_answer_audio"
+        "workers.db.store_answer_audio",
+        "workers.query",
+        "workers.summary",
+        "workers.upload_audio_minio",
+        "workers.upload_answer_audio_to_minio",
+        "workers.vectors.set_data",
     ]
 )
