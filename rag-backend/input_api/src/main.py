@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form
-from lib.pydentic import YTRequestModel
+from lib.pydentic import QuestionRequest, YTRequestModel
 from workers.input.yt import extract_text_from_yt_link
 from lib.whisper import get_whisper_model
 from lib.pydentic import SuccessResponse
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     try:
         logger.info("Pre-loading Whisper model...")
         # Run model loading in thread to avoid blocking
-        await asyncio.to_thread(get_whisper_model,"base")
+        await asyncio.to_thread(get_whisper_model, "base")
         logger.info("Whisper model pre-loaded successfully")
     except Exception as e:
         logger.error(f"Failed to pre-load Whisper model: {str(e)}")
@@ -56,18 +56,18 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Qdrant initialized successfully")
     except Exception as e:
         logger.error(f"✗ Failed to initialize Qdrant: {e}")
-        
+
     yield
     # ===== Shutdown =====
     logger.info("Shutting down the server...")
-    
+
     # Cancel cleanup task
     cleanup_task.cancel()
     try:
         await cleanup_task
     except asyncio.CancelledError:
         logger.info("Cleanup task cancelled")
-    
+
     logger.info("Server shutdown complete")
 
 
@@ -149,6 +149,73 @@ async def process_youtube_link(req: YTRequestModel):
         )
 
 
+@api_router.post("/v1/generate-answer", status_code=202)
+async def create_question_to_answer(data: QuestionRequest):
+    try:
+        if not data:
+            logger.error("No data provided for answer generation")
+            raise APIError("No data provided", status_code=400)
+        if not isinstance(data, QuestionRequest):
+            logger.error("Invalid data format for answer generation")
+            raise APIError("Invalid data fromat for answer generation", status_code=400)
+
+        question = data.question
+        user_id = data.user_id
+        chat_id = data.chat_id
+        question_id = data.question_id
+
+        if not user_id or user_id.strip() == "":
+            logger.error("user_id is empty")
+            raise APIError("user_id cannot be empty", status_code=400)
+
+        if not chat_id or chat_id.strip() == "":
+            logger.error("chat_id is empty")
+            raise APIError("chat_id can not be empty", status_code=400)
+
+        if not question_id or question_id.strip() == "":
+            logger.error("question_id is empty")
+            raise APIError("question_id can not be empty", status_code=400)
+
+        if not question or question.strip() == "":
+            logger.error("question is empty")
+            raise APIError("question can not be empty", status_code=400)
+
+        logger.info(
+            f"Sumitting answer generation for the question_id:{question_id} and the question is {question}"
+        )
+        try:
+            from workers.rag.query import handle_query
+
+            print(len(question))
+            response = handle_query.delay(
+                user_id=user_id,
+                chat_id=chat_id,
+                question=question,
+                question_id=question_id,
+            )
+
+            logger.info("Submited for answer generation queue")
+            return SuccessResponse(
+                data={"task_id": response.id},
+                status="accepted",
+                message="answer generation task submitted successfully",
+            )
+        except Exception as e:
+            raise APIError(
+                f"Failed to load the data into the queue: {str(e)}", status_code=500
+            )
+
+    except APIError:
+        raise
+    except Exception as e:
+        logger.exception(
+            f"Unexpected error in create_question_to_answer endpoint: {str(e)}"
+        )
+        raise APIError(
+            f"Unexpected error during answer generation: {str(e)}", status_code=500
+        )
+
+
 app.include_router(api_router)
 
 
@@ -156,4 +223,4 @@ if __name__ == "__main__":
     import uvicorn
 
     logger.info("Starting server on http://localhost:8000")
-    uvicorn.run("main:app", host="0.0.0.0", port=8200, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

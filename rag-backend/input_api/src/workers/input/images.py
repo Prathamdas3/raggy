@@ -112,7 +112,7 @@ def extract_text_from_image_task(
         split_error = None
 
         try:
-            from workers.text_splitter import split_text_task
+            from workers.input.text_splitter import split_text_task
 
             split_task = split_text_task.delay(extracted_text, user_id, chat_id)
             split_task_id = split_task.id

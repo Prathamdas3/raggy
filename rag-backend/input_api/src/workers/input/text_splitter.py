@@ -168,10 +168,10 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
             )
 
             try:
-                from workers.db.summary_generate import send_request_for_summary_generation
+                from workers.rag.summary import generate_summary
                 logger.info("Starting summary generation request task queuing")
-                summary_task = send_request_for_summary_generation.delay(
-                user_id=user_id,chat_id=chat_id,summary=text
+                summary_task = generate_summary.delay(
+                user_id=user_id,chat_id=chat_id,original_text=text
                 )
                 logger.info(
                 f"Queued summary generation task {summary_task.id} for the splitted text"
@@ -191,7 +191,7 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                 }
             
             try:
-                from workers.db.store_vector_storage import save_chunks_to_vectorstore
+                from workers.rag.set_data import save_chunks_to_vectorstore
                 logger.info("Starting vector store saving task queuing")
                 vector_task = save_chunks_to_vectorstore.delay(chunks=chunks_with_metadata)
                 logger.info(
@@ -222,7 +222,7 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
             
             
         except Exception as e:
-            logger.error(f"Failed to queue for storing the text chunks in db")
+            logger.error("Failed to queue for storing the text chunks in db")
             return {
                 "status": "partial_success",
                 "message": "Text splited successfully but failed to queue for db storing",

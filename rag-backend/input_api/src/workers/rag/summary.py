@@ -115,7 +115,7 @@ def generate_summary(
             audio_task_id = None
             try:
                 logger.info("Triggering text-to-audio conversion task")
-                from workers.audio import convert_text_to_audio
+                from workers.rag.audio import convert_text_to_audio
 
                 if not chat_id:
                     logger.warning(

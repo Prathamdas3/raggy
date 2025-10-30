@@ -151,7 +151,7 @@ def handle_query(self, chat_id:str, user_id:str, question_id:str,question:str):
                     audio_task_id=None
                     try:
                         logger.info("Triggering text-to-audio conversion task")
-                        from workers.answer_audio import convert_text_to_audio
+                        from workers.rag.answer_audio import convert_text_to_audio
                         if not chat_id or not question_id:
                             logger.warning(
                                 "question_id or chat_id missing, skipping audio generation"

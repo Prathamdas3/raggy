@@ -176,7 +176,7 @@ def upload_audio_to_minio(self, temp_file_path: str, chat_id: str,question_id:st
         except Exception as url_error:
             logger.warning(f"Failed to generate presigned URL: {str(url_error)}")
             # Create a basic URL without presigned access
-            from lib.minio_client import MINIO_ENDPOINT, MINIO_SECURE
+            from lib.minio import MINIO_ENDPOINT, MINIO_SECURE
 
             protocol = "https" if MINIO_SECURE else "http"
             minio_url = (

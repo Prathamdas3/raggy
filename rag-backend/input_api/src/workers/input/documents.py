@@ -336,7 +336,7 @@ def extract_text_from_othertypes(
         logger.info(f"Queueing text for splitting. Text length: {len(text)} characters")
 
         try:
-            from workers.text_splitter import split_text_task
+            from workers.input.text_splitter import split_text_task
 
             split_task = split_text_task.delay(text, user_id, chat_id)
             logger.info(f"Queued split_text_task {split_task.id} for extracted text")

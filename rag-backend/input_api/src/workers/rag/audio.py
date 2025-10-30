@@ -103,7 +103,7 @@ def convert_text_to_audio(self, text: str, chat_id: str):
         # ===== Trigger upload_audio_to_minio task =====
         logger.info(f"Triggering upload_audio_to_minio task for chat_id: {chat_id}")
         try:
-            from workers.upload_audio_minio import upload_audio_to_minio
+            from workers.rag.upload_audio_minio import upload_audio_to_minio
 
             # Call the upload task asynchronously
             upload_task_result = upload_audio_to_minio.delay(
