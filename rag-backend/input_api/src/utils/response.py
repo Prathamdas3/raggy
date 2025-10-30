@@ -1,6 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from lib.pydentic_models import ErrorResponse
+from lib.pydentic import ErrorResponse
 
 
 class APIError(Exception):

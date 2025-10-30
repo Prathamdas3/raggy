@@ -1,4 +1,4 @@
-from lib.pydentic_models import ChunkData
+from lib.pydentic import ChunkData
 from utils.response import APIError
 from lib.celery import celery
 from lib.logger import get_logger

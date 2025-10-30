@@ -1,5 +1,5 @@
 import os
-from lib.pydentic_models import ChunkData
+from lib.pydentic import ChunkData
 from utils.response import APIError
 from lib.logger import get_logger
 from typing import Dict,List

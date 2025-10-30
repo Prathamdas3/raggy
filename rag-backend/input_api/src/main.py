@@ -1,10 +1,13 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form
-from lib.pydentic_models import YTRequestModel
-from workers.yt import extract_text_from_yt_link
+from lib.pydentic import YTRequestModel
+from workers.input.yt import extract_text_from_yt_link
 from lib.whisper import get_whisper_model
-from lib.pydentic_models import SuccessResponse
+from lib.pydentic import SuccessResponse
+from lib.model import get_model
+from lib.minio import initialize_minio
+from lib.qdrant import initialize_qdrant
 from utils.response import APIError, api_error_handler
 from lib.logger import get_logger
 from utils.files.file import handle_file
@@ -30,6 +33,29 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to pre-load Whisper model: {str(e)}")
         logger.warning("Whisper model will be lazy-loaded on first use")
+
+    try:
+        logger.info("Pre-loading HuggingFace model...")
+        # Run model loading in thread to avoid blocking
+        await asyncio.to_thread(get_model)
+        logger.info("Model pre-loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to pre-load model: {str(e)}")
+        logger.warning("Model will be lazy-loaded on first use")
+
+    logger.info("🚀 Starting up FastAPI application...")
+    try:
+        initialize_minio()
+        logger.info("✓ MinIO initialized successfully")
+    except Exception as e:
+        logger.error(f"✗ Failed to initialize MinIO: {e}")
+
+    logger.info("Vector initialization Starting...")
+    try:
+        initialize_qdrant()
+        logger.info("✓ Qdrant initialized successfully")
+    except Exception as e:
+        logger.error(f"✗ Failed to initialize Qdrant: {e}")
         
     yield
     # ===== Shutdown =====
