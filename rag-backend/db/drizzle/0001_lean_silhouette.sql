@@ -1,1 +1,0 @@
-ALTER TABLE "docs" DROP COLUMN "title";
