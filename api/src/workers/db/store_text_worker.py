@@ -3,13 +3,15 @@ from utils.response import APIError
 from lib.celery import celery
 from lib.logger import get_logger
 from db.store_text import store_original_text
-from typing import Dict,List
+from typing import Dict, List
 
 logger = get_logger("workers/db/store_text")
 
 
 @celery.task(bind=True)
-def send_chunks_to_docs_api_task(self, chat_id:str,user_id:str,chunks:List[ChunkData]) -> Dict:
+def send_chunks_to_docs_api_task(
+    self, chat_id: str, user_id: str, chunks: List[ChunkData]
+) -> Dict:
     """
     Celery task to send chunks to docs API.
 
@@ -27,7 +29,9 @@ def send_chunks_to_docs_api_task(self, chat_id:str,user_id:str,chunks:List[Chunk
     logger.info(f"Celery task started: send_chunks_to_docs_api_task")
 
     try:
-        result = asyncio.run(store_original_text(user_id=user_id,chat_id=chat_id,chunks=chunks))
+        result = asyncio.run(
+            store_original_text(user_id=user_id, chat_id=chat_id, chunks=chunks)
+        )
 
         logger.info("Chunks sent to docs API successfully")
         return {

@@ -1,4 +1,3 @@
-
 from lib.celery import celery
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from lib.logger import get_logger
@@ -153,11 +152,12 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
         logger.info(f"Created {len(chunks_with_metadata)} chunks with metadata")
         try:
             from workers.db.store_text_worker import send_chunks_to_docs_api_task
+
             logger.info(
                 f"Starting the api calling with the chunks: {len(chunks_with_metadata)}"
             )
             task_data = send_chunks_to_docs_api_task.delay(
-                user_id=user_id,chat_id=chat_id,chunks=chunks_with_metadata
+                user_id=user_id, chat_id=chat_id, chunks=chunks_with_metadata
             )
             logger.info(
                 f"Queued storing the data task {task_data.id} for storing the text chunks"
@@ -169,13 +169,14 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
 
             try:
                 from workers.rag.summary import generate_summary
+
                 logger.info("Starting summary generation request task queuing")
                 summary_task = generate_summary.delay(
-                user_id=user_id,chat_id=chat_id,original_text=text
+                    user_id=user_id, chat_id=chat_id, original_text=text
                 )
                 logger.info(
-                f"Queued summary generation task {summary_task.id} for the splitted text"
-                ) 
+                    f"Queued summary generation task {summary_task.id} for the splitted text"
+                )
             except Exception as e:
                 logger.error(f"Failed to queue summary generation task: {str(e)}")
                 return {
@@ -189,22 +190,26 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                     },
                     "summary_store_error": str(e),
                 }
-            
+
             try:
                 from workers.rag.set_data import save_chunks_to_vectorstore
+
                 logger.info("Starting vector store saving task queuing")
-                vector_task = save_chunks_to_vectorstore.delay(chunks=chunks_with_metadata)
+                vector_task = save_chunks_to_vectorstore.delay(
+                    chunks=chunks_with_metadata
+                )
                 logger.info(
-                f"Queued vector store saving task {vector_task.id} for the splitted text chunks")
+                    f"Queued vector store saving task {vector_task.id} for the splitted text chunks"
+                )
                 return {
-                "status": "success",
-                "message": "Text split successfully with metadata and queued for db storing and summary generation also vector store saving",
-                "code": 200,
-                "data": {
-                    "chunks": chunks_with_metadata,
-                    "chunk_count": len(chunks_with_metadata),
-                    "original_text_length": len(text),
-                     },
+                    "status": "success",
+                    "message": "Text split successfully with metadata and queued for db storing and summary generation also vector store saving",
+                    "code": 200,
+                    "data": {
+                        "chunks": chunks_with_metadata,
+                        "chunk_count": len(chunks_with_metadata),
+                        "original_text_length": len(text),
+                    },
                 }
             except Exception as e:
                 logger.error(f"Failed to queue vector store saving task: {str(e)}")
@@ -219,8 +224,7 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                     },
                     "vector_store_error": str(e),
                 }
-            
-            
+
         except Exception as e:
             logger.error("Failed to queue for storing the text chunks in db")
             return {
@@ -230,7 +234,6 @@ def split_text_task(self, text: str, user_id: str, chat_id: str) -> dict:
                 "store_error": str(e),
             }
 
-            
     except Exception as e:
         logger.exception(f"Unexpected error in text splitting task: {str(e)}")
         return {

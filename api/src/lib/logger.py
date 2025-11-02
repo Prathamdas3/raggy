@@ -1,5 +1,5 @@
 import logging
-from logging.handlers import RotatingFileHandler 
+from logging.handlers import RotatingFileHandler
 import sys
 import os
 from datetime import datetime

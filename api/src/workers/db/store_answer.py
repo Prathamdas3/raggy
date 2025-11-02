@@ -6,22 +6,20 @@ import httpx
 from utils.response import APIError
 
 load_dotenv()
-logger=get_logger("Workers/db/store_answer")
+logger = get_logger("Workers/db/store_answer")
 
 DOCS_API_URL = os.getenv("DOCS_API_URL")
 DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
 
 logger.info(f"Docs API URL: {DOCS_API_URL}")
 
-async def send_post_request(url,chat_id:str, content:str):
-    try: 
+
+async def send_post_request(url, chat_id: str, content: str):
+    try:
         async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
-            response=await client.post(
+            response = await client.post(
                 url,
-                json={
-                    "chat_id":chat_id,
-                    "content":content
-                },
+                json={"chat_id": chat_id, "content": content},
                 headers={"Content-Type": "application/json"},
             )
 
@@ -77,20 +75,21 @@ async def send_post_request(url,chat_id:str, content:str):
             status_code=500,
             details=f"Request error: {str(re)}",
         )
-    
+
+
 @celery.task(bind=True)
-def store_answer_to_db(self,chat_id:str,question_id:str,content:str):
+def store_answer_to_db(self, chat_id: str, question_id: str, content: str):
     try:
         if not chat_id or not question_id or not content:
             logger.error("Invalid parameters for store_answer_to_db")
             return {
-                "status":"error",
-                "message":"chat_id, question_id, content are required",
-                "code":400,
-                "data":None
+                "status": "error",
+                "message": "chat_id, question_id, content are required",
+                "code": 400,
+                "data": None,
             }
-        
-        if content.strip()=="" or chat_id.strip()=="" or question_id.strip()=="":
+
+        if content.strip() == "" or chat_id.strip() == "" or question_id.strip() == "":
             logger.error("parameters is empty after stripping")
 
             return {
@@ -99,24 +98,24 @@ def store_answer_to_db(self,chat_id:str,question_id:str,content:str):
                 "code": 400,
                 "data": None,
             }
-        
-        try: 
+
+        try:
             import asyncio
 
             logger.info(
                 f"Sending answer to the api to store. question_id:{question_id}, chat_id:{chat_id} and content:{content}"
             )
 
-            url=f"{DOCS_API_URL}/query/{question_id}"
-            response=asyncio.run(
-                send_post_request(url,chat_id=chat_id,content=content)
+            url = f"{DOCS_API_URL}/query/{question_id}"
+            response = asyncio.run(
+                send_post_request(url, chat_id=chat_id, content=content)
             )
             logger.info("Answer successfully sent to the api")
             return {
-                "status":"success",
-                "message":"Answer stored successfully",
-                "code":200,
-                "data":response
+                "status": "success",
+                "message": "Answer stored successfully",
+                "code": 200,
+                "data": response,
             }
         except APIError as api_err:
             logger.error(f"APIError while sending summary to docs API: {str(api_err)}")

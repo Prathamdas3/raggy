@@ -118,9 +118,7 @@ def generate_summary(
                 from workers.rag.audio import convert_text_to_audio
 
                 if not chat_id:
-                    logger.warning(
-                        " chat_id missing, skipping audio generation"
-                    )
+                    logger.warning(" chat_id missing, skipping audio generation")
                 else:
                     # Trigger audio generation task
 

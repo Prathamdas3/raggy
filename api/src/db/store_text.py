@@ -2,7 +2,7 @@ import os
 from lib.pydentic import ChunkData
 from utils.response import APIError
 from lib.logger import get_logger
-from typing import Dict,List
+from typing import Dict, List
 import httpx
 from dotenv import load_dotenv
 
@@ -16,7 +16,9 @@ DOCS_API_TIMEOUT = int(os.getenv("DOCS_API_TIMEOUT"))
 logger.info(f"Docs API URL: {DOCS_API_URL}")
 
 
-async def store_original_text(user_id:str,chat_id:str,chunks:List[ChunkData]) -> Dict:
+async def store_original_text(
+    user_id: str, chat_id: str, chunks: List[ChunkData]
+) -> Dict:
     """
     Send extracted text chunks to the docs API endpoint.
 
@@ -31,7 +33,7 @@ async def store_original_text(user_id:str,chat_id:str,chunks:List[ChunkData]) ->
     Raises:
         APIError: If request fails
     """
- 
+
     logger.info(
         f"Preparing to send chunks to docs API. User: {user_id}, Chat: {chat_id}, Chunks: {len(chunks)}"
     )
@@ -85,8 +87,8 @@ async def store_original_text(user_id:str,chat_id:str,chunks:List[ChunkData]) ->
 
         try:
             logger.info(f"Sending request to docs API: {DOCS_API_URL}")
-            url=f"{DOCS_API_URL}/docs"
-     
+            url = f"{DOCS_API_URL}/docs"
+
             async with httpx.AsyncClient(timeout=DOCS_API_TIMEOUT) as client:
                 response = await client.post(
                     url,

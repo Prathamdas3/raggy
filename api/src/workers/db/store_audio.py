@@ -98,7 +98,6 @@ def store_audio_to_db(self, chat_id: str, audio_url: str):
                 "data": None,
             }
 
-
         logger.info(f"Processing audio URL for chat: {chat_id}")
 
         try:

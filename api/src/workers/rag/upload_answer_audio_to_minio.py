@@ -12,7 +12,7 @@ logger = get_logger("workers/upload_answer_audio_to_minio")
 
 
 @celery.task(bind=True, max_retries=3)
-def upload_audio_to_minio(self, temp_file_path: str, chat_id: str,question_id:str):
+def upload_audio_to_minio(self, temp_file_path: str, chat_id: str, question_id: str):
     """
     Upload audio file to MinIO bucket, delete temp file after successful upload,
     and store the audio URL in the database.
@@ -67,7 +67,7 @@ def upload_audio_to_minio(self, temp_file_path: str, chat_id: str,question_id:st
                 "minio_url": None,
             }
 
-        if not question_id or not isinstance(question_id,str):
+        if not question_id or not isinstance(question_id, str):
             logger.error("Invalid question_id provided")
             return {
                 "success": False,
@@ -206,7 +206,7 @@ def upload_audio_to_minio(self, temp_file_path: str, chat_id: str,question_id:st
 
             # Call the task asynchronously
             db_task_result = store_answer_audio_to_db.delay(
-                chat_id=chat_id, link=minio_url,question_id=question_id
+                chat_id=chat_id, link=minio_url, question_id=question_id
             )
 
             logger.info(

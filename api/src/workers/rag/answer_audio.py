@@ -11,8 +11,9 @@ logger = get_logger("workers/answer_audio")
 TEMP_DIR = Path("temp")
 TEMP_DIR.mkdir(exist_ok=True)
 
+
 @celery.task(bind=True)
-def convert_text_to_audio(self, text: str, chat_id: str,question_id:str):
+def convert_text_to_audio(self, text: str, chat_id: str, question_id: str):
     """
     Convert text to audio file using gTTS, save to temp directory,
     and trigger MinIO upload task.
@@ -26,11 +27,13 @@ def convert_text_to_audio(self, text: str, chat_id: str,question_id:str):
     Returns:
         dict: Contains success status, temp file path, and any error messages
     """
-        
+
     temp_file_path = None
 
     try:
-        logger.info(f"Starting text-to-audio conversion for the answer with question_id:{question_id}")
+        logger.info(
+            f"Starting text-to-audio conversion for the answer with question_id:{question_id}"
+        )
 
         if not text or not isinstance(text, str):
             logger.error("Invalid text provided")
@@ -47,15 +50,15 @@ def convert_text_to_audio(self, text: str, chat_id: str,question_id:str):
                 "error": "Invalid chat_id provided",
                 "temp_file_path": None,
             }
-        
-        if not question_id or not isinstance(question_id,str):
+
+        if not question_id or not isinstance(question_id, str):
             logger.error("Invalid question_id provided")
             return {
-                 "success": False,
+                "success": False,
                 "error": "Invalid question_id provided",
-                "temp_file_path": None, 
+                "temp_file_path": None,
             }
-        
+
         max_chars = 50000
         if len(text) > max_chars:
             logger.warning(
@@ -63,7 +66,7 @@ def convert_text_to_audio(self, text: str, chat_id: str,question_id:str):
             )
             text = text[:max_chars]
 
-                # Create unique filename
+            # Create unique filename
         unique_id = uuid4()
         timestamp = datetime.now().isoformat().replace(":", "-")
         temp_filename = f"audio_{timestamp}_{unique_id}.mp3"
@@ -98,7 +101,7 @@ def convert_text_to_audio(self, text: str, chat_id: str,question_id:str):
                 "error": "Audio file is empty",
                 "temp_file_path": None,
             }
-        
+
         logger.info(
             f"✓ Text-to-audio conversion completed. File size: {file_size} bytes"
         )
@@ -106,13 +109,13 @@ def convert_text_to_audio(self, text: str, chat_id: str,question_id:str):
         # ===== Trigger upload_audio_to_minio task =====
         logger.info(f"Triggering upload_audio_to_minio task for chat_id: {chat_id}")
         try:
-            from workers.rag.upload_answer_audio_to_minio  import upload_audio_to_minio
+            from workers.rag.upload_answer_audio_to_minio import upload_audio_to_minio
 
             # Call the upload task asynchronously
             upload_task_result = upload_audio_to_minio.delay(
                 temp_file_path=str(temp_file_path),
                 chat_id=chat_id,
-                question_id=question_id
+                question_id=question_id,
             )
 
             logger.info(

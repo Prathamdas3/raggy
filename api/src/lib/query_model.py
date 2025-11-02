@@ -138,7 +138,7 @@ def is_model_loaded():
     return _model_instance is not None
 
 
-def get_response(query: str,question:str) -> str:
+def get_response(query: str, question: str) -> str:
     """
     Get response from the model for a given query.
 
@@ -168,13 +168,13 @@ def get_response(query: str,question:str) -> str:
         if not question:
             logger.error("Empty question provided")
             raise ValueError("Question cannot be empty")
-        
-        if not isinstance(question,str):
+
+        if not isinstance(question, str):
             logger.warning(f"Question is not string: {type(question)}")
-            question=str(question)
+            question = str(question)
 
         query = query.strip()
-        question=question.strip()
+        question = question.strip()
 
         if not query:
             logger.error("Query is empty after stripping")
@@ -183,12 +183,12 @@ def get_response(query: str,question:str) -> str:
         if not question:
             logger.error("Question is empty after stripping")
             raise ValueError("Question cannot be empty or only whitespace")
-        
+
         # Warn if query is very long
         if len(query) > 10000:
             logger.warning(f"Query is very long: {len(query)} characters")
 
-        if len(question)>10000:
+        if len(question) > 10000:
             logger.warning(f"Question is very long: {len(question)} characters")
         # ===== Get Model Instance =====
         try:
