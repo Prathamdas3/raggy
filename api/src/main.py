@@ -12,6 +12,8 @@ from utils.response import APIError, api_error_handler
 from lib.logger import get_logger
 from utils.files.file import handle_file
 from utils.files.clean import cleanup_temp_files
+from db.index import create_db_and_tables
+import db.schema as schema
 from constants import (
     YT_REGEX,
 )
@@ -56,6 +58,12 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Qdrant initialized successfully")
     except Exception as e:
         logger.error(f"✗ Failed to initialize Qdrant: {e}")
+
+    try:
+        create_db_and_tables()
+        logger.info("Successfully created the db tables")
+    except Exception as e:
+        logger.error(f"Failed to create the db tables {e}")
 
     yield
     # ===== Shutdown =====

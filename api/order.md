@@ -5,9 +5,10 @@
 
 [x] Summary generation 
 [x] Audio converter
-
 [x] verctor store setup
-[ ] rag builder 
+[X] rag builder 
+
+[ ] set up a config file while will hold all the details about the env files
 [ ] delete minio files when the chat is deleted  
 [ ] merge similar files like audio generation and text generation, and audio and text storing in db as well as audio storing in minio
 [ ] migrate to langchain 1.0 from langchain_classic

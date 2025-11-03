@@ -14,3 +14,4 @@ app.log
 logs/
 *.log
 .env
+.mypy_cache
