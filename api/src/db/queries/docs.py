@@ -3,7 +3,7 @@ from db.schema import Docs
 from lib.logger import get_logger
 from fastapi import HTTPException, status
 from sqlmodel import select
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from typing import Optional
 import uuid
@@ -12,11 +12,34 @@ logger = get_logger("db/queries/docs")
 
 
 class UpdateDocs(BaseModel):
+    """Schema for updating document fields."""
+
     summary_text: Optional[str] = None
     audio_url: Optional[str] = None
 
     class Config:
         exclude_unset = True
+
+    @field_validator("summary_text", "audio_url")
+    @classmethod
+    def validate_fields(cls, v: Optional[str]) -> Optional[str]:
+        """Validate that fields are not empty or just whitespace."""
+        if v is not None and not v.strip():
+            raise ValueError("Field cannot be empty or just whitespace")
+        return v.strip() if v else v
+
+    @model_validator(mode="after")
+    def validate_at_least_one_field(self):
+        """Ensure at least one field is provided for update."""
+        if not self.has_updates():
+            raise ValueError(
+                "At least one field (summary_text or audio_url) must be provided"
+            )
+        return self
+
+    def has_updates(self) -> bool:
+        """Check if any fields were provided for update."""
+        return any(v is not None for v in self.model_dump(exclude_unset=True).values())
 
 
 def create_docs(doc: Docs, session: SessionDep):
@@ -35,7 +58,7 @@ def create_docs(doc: Docs, session: SessionDep):
         logger.error(f"Integrity constraint violation while creating docs: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Chat already exists or violates database constraints",
+            detail="Docs already exists or violates database constraints",
         )
 
     except SQLAlchemyError as e:
@@ -57,6 +80,13 @@ def create_docs(doc: Docs, session: SessionDep):
 
 def update_docs(chat_id: uuid.UUID, docs_update: UpdateDocs, session: SessionDep):
     try:
+        if not docs_update.has_updates():
+            logger.warning(f"Update attempt with no fields for chat ID: {chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields provided for update",
+            )
+
         logger.info("Starting the update process for the docs with chat_id:{chat_id}")
         statement = select(Docs).where(Docs.chat_id == chat_id)
         docs = session.exec(statement).first()
@@ -81,6 +111,9 @@ def update_docs(chat_id: uuid.UUID, docs_update: UpdateDocs, session: SessionDep
         )
 
         return docs
+
+    except HTTPException:
+        raise
 
     except IntegrityError as e:
         session.rollback()
@@ -119,6 +152,9 @@ def get_docs_with_chat_id(chat_id: uuid.UUID, session: SessionDep):
 
         return docs
 
+    except HTTPException:
+        raise
+    
     except SQLAlchemyError as e:
         logger.error(
             f"Database error while getting the docs with chat_id:{chat_id}: {str(e)}",

@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from fastapi import HTTPException, status, Query
 from typing import Annotated, Optional
 from sqlmodel import select
-from pydantic import BaseModel,field_validator
+from pydantic import BaseModel, field_validator
 import uuid
 
 logger = get_logger("db/queries/chat")
@@ -15,7 +15,10 @@ class UpdateChat(BaseModel):
     chat_name: Optional[str] = None
     is_bookmarked: Optional[bool] = None
 
-    @field_validator('chat_name')
+    class Config:
+        exclude_unset = True
+
+    @field_validator("chat_name")
     @classmethod
     def validate_chat_name(cls, v: Optional[str]) -> Optional[str]:
         """Validate chat name is not empty or just whitespace."""
@@ -23,9 +26,9 @@ class UpdateChat(BaseModel):
             raise ValueError("Chat name cannot be empty or just whitespace")
         return v.strip() if v else v
 
-
-    class Config:
-        exclude_unset = True
+    def has_updates(self) -> bool:
+        """Check if any fields were provided for update."""
+        return any(v is not None for v in self.model_dump(exclude_unset=True).values())
 
 
 def create_chat(chat: Chats, session: SessionDep) -> Chats:
@@ -97,7 +100,7 @@ def get_chat_by_id(chat_id: uuid.UUID, session: SessionDep) -> Chats:
 
         logger.info(f"Successfully fetched the chat with the chat id:{chat_id}")
         return chat
-    
+
     except HTTPException:
         raise
     except SQLAlchemyError as e:
@@ -145,6 +148,14 @@ def delete_chat(chat_id: uuid.UUID, session: SessionDep):
 
 def update_chat_name(chat_id: uuid.UUID, chat_update: UpdateChat, session: SessionDep):
     try:
+        if not chat_update.has_updates():
+            logger.warning(f"Update attempt with no fields for chat ID: {chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields provided for update",
+            )
+
+        logger.info("Starting the update process for the docs with chat_id:{chat_id}")
         chat = session.get(Chats, chat_id)
         if not chat:
             logger.error(f"No chat found for the given id:{chat_id}")
@@ -170,6 +181,17 @@ def update_chat_name(chat_id: uuid.UUID, chat_update: UpdateChat, session: Sessi
 
     except HTTPException:
         raise
+
+    except IntegrityError as e:
+        session.rollback()
+        logger.erro(
+            f"Integrity constaint violation while updating chat {chat_id}: {str(e)}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Update violates database constraints",
+        )
 
     except SQLAlchemyError as e:
         session.rollback()
