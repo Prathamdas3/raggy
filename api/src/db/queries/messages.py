@@ -6,9 +6,27 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlmodel import select
 from pydantic import BaseModel, field_validator
+from datetime import datetime
 import uuid
 
 logger = get_logger("db/queries/messages")
+
+
+class MessageResponse(BaseModel):
+    """Individual message response."""
+
+    id: uuid.UUID
+    chat_id: uuid.UUID
+    user_id: uuid.UUID
+    question_id: Optional[uuid.UUID]
+    sender: str
+    content: str
+    audio_url: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class UpdateAudio(BaseModel):
@@ -163,6 +181,69 @@ def update_audio_url(
         session.rollback()
         logger.error(
             f"Unexpected error while updating audio url: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred",
+        )
+
+
+def get_messages_for_a_chat(
+    chat_id: uuid.UUID, user_id: uuid.UUID, session: SessionDep
+):
+    try:
+        logger.info(
+            "Getting strated to fetch the messages of user_id:{user_id} and cha_id:{chat_id}"
+        )
+        from sqlalchemy.orm import aliased
+
+        Question = aliased(Messages)
+        Answer = aliased(Messages)
+
+        statement = (
+            select(Question, Answer)
+            .outerjoin(
+                Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
+            )
+            .where(Question.chat_id == chat_id)
+            .where(Question.user_id == user_id)
+            .where(Question.sender == "user")
+            .order_by(Question.created_at.asc())
+        )
+
+        messages = session.exec(statement=statement).all()
+
+        messages_pair = []
+        for question, response in messages:
+            messages_pair.append(
+                {
+                    "question": MessageResponse.model_validate(question),
+                    "response": MessageResponse.model_validate(response)
+                    if response
+                    else None,
+                }
+            )
+        
+        logger.info(f"Successfully got all the messages under the chat_id {chat_id}")
+
+        return messages_pair
+
+    except IntegrityError as e:
+        logger.error(f"Integrity constraint violation while getting all the messages in the chat with id: {chat_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Violates database constraints"
+        )
+
+    except SQLAlchemyError as e:
+        logger.error(f"Unexpected error while getting all the messages in the chat with id: {chat_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while getting all the messages in the chat with id {chat_id }: {str(e)}", exc_info=True
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

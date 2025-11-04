@@ -103,6 +103,15 @@ def get_chat_by_id(chat_id: uuid.UUID, session: SessionDep) -> Chats:
 
     except HTTPException:
         raise
+    except IntegrityError as e:
+        logger.error(
+            f"Integrity constraint violation while getting the chat with id: {chat_id}: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="violates database constraints",
+        )
+
     except SQLAlchemyError as e:
         logger.error(f"Database error while getting chat: {str(e)}")
         raise HTTPException(
@@ -129,6 +138,16 @@ def delete_chat(chat_id: uuid.UUID, session: SessionDep):
         session.commit()
         logger.info("Successfully deleted the chat")
         return {"ok": True}
+    except HTTPException:
+        raise
+    except IntegrityError as e:
+        session.rollback()
+        logger.error(f"Integrity constraint violation while deleting chat:{chat_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=" violates database constraints",
+        )
+
     except SQLAlchemyError as e:
         session.rollback()
         logger.error(f"Database error while deleting chat: {str(e)}")
