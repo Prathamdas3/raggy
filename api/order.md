@@ -6,7 +6,9 @@
 [x] Summary generation 
 [x] Audio converter
 [x] verctor store setup
-[X] rag builder 
+[X] rag builder
+
+[ ] some how setup an api for setting up the huggingface interface and groq for user trial
 
 [ ] set up a config file while will hold all the details about the env files
 [ ] delete minio files when the chat is deleted  

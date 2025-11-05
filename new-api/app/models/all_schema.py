@@ -19,9 +19,9 @@ class Sender(Enum):
 
 class User(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    first_name: str = ""
-    last_name: str = ""
-    user_name: str = Field(default="", nullable=False, index=True, unique=True)
+    first_name: str | None = Field(default=None)
+    last_name: str | None = Field(default=None)
+    user_name: str = Field(default="", index=True, unique=True)
     password: str = ""
     email: EmailStr = Field(
         default="", sa_type=sa.String(), nullable=False, index=True, unique=True

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from config import config
 from jose import jwt, JWTError
 from fastapi import HTTPException, status, Request
+from uuid import UUID
 
 
 def create_access_token(data: dict) -> str:
@@ -72,7 +73,7 @@ def create_refresh_token(data: dict) -> str:
         )
 
 
-async def get_user_id_from_request(request: Request) -> str:
+async def get_user_id_from_request(request: Request) -> UUID:
     """Extract user id from the access token"""
     token = request.cookies.get("jwt")
 
