@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, HTTPException
 from app.utils.logger import get_logger
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter()
 
 logger = get_logger(__name__)
 

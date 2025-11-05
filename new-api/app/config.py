@@ -13,10 +13,16 @@ TEMP_DIR = BASE_DIR / "temp"
 class Configs:
     temp_dir: Path = TEMP_DIR
     MODEL_ID: str = os.getenv("MODEL_ID", "")
-    HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "")
-    DATABASE_URI = os.getenv("DATABASE_URI", "")
-    HUGGINGFACE_MODEL = os.getenv("HUGGINGFACE_MODEL", "")
-    HUGGINGFACE_DEVICE = os.getenv("HUGGINGFACE_DEVICE", "cpu")
+    HUGGINGFACE_API_TOKEN: str = os.getenv("HUGGINGFACE_API_TOKEN", "")
+    DATABASE_URI: str = os.getenv("DATABASE_URI", "")
+    HUGGINGFACE_MODEL: str = os.getenv("HUGGINGFACE_MODEL", "")
+    HUGGINGFACE_DEVICE: str = os.getenv("HUGGINGFACE_DEVICE", "cpu")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+    ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
+        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+    )
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 
 config = Configs()

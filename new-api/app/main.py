@@ -1,17 +1,15 @@
 from fastapi import FastAPI
 from app.lifecycle import lifespan
 from app.utils.logger import get_logger
-from app.api.v1 import user, audio, summary, input
+from app.api.v1 import router
 import app.models.all_schema
 
 logger = get_logger()
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(user.router)
-app.include_router(audio.router)
-app.include_router(summary.router)
-app.include_router(input.router)
+app.include_router(router.router)
+
 
 if __name__ == "__main__":
     import uvicorn
