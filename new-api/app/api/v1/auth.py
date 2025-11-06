@@ -110,7 +110,7 @@ def on_signin(
     user_agent = request.headers.get("user-agent")
     try:
         logger.debug("Starting sign in proccess for the user")
-
+        
         old_user = user.get_user_by_email(email=data.email, session=session)
         if not old_user:
             raise HTTPException(

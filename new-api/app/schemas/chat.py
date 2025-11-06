@@ -4,7 +4,7 @@ from typing import Optional
 
 class UpdateChat(BaseModel):
     chat_name: Optional[str] = None
-    is_bookmarked: Optional[bool] = None
+    is_bookmarked: Optional[bool] = False
 
     class Config:
         exclude_unset = True
