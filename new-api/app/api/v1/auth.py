@@ -82,7 +82,7 @@ def on_signup(
             value=refresh_token,
             httponly=True,
             secure=False,
-            samesite="none",
+            samesite="lax",
             max_age=config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         )
 
@@ -153,7 +153,7 @@ def on_signin(
             value=new_refresh_token,
             httponly=True,
             secure=False,
-            samesite="none",
+            samesite="lax",
             max_age=int(config.REFRESH_TOKEN_EXPIRE_DAYS) * 24 * 60 * 60,
         )
 
