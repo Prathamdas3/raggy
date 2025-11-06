@@ -28,7 +28,7 @@ class User(SQLModel, table=True):
     )
 
     # Relationships
-    session: "Session" = Relationship(back_populates="user", cascade_delete=True)
+    sessions: list["Session"] = Relationship(back_populates="user", cascade_delete=True)
     chats: list["Chats"] = Relationship(back_populates="user", cascade_delete=True)
     docs: list["Docs"] = Relationship(back_populates="user", cascade_delete=True)
     messages: list["Messages"] = Relationship(
@@ -57,7 +57,7 @@ class Session(SQLModel, table=True):
     user_agent: str = ""
 
     # Relationship
-    user: User = Relationship(back_populates="session")
+    user: User = Relationship(back_populates="sessions")
 
     created_at: datetime | None = Field(
         default=None,

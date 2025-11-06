@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator, EmailStr
 from typing import Optional
+from uuid import UUID
 import re
 
 
@@ -62,3 +63,7 @@ class UpdateUser(BaseModel):
     def has_updates(self) -> bool:
         """Check if any fields were provided for update"""
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())
+
+class ResponseFromToken(BaseModel):
+    user_id:UUID
+    token:str

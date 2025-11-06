@@ -12,7 +12,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def get_hassed_password(password: str) -> str:
+def get_hashed_password(password: str) -> str:
     """Hash a password with error handling"""
     try:
         if not password:

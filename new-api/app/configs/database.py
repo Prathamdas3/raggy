@@ -6,7 +6,8 @@ from typing import Annotated
 from sqlalchemy.exc import SQLAlchemyError
 
 logger = get_logger(__name__)
-URL=config.DATABASE_URI
+URL = config.DATABASE_URI
+
 
 def get_engine():
     try:

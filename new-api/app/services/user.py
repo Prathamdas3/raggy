@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from pydantic import EmailStr
 from sqlmodel import select
 from typing import Optional
-from app.schemas import response, auth, user
+from app.schemas import response, user
 from uuid import UUID
 
 logger = get_logger(__name__)
@@ -29,7 +29,7 @@ def get_user_by_id(user_id: UUID, session: SessionDep) -> User:
         if not user:
             logger.info(f"No user found {user_id}")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="No user found with the given id",
             )
 
@@ -95,7 +95,7 @@ def get_user_by_email(email: EmailStr, session: SessionDep) -> Optional[User]:
         )
 
 
-def create_user(user: auth.UserCreate, session: SessionDep) -> response.Response:
+def create_user(user: user.UserCreate, session: SessionDep) -> response.Response:
     """Creating the user with the email and password"""
     try:
         logger.info("Registering the user")
@@ -105,14 +105,15 @@ def create_user(user: auth.UserCreate, session: SessionDep) -> response.Response
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email alreay exists, please try another email",
             )
-        session.add(user)
+        new_user: User = User(email=user.email, password=user.password)
+        session.add(new_user)
         session.commit()
-        session.refresh(user)
-        logger.info(f"Successfully registered the user with the id:{user.id}")
+        session.refresh(new_user)
+        logger.info(f"Successfully registered the user with the id:{new_user.id}")
         return response.Response(
             status="success",
             message="Successfully registered",
-            data={"id": user.id, "email": user.email},
+            data={"id": new_user.id, "email": user.email},
         )
     except HTTPException:
         raise
@@ -159,7 +160,7 @@ def update_user_details(
         if not old_user:
             logger.error(f"No user found with the given user id:{user_id}")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="No user found with gith given id",
             )
 
@@ -209,7 +210,7 @@ def delete_user_by_id(user_id: UUID, session: SessionDep) -> response.Response:
         old_user = get_user_by_id(user_id=user_id, session=session)
         if not old_user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="No user found with this user_id",
             )
 
@@ -247,3 +248,6 @@ def delete_user_by_id(user_id: UUID, session: SessionDep) -> response.Response:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
         )
+
+
+# update password

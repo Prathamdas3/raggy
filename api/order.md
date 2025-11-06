@@ -9,6 +9,7 @@
 [X] rag builder
 
 [ ] some how setup an api for setting up the huggingface interface and groq for user trial
+[ ] slowly move to async code with async database, async function
 
 [ ] set up a config file while will hold all the details about the env files
 [ ] delete minio files when the chat is deleted  
