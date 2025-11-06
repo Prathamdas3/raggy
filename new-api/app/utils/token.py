@@ -3,6 +3,7 @@ from app.config import config
 from jose import jwt, JWTError
 from fastapi import HTTPException, status, Request
 from app.schemas.user import ResponseFromToken
+from uuid import UUID
 
 
 def create_access_token(data: dict) -> str:
@@ -73,7 +74,7 @@ def create_refresh_token(data: dict) -> str:
         )
 
 
-def get_user_id_from_access_token(request: Request) -> ResponseFromToken:
+def get_user_id_from_access_token(request: Request) -> UUID:
     """Extract user id from the access token"""
     token = request.cookies.get("jwt")
 
@@ -104,7 +105,7 @@ def get_user_id_from_access_token(request: Request) -> ResponseFromToken:
     except Exception:
         raise credentials_exception
 
-    return ResponseFromToken(user_id=user_id, token=token)
+    return user_id
 
 
 def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:

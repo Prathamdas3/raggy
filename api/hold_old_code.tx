@@ -294,4 +294,13 @@ export type createDoc = typeof docsTable.$inferInsert;
 export type message = typeof messagesTable.$inferSelect;
 export type createMessage = typeof messagesTable.$inferInsert;
 
-
+axios.interceptors.response.use(
+  res => res,
+  async err => {
+    if (err.response?.status === 401) {
+      await axios.post("/refresh");  // tries refresh
+      return axios(err.config);      // retry original request
+    }
+    return Promise.reject(err);
+  }
+);

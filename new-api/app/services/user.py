@@ -1,5 +1,5 @@
 from app.models.all_schema import User
-from app.configs.database import SessionDep
+from sqlmodel import Session as SessionDep
 from app.utils.logger import get_logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -173,7 +173,7 @@ def update_user_details(
         session.commit()
         session.refresh(old_user)
 
-        logger.info(
+        logger.debug(
             f"Successfully updated the user details for the user with the id:{user_id}, with the fields: {list(updated_data.keys())}"
         )
 

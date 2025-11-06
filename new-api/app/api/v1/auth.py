@@ -18,6 +18,7 @@ from app.utils.token import (
     create_refresh_token,
     get_user_id_from_refresh_token,
 )
+from app.configs.database import SessionDep
 
 router = APIRouter(prefix="/auth")
 
@@ -25,7 +26,12 @@ logger = get_logger(__name__)
 
 
 @router.post("/sign_up", status_code=status.HTTP_201_CREATED)
-def on_signup(data: userschema.UserCreate, request: Request, response: ResponseFastAPI):
+def on_signup(
+    data: userschema.UserCreate,
+    request: Request,
+    response: ResponseFastAPI,
+    session: SessionDep,
+):
     ip_address = request.client.host
     user_agent = request.headers.get("user-agent")
     try:
@@ -38,7 +44,7 @@ def on_signup(data: userschema.UserCreate, request: Request, response: ResponseF
 
         logger.debug("Password hashed successfully")
 
-        new_user = user.create_user(user=user_data)
+        new_user = user.create_user(user=user_data, session=session)
 
         if not getattr(new_user, "id", None):
             raise HTTPException(
@@ -59,7 +65,7 @@ def on_signup(data: userschema.UserCreate, request: Request, response: ResponseF
             expires_at=datetime.now()
             + timedelta(days=config.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        sessions.create_session(details)
+        sessions.create_session(details, session=session)
         logger.info(
             "successfully generated the refresh token and stored in the session"
         )
@@ -97,13 +103,15 @@ def on_signup(data: userschema.UserCreate, request: Request, response: ResponseF
 
 
 @router.post("/sign_in", status_code=status.HTTP_200_OK)
-def on_signin(request: Request, response: ResponseFastAPI, data: auth.SignIn):
+def on_signin(
+    request: Request, response: ResponseFastAPI, data: auth.SignIn, session: SessionDep
+):
     ip_address = request.client.host
     user_agent = request.headers.get("user-agent")
     try:
         logger.debug("Starting sign in proccess for the user")
 
-        old_user = user.get_user_by_email(email=data.email)
+        old_user = user.get_user_by_email(email=data.email, session=session)
         if not old_user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -130,7 +138,7 @@ def on_signin(request: Request, response: ResponseFastAPI, data: auth.SignIn):
             expires_at=datetime.now()
             + timedelta(days=config.REFRESH_TOKEN_EXPIRE_DAYS),
         )
-        sessions.create_session(details)
+        sessions.create_session(details, session=session)
 
         access_token = create_access_token({"sub": str(old_user.id)})
         response.set_cookie(
@@ -165,7 +173,7 @@ def on_signin(request: Request, response: ResponseFastAPI, data: auth.SignIn):
 
 
 @router.delete("/sign_out", status_code=status.HTTP_200_OK)
-def on_signout(request: Request, response: ResponseFastAPI):
+def on_signout(request: Request, response: ResponseFastAPI, session: SessionDep):
     try:
         logger.debug("Starting to sign out process")
         user_id, token = get_user_id_from_refresh_token(request=request)
@@ -176,10 +184,10 @@ def on_signout(request: Request, response: ResponseFastAPI):
             )
 
         params = GetSessionReq(user_id=user_id, token=token)
-        old_session = sessions.get_session(data=params)
+        old_session = sessions.get_session(data=params, session=session)
 
         if not old_session:
-            sessions.remove_session(old_session=old_session)
+            sessions.remove_session(old_session=old_session, session=session)
             logger.debug("Successfully removed the session")
 
         response.delete_cookie(key="jwt")
@@ -191,12 +199,12 @@ def on_signout(request: Request, response: ResponseFastAPI):
         logger.error(f"Failed to log out the user {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error during signin",
+            detail="Internal server error during log out",
         )
 
 
 @router.get("/refresh", status_code=status.HTTP_200_OK)
-def on_token_refresh(request: Request, response: ResponseFastAPI):
+def on_token_refresh(request: Request, response: ResponseFastAPI, session: SessionDep):
     try:
         logger.debug("Starting to refresh the token")
         user_id, token = get_user_id_from_refresh_token(request=request)
@@ -206,7 +214,7 @@ def on_token_refresh(request: Request, response: ResponseFastAPI):
             )
 
         params = GetSessionReq(user_id=user_id, token=token)
-        old_session = sessions.get_session(data=params)
+        old_session = sessions.get_session(data=params, session=session)
         if not old_session:
             raise HTTPException(
                 detail="No user found", status_code=status.HTTP_401_UNAUTHORIZED
@@ -230,5 +238,5 @@ def on_token_refresh(request: Request, response: ResponseFastAPI):
         logger.error(f"Failed to refresh to access token {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error during signin",
+            detail="Internal server error during refresh",
         )

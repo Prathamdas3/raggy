@@ -1,5 +1,5 @@
 from app.models.all_schema import Session
-from app.configs.database import SessionDep
+from sqlmodel import Session as SessionDep
 from app.utils.logger import get_logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError

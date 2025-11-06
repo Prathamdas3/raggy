@@ -93,7 +93,7 @@ class Token(SQLModel, table=True):
 class Chats(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
-    chat_name: str = Field(default="", nullable=False)
+    chat_name: str | None = None
     is_bookmarked: bool = False
 
     # Relationships
