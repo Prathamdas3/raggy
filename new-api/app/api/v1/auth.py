@@ -36,40 +36,38 @@ def on_signup(
     user_agent = request.headers.get("user-agent")
     try:
         logger.debug("Starting with user registration endpoint")
-
         logger.debug("Password hashing....")
 
         user_data = data.model_dump()
         user_data["password"] = get_hashed_password(data.password)
 
         logger.debug("Password hashed successfully")
-
         new_user = user.create_user(user=user_data, session=session)
-
-        if not getattr(new_user, "id", None):
+        
+        if not new_user.data['id']:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to register new user with email:{data.email}",
             )
-        logger.debug(f"Successfully created the user with id:{new_user.data.id}")
+        logger.debug(f"Successfully created the user with id:{new_user.data['id']}")
         logger.debug(
-            f"started generating the refresh token for user id: {new_user.data.id}"
+            f"started generating the refresh token for user id: {new_user.data['id']}"
         )
-        refresh_token = create_refresh_token({"sub": str(new_user.data.id)})
+        refresh_token = create_refresh_token({"sub": str(new_user.data['id'])})
 
         details = SessionCreate(
             ip_address=ip_address,
             user_agent=user_agent,
-            user_id=new_user.data.id,
+            user_id=new_user.data['id'],
             token=refresh_token,
             expires_at=datetime.now()
-            + timedelta(days=config.REFRESH_TOKEN_EXPIRE_DAYS),
+            + timedelta(days=int(config.REFRESH_TOKEN_EXPIRE_DAYS)),
         )
         sessions.create_session(details, session=session)
         logger.info(
             "successfully generated the refresh token and stored in the session"
         )
-        access_token = create_access_token({"sub": str(new_user.data.id)})
+        access_token = create_access_token({"sub": str(new_user.data['id'])})
         response.set_cookie(
             key="jwt",
             value=access_token,
@@ -133,10 +131,10 @@ def on_signin(
         details = SessionCreate(
             ip_address=ip_address,
             user_agent=user_agent,
-            user_id=old_user.id,
+            user_id=old_user['id'],
             token=new_refresh_token,
             expires_at=datetime.now()
-            + timedelta(days=config.REFRESH_TOKEN_EXPIRE_DAYS),
+            + timedelta(days=int(config.REFRESH_TOKEN_EXPIRE_DAYS)),
         )
         sessions.create_session(details, session=session)
 
@@ -147,7 +145,7 @@ def on_signin(
             httponly=True,
             secure=False,  # True for production
             samesite="lax",  # none if frontend is deployed in another domain
-            max_age=config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            max_age=int(config.ACCESS_TOKEN_EXPIRE_MINUTES) * 60,
         )
 
         response.set_cookie(
@@ -156,7 +154,7 @@ def on_signin(
             httponly=True,
             secure=False,
             samesite="none",
-            max_age=config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+            max_age=int(config.REFRESH_TOKEN_EXPIRE_DAYS) * 24 * 60 * 60,
         )
 
         return Response(status="success", message="successfully logged in")

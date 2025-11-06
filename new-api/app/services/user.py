@@ -59,8 +59,8 @@ def get_user_by_id(user_id: UUID, session: SessionDep) -> User:
 
 def get_user_by_email(email: EmailStr, session: SessionDep) -> Optional[User]:
     """Fetching the user based on email"""
-    if not email or not isinstance(email, EmailStr):
-        raise ValueError("No email found")
+    if not email:
+        raise TypeError("No email found")
 
     if not email.strip():
         raise ValueError("Email can have a empty value")
@@ -99,13 +99,13 @@ def create_user(user: user.UserCreate, session: SessionDep) -> response.Response
     """Creating the user with the email and password"""
     try:
         logger.info("Registering the user")
-        old_user = get_user_by_email(email=user.email)
+        old_user = get_user_by_email(email=user["email"], session=session)
         if old_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email alreay exists, please try another email",
             )
-        new_user: User = User(email=user.email, password=user.password)
+        new_user: User = User(email=user["email"], password=user["password"])
         session.add(new_user)
         session.commit()
         session.refresh(new_user)
@@ -113,7 +113,7 @@ def create_user(user: user.UserCreate, session: SessionDep) -> response.Response
         return response.Response(
             status="success",
             message="Successfully registered",
-            data={"id": new_user.id, "email": user.email},
+            data={"id": new_user.id, "email": new_user.email},
         )
     except HTTPException:
         raise
@@ -121,7 +121,7 @@ def create_user(user: user.UserCreate, session: SessionDep) -> response.Response
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
         logger.error(
-            f"Failed to register the user with the email:{user.email},error: {str(e)}",
+            f"Failed to register the user with the email:{user['email']},error: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(

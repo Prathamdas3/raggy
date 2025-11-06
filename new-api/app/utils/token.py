@@ -18,14 +18,15 @@ def create_access_token(data: dict) -> str:
             )
 
         to_encode = data.copy()
-        expires_delta = config.ACCESS_TOKEN_EXPIRE_MINUTES
+        expires_delta = int(config.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         if expires_delta:
             expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
         else:
             expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-        to_encode.update({"exp": expire, type: "access", "iat": datetime.now()})
+    
+        to_encode.update({"exp": expire, "type": "access", "iat": datetime.now()})
 
         encoded_jwt = jwt.encode(
             to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM
@@ -52,14 +53,14 @@ def create_refresh_token(data: dict) -> str:
             )
 
         to_encode = data.copy()
-        expires_delta = config.REFRESH_TOKEN_EXPIRE_DAYS
+        expires_delta = int(config.REFRESH_TOKEN_EXPIRE_DAYS)
 
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(timezone.utc) + timedelta(days=expires_delta)
         else:
             expire = datetime.now(timezone.utc) + timedelta(days=7)
 
-        to_encode.update({"exp": expire, type: "refresh", "iat": datetime.now()})
+        to_encode.update({"exp": expire, "type": "refresh", "iat": datetime.now()})
 
         encode_jwt = jwt.encode(
             to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM
@@ -70,7 +71,7 @@ def create_refresh_token(data: dict) -> str:
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating access token: {str(e)}",
+            detail=f"Error creating refresh token: {str(e)}",
         )
 
 

@@ -6,7 +6,7 @@ T = TypeVar("T")
 
 
 class Status(Enum):
-    success = ("success",)
+    success = "success"
     error = "error"
 
 

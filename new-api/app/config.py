@@ -24,5 +24,8 @@ class Configs:
     )
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
+    class Config:
+        env_file = ".env"
+
 
 config = Configs()

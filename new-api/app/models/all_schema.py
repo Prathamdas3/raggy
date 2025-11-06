@@ -19,9 +19,9 @@ class Sender(Enum):
 
 class User(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    first_name: str | None = Field(default=None)
-    last_name: str | None = Field(default=None)
-    user_name: str = Field(default="", index=True, unique=True)
+    first_name: str | None = Field(default=None,nullable=True)
+    last_name: str | None = Field(default=None,nullable=True)
+    user_name: str = Field(default="", index=True)
     password: str = ""
     email: EmailStr = Field(
         default="", sa_type=sa.String(), nullable=False, index=True, unique=True
@@ -98,9 +98,10 @@ class Chats(SQLModel, table=True):
 
     # Relationships
     user: User = Relationship(back_populates="chats")
-    docs: "Docs" = Relationship(back_populates="chats", cascade_delete=True)
+    # FIXED: Changed from "chats" to "chat" to match the property name in Docs model
+    doc: Optional["Docs"] = Relationship(back_populates="chat", cascade_delete=True)
     messages: list["Messages"] = Relationship(
-        back_populates="chats", cascade_delete=True
+        back_populates="chat", cascade_delete=True
     )
 
     created_at: datetime | None = Field(
@@ -130,7 +131,8 @@ class Docs(SQLModel, table=True):
 
     # Relationships
     user: User = Relationship(back_populates="docs")
-    chat: Chats = Relationship(back_populates="docs")
+    # FIXED: Changed back_populates from "docs" to "doc" to match the property name in Chats model
+    chat: Chats = Relationship(back_populates="doc")
 
     created_at: datetime | None = Field(
         default=None,
@@ -157,6 +159,7 @@ class Messages(SQLModel, table=True):
     audio_url: str = ""
 
     # Relationships
+    # FIXED: Changed from "chats" to "chat" to match the property name
     chat: Chats = Relationship(back_populates="messages")
     user: User = Relationship(back_populates="messages")
 
