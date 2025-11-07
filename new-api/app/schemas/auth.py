@@ -37,23 +37,25 @@ class SignIn(BaseModel):
     email: EmailStr
     password: str
 
-    @field_validator("email", mode="before")
-    def verify_email(cls, v, field):
-        if not isinstance(v, EmailStr):
-            raise TypeError(f"{field.name} must follow the email format")
+    @field_validator("email", "password", mode="before")
+    def verify_email(cls, v, info):
+        if not isinstance(v, str):
+            raise TypeError(f"{info.field_name} must follow the email format")
 
         if not v.strip():
-            raise ValueError(f"{field.name} should not be empty")
+            raise ValueError(f"{info.field_name} should not be empty")
 
         return v.strip()
 
     @field_validator("password", mode="before")
-    def verify_password(cls, v, field):
+    def verify_password(cls, v, info):
         if not v or not isinstance(v, str):
-            raise TypeError(f"{field.name} should be a string")
+            raise TypeError(f"{info.field_name} should be a string")
 
         if not v.strip():
-            raise ValueError(f"{field.name} should not be empty")
+            raise ValueError(f"{info.field_name} should not be empty")
+
+        return v
 
 
 class GetSessionReq(BaseModel):
@@ -61,18 +63,20 @@ class GetSessionReq(BaseModel):
     token: str
 
     @field_validator("token", mode="before")
-    def check_token(cls, v, field):
+    def check_token(cls, v, info):
         if not v or not isinstance(v, str):
-            raise TypeError(f"{field.name} should be string")
+            raise TypeError(f"{info.field_name} should be string")
 
         if not v.strip():
-            raise ValueError(f"{field.name} can not be empty")
+            raise ValueError(f"{info.field_name} can not be empty")
 
         return v.strip()
 
     @field_validator("user_id", mode="before")
-    def check_user_id(cls, v, field):
-        if not v or not isinstance(v, UUID):
-            raise TypeError(f"{field.name} should be UUID")
-
-        return v
+    def check_user_id(cls, v, info):
+        if v is None:
+            raise ValueError(f"{info.field_name} cannot be empty")
+        try:
+            return UUID(str(v))
+        except ValueError:
+            raise ValueError(f"{info.field_name} must be a valid UUID")

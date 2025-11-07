@@ -3,14 +3,12 @@ from fastapi import (
     status,
     HTTPException,
     Request,
-    Response as ResponseFastAPI,
+    Response,
 )
-from app.schemas import user as userschema, auth
-from app.schemas.response import Response
+from app.schemas import user as userschema, auth, response as custom_response
 from app.utils.logger import get_logger
 from app.services import user, sessions
 from app.utils.password import get_hashed_password, verify_password
-from app.schemas.auth import SessionCreate, GetSessionReq
 from datetime import datetime, timedelta
 from app.config import config
 from app.utils.token import (
@@ -29,7 +27,7 @@ logger = get_logger(__name__)
 def on_signup(
     data: userschema.UserCreate,
     request: Request,
-    response: ResponseFastAPI,
+    response: Response,
     session: SessionDep,
 ):
     ip_address = request.client.host
@@ -43,8 +41,8 @@ def on_signup(
 
         logger.debug("Password hashed successfully")
         new_user = user.create_user(user=user_data, session=session)
-        
-        if not new_user.data['id']:
+
+        if not new_user.data["id"]:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to register new user with email:{data.email}",
@@ -53,12 +51,12 @@ def on_signup(
         logger.debug(
             f"started generating the refresh token for user id: {new_user.data['id']}"
         )
-        refresh_token = create_refresh_token({"sub": str(new_user.data['id'])})
+        refresh_token = create_refresh_token({"sub": str(new_user.data["id"])})
 
-        details = SessionCreate(
+        details = auth.SessionCreate(
             ip_address=ip_address,
             user_agent=user_agent,
-            user_id=new_user.data['id'],
+            user_id=new_user.data["id"],
             token=refresh_token,
             expires_at=datetime.now()
             + timedelta(days=int(config.REFRESH_TOKEN_EXPIRE_DAYS)),
@@ -67,7 +65,7 @@ def on_signup(
         logger.info(
             "successfully generated the refresh token and stored in the session"
         )
-        access_token = create_access_token({"sub": str(new_user.data['id'])})
+        access_token = create_access_token({"sub": str(new_user.data["id"])})
         response.set_cookie(
             key="jwt",
             value=access_token,
@@ -86,7 +84,7 @@ def on_signup(
             max_age=config.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         )
 
-        return Response(
+        return custom_response.Response(
             message="successfully created the user",
             status="success",
         )
@@ -102,13 +100,13 @@ def on_signup(
 
 @router.post("/sign_in", status_code=status.HTTP_200_OK)
 def on_signin(
-    request: Request, response: ResponseFastAPI, data: auth.SignIn, session: SessionDep
+    data: auth.SignIn, request: Request, response: Response, session: SessionDep
 ):
     ip_address = request.client.host
     user_agent = request.headers.get("user-agent")
     try:
         logger.debug("Starting sign in proccess for the user")
-        
+
         old_user = user.get_user_by_email(email=data.email, session=session)
         if not old_user:
             raise HTTPException(
@@ -128,10 +126,10 @@ def on_signin(
 
         new_refresh_token = create_refresh_token({"sub": str(old_user.id)})
 
-        details = SessionCreate(
+        details = auth.SessionCreate(
             ip_address=ip_address,
             user_agent=user_agent,
-            user_id=old_user['id'],
+            user_id=old_user.id,
             token=new_refresh_token,
             expires_at=datetime.now()
             + timedelta(days=int(config.REFRESH_TOKEN_EXPIRE_DAYS)),
@@ -157,7 +155,9 @@ def on_signin(
             max_age=int(config.REFRESH_TOKEN_EXPIRE_DAYS) * 24 * 60 * 60,
         )
 
-        return Response(status="success", message="successfully logged in")
+        return custom_response.Response(
+            status="success", message="successfully logged in"
+        )
 
     except HTTPException:
         raise
@@ -171,17 +171,17 @@ def on_signin(
 
 
 @router.delete("/sign_out", status_code=status.HTTP_200_OK)
-def on_signout(request: Request, response: ResponseFastAPI, session: SessionDep):
+def on_signout(request: Request, response: Response, session: SessionDep):
     try:
         logger.debug("Starting to sign out process")
-        user_id, token = get_user_id_from_refresh_token(request=request)
+        token_data= get_user_id_from_refresh_token(request=request)
 
-        if not user_id or not token:
+        if token_data.user_id is None or token_data.token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid creadentials"
             )
 
-        params = GetSessionReq(user_id=user_id, token=token)
+        params = auth.GetSessionReq(user_id=token_data.user_id, token=token_data.token)
         old_session = sessions.get_session(data=params, session=session)
 
         if not old_session:
@@ -190,7 +190,9 @@ def on_signout(request: Request, response: ResponseFastAPI, session: SessionDep)
 
         response.delete_cookie(key="jwt")
         response.delete_cookie(key="token")
-        return Response(status="Success", message="Successfully logged out")
+        return custom_response.Response(
+            status="success", message="Successfully logged out"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -202,23 +204,26 @@ def on_signout(request: Request, response: ResponseFastAPI, session: SessionDep)
 
 
 @router.get("/refresh", status_code=status.HTTP_200_OK)
-def on_token_refresh(request: Request, response: ResponseFastAPI, session: SessionDep):
+def on_token_refresh(request: Request, response: Response, session: SessionDep):
     try:
         logger.debug("Starting to refresh the token")
-        user_id, token = get_user_id_from_refresh_token(request=request)
-        if not user_id or not token:
+        token_data = get_user_id_from_refresh_token(request=request)
+    
+        if token_data.user_id is None and token_data.token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
             )
 
-        params = GetSessionReq(user_id=user_id, token=token)
+        params = auth.GetSessionReq(user_id=token_data.user_id, token=token_data.token)
         old_session = sessions.get_session(data=params, session=session)
+
         if not old_session:
+            logger.error(f"Failed to found old session for the user_id:{token_data.user_id}")
             raise HTTPException(
                 detail="No user found", status_code=status.HTTP_401_UNAUTHORIZED
             )
 
-        access_token = create_access_token({"sub": str(user_id)})
+        access_token = create_access_token({"sub": str(token_data.user_id)})
         response.set_cookie(
             key="jwt",
             value=access_token,
@@ -227,7 +232,9 @@ def on_token_refresh(request: Request, response: ResponseFastAPI, session: Sessi
             samesite="lax",  # none if frontend is deployed in another domain
             max_age=config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
-        return Response(status="success", message="Successfully refreshed")
+        return custom_response.Response(
+            status="success", message="Successfully refreshed"
+        )
 
     except HTTPException:
         raise

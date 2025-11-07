@@ -19,6 +19,7 @@ def create_session(data: SessionCreate, session: SessionDep) -> Response:
             user_agent=data.user_agent,
             user_id=data.user_id,
             expires_at=data.expires_at,
+            token=data.token,
         )
         session.add(new_session)
         session.commit()
