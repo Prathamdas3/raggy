@@ -23,14 +23,14 @@ class UpdateChat(BaseModel):
         return v.strip()
 
     @field_validator("is_bookmarked", mode="before")
-    def verify_is_bookmarked(cls, v, field):
+    def verify_is_bookmarked(cls, v, info):
         if not v:
             return v
 
-        if not isinstance(v, str):
-            raise TypeError(f"{field.name} should be type of string")
+        if not isinstance(v, bool):
+            raise TypeError(f"{info.field_name} should be type of boolean")
 
-        return v.strip()
+        return v
 
     def has_updates(self) -> bool:
         """Check if any fields were provided for update"""

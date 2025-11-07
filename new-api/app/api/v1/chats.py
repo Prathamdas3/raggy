@@ -23,7 +23,7 @@ def create_new_chat(
 ):
     try:
         logger.debug("Starting the process of creating a chat")
-        new_id = create_chat(user_id=user_id, session=session)
+        new_id = create_chat(user_id=UUID(str(user_id)), session=session)
 
         if not new_id:
             raise HTTPException(
@@ -49,7 +49,7 @@ def get_all_chats(
 ):
     try:
         logger.debug(f"Started to get the chats with the user_id:{user_id}")
-        chats = get_chats(user_id=user_id, session=session)
+        chats = get_chats(user_id=UUID(str(user_id)), session=session)
         logger.debug(
             f"Successfully fetched all the chats with the user_id:{user_id}, len: {len(chats)}"
         )
@@ -79,7 +79,7 @@ def update_chat(
             f"Starting to update the chat with the user_id:{user_id} and chat_id:{chat_id}"
         )
         chat = update_chat_fn(
-            chat_id=chat_id, user_id=user_id, session=session, details=details
+            chat_id=UUID(str(chat_id)), user_id=UUID(str(user_id)), session=session, details=details
         )
         if not chat:
             raise HTTPException(
@@ -109,7 +109,7 @@ def delete_chat(
             f"Strating to remove the chat withe the chat_id: {chat_id}, user_id: {user_id}"
         )
 
-        remove_chat(session=session, chat_id=chat_id, user_id=user_id)
+        remove_chat(session=session, chat_id=UUID(str(chat_id)), user_id=UUID(str(user_id)))
 
         logger.debug("Successfully removed the chat")
         return ReturnResponse(message="Successfully removed the chat", status="success")
