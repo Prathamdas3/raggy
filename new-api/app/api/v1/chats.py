@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from app.utils.logger import get_logger
 from app.configs.database import SessionDep
 from uuid import UUID
-from app.services.chat import (
+from app.services.db.chat import (
     create_chat,
     get_chats,
     update_chat as update_chat_fn,
@@ -10,7 +10,7 @@ from app.services.chat import (
 )
 from app.utils.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
-from app.schemas.chat import UpdateChat
+from app.schemas.db.chat import UpdateChat
 
 router = APIRouter()
 
@@ -79,7 +79,10 @@ def update_chat(
             f"Starting to update the chat with the user_id:{user_id} and chat_id:{chat_id}"
         )
         chat = update_chat_fn(
-            chat_id=UUID(str(chat_id)), user_id=UUID(str(user_id)), session=session, details=details
+            chat_id=UUID(str(chat_id)),
+            user_id=UUID(str(user_id)),
+            session=session,
+            details=details,
         )
         if not chat:
             raise HTTPException(
@@ -109,7 +112,9 @@ def delete_chat(
             f"Strating to remove the chat withe the chat_id: {chat_id}, user_id: {user_id}"
         )
 
-        remove_chat(session=session, chat_id=UUID(str(chat_id)), user_id=UUID(str(user_id)))
+        remove_chat(
+            session=session, chat_id=UUID(str(chat_id)), user_id=UUID(str(user_id))
+        )
 
         logger.debug("Successfully removed the chat")
         return ReturnResponse(message="Successfully removed the chat", status="success")

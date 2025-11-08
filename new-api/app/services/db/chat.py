@@ -5,7 +5,7 @@ from sqlmodel import Session as SessionDep, select
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.schemas.response import Response
-from app.schemas.chat import UpdateChat
+from app.schemas.db.chat import UpdateChat
 
 logger = get_logger(__name__)
 

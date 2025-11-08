@@ -5,7 +5,8 @@ from fastapi import (
     Request,
     Response,
 )
-from app.schemas import user as userschema, auth, response as custom_response
+from app.schemas import response as custom_response
+from app.schemas.db import auth, user as userschema
 from app.utils.logger import get_logger
 from app.services import user, sessions
 from app.utils.password import get_hashed_password, verify_password

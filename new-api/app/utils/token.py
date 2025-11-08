@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from app.config import config
 from jose import jwt, JWTError
 from fastapi import HTTPException, status, Request
-from app.schemas.user import ResponseFromToken
+from app.schemas.db.user import ResponseFromToken
 from uuid import UUID
 
 

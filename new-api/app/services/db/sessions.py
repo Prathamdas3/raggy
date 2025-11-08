@@ -3,7 +3,7 @@ from sqlmodel import Session as SessionDep
 from app.utils.logger import get_logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from app.schemas.auth import SessionCreate, GetSessionReq
+from app.schemas.db.auth import SessionCreate, GetSessionReq
 from app.schemas.response import Response
 from typing import Optional
 from sqlmodel import select

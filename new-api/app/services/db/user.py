@@ -1,12 +1,13 @@
 from app.models.all_schema import User
 from sqlmodel import Session as SessionDep
+from app.schemas.db import user
 from app.utils.logger import get_logger
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from pydantic import EmailStr
 from sqlmodel import select
 from typing import Optional
-from app.schemas import response, user
+from app.schemas import response
 from uuid import UUID
 
 logger = get_logger(__name__)

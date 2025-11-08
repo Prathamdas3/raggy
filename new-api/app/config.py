@@ -11,7 +11,7 @@ TEMP_DIR = BASE_DIR / "temp"
 
 @dataclass
 class Configs:
-    temp_dir: Path = TEMP_DIR
+    TEMP_DIR: Path = TEMP_DIR
     MODEL_ID: str = os.getenv("MODEL_ID", "")
     HUGGINGFACE_API_TOKEN: str = os.getenv("HUGGINGFACE_API_TOKEN", "")
     DATABASE_URI: str = os.getenv("DATABASE_URI", "")
