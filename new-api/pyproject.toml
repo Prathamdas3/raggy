@@ -9,6 +9,7 @@ dependencies = [
     "celery>=5.5.3",
     "dotenv>=0.9.9",
     "fastapi>=0.121.0",
+    "openai-whisper>=20250625",
     "passlib>=1.7.4",
     "psycopg2-binary>=2.9.11",
     "pydantic[email]>=2.12.3",

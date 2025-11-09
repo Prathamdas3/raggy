@@ -21,10 +21,13 @@ class SessionCreate(BaseModel):
         return v.strip()
 
     @field_validator("user_id")
-    def check_userid(cls, v):
-        if not isinstance(v, UUID):
-            raise TypeError("user_id must be a UUID")
-        return v
+    def check_userid(cls, v, info):
+        if v is None:
+            raise ValueError(f"{info.field_name} cannot be empty")
+        try:
+            return UUID(str(v))
+        except ValueError:
+            raise ValueError(f"{info.field_name} must be a valid UUID")
 
     @field_validator("expires_at")
     def check_datetime(cls, v):

@@ -4,6 +4,7 @@ from app.config import config
 from uuid import uuid4
 from app.utils.logger import get_logger
 import subprocess
+from app.utils.file import remove_file
 
 logger = get_logger(__name__)
 
@@ -66,6 +67,8 @@ def mp3_wav(path: Path) -> Path:
             raise RuntimeError("WAV file created but is empty")
 
         logger.info(f"WAV file verified. Size: {wav_size / (1024 * 1024):.2f} MB")
+
+        remove_file(file_path=path)
 
         return wav_file_path
 
