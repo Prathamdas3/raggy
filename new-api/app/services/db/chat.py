@@ -232,3 +232,78 @@ def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         )
 
 
+def update_docs(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
+    if not chat_id or not isinstance(chat_id, UUID):
+        raise TypeError("chat_id should be uuid")
+
+    if not user_id or not isinstance(user_id, UUID):
+        raise TypeError("user_id should be uuid")
+
+    try:
+        logger.debug(f"starting to update the summary text for chat_id:{chat_id}")
+        statement = (
+            select(Docs).where(Docs.chat_id == chat_id).where(Docs.user_id == user_id)
+        )
+        doc_data = session.exec(statement=statement).first()
+
+        if doc_data is None:
+            logger.error(f"No doc found with this chat_id: {chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid chat id for fetching the summary",
+            )
+
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while fetching the summary of the chat: {chat_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+
+def get_audio_url(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
+    if not chat_id or not isinstance(chat_id, UUID):
+        raise TypeError("chat_id should be uuid")
+
+    if not user_id or not isinstance(user_id, UUID):
+        raise TypeError("user_id should be uuid")
+
+    try:
+        logger.debug(f"Starting to fetch the audio url of the summary: {chat_id}")
+        statement = (
+            select(Docs).where(Docs.chat_id == chat_id).where(Docs.user_id == user_id)
+        )
+        doc_data = session.exec(statement=statement).first()
+
+        if doc_data is None:
+            logger.error(f"No doc found with this chat_id: {chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid chat id for fetching the summary",
+            )
+
+        logger.debug("Successfully fetched the docs for the summary")
+        return doc_data.audio_url
+    except (IntegrityError, SQLAlchemyError) as e:
+        logger.error(
+            f"Failed to fetch the summary audio for the chat id: {chat_id} for the user with user id: {user_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while fetching the summary audio url of the chat: {chat_id} for the user with user id: {user_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+
