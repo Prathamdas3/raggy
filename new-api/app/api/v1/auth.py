@@ -9,10 +9,10 @@ from app.schemas import response as custom_response
 from app.schemas.db import auth, user as userschema
 from app.utils.logger import get_logger
 from app.services.db import user, sessions
-from app.utils.password import get_hashed_password, verify_password
+from app.services.auth.password import get_hashed_password, verify_password
 from datetime import datetime, timedelta
 from app.config import config
-from app.utils.token import (
+from app.services.auth.token import (
     create_access_token,
     create_refresh_token,
     get_user_id_from_refresh_token,

@@ -20,6 +20,7 @@ dependencies = [
     "python-multipart>=0.0.20",
     "qdrant-client>=1.15.1",
     "redis>=7.0.1",
+    "sentence-transformers>=5.1.2",
     "sqlmodel>=0.0.27",
     "uvicorn>=0.38.0",
     "yt-dlp>=2025.10.22",

@@ -37,12 +37,44 @@ class CreateText(BaseModel):
             raise ValueError(f"{info.field_name} can not be empty")
 
         return v
-    
-    @field_validator("user_id","chat_id",mode="before")
-    def check_user_data(cls,v,info):
+
+    @field_validator("user_id", "chat_id", mode="before")
+    def check_user_data(cls, v, info):
         if v is None:
             raise ValueError(f"{info.field_name} cannot be empty")
         try:
             return UUID(str(v))
         except ValueError:
             raise ValueError(f"{info.field_name} must be a valid UUID")
+
+
+class UpdateDocsData(BaseModel):
+    user_id: UUID
+    chat_id: UUID
+    summary_text: Optional[str] = None
+    audio_url: Optional[str] = None
+
+    class Config:
+        exclude_unset = True
+
+    @field_validator("user_id", "chat_id", mode="before")
+    def check_fields(cls, v, info):
+        if v is None:
+            raise ValueError(f"{info.field_name} cannot be empty")
+        try:
+            return UUID(str(v))
+        except ValueError:
+            raise ValueError(f"{info.field_name} must be a valid UUID")
+
+    @field_validator("summary_text", "audio_url", mode="before")
+    def check_details(cls, v, info):
+        if not v:
+            return v
+
+        if not isinstance(v, str):
+            TypeError(f"{info.field_name} must be string")
+
+        return v
+
+    def has_updates(self) -> bool:
+        return any(v is not None for v in self.model_dump(exclude_unset=True).values())

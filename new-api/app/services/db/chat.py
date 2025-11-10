@@ -1,4 +1,4 @@
-from app.models.all_schema import Chats, Docs
+from app.models.all_schema import Chats, Docs, Messages
 from fastapi import HTTPException, status
 from app.utils.logger import get_logger
 from sqlmodel import Session as SessionDep, select
@@ -6,6 +6,8 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.schemas.response import Response
 from app.schemas.db.chat import UpdateChat
+from sqlalchemy.orm import aliased
+from app.schemas.db.message import MessageResponse
 
 logger = get_logger(__name__)
 
@@ -34,6 +36,7 @@ def create_chat(session: SessionDep, user_id: UUID) -> UUID:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database operation failed",
         )
+
     except Exception as e:
         session.rollback()
         logger.error(
@@ -129,20 +132,14 @@ def remove_chat(session: SessionDep, chat_id: UUID, user_id: UUID) -> Response:
 
 
 def update_chat(
-    chat_id: UUID,
     details: UpdateChat,
     session: SessionDep,
-    user_id: UUID,
 ) -> UUID:
-    if not chat_id or not isinstance(chat_id, UUID):
-        raise TypeError("chat_id should be uuid")
 
-    if not user_id or not isinstance(user_id, UUID):
-        raise TypeError("user_id should be uuid")
 
     try:
-        logger.debug(f"Started with the updates of chat with id:{chat_id}")
-        old_chat = session.get(Chats, chat_id)
+        logger.debug(f"Started with the updates of chat with id:{details.chat_id}")
+        old_chat = session.get(Chats, details.chat_id)
         if not old_chat:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -158,7 +155,7 @@ def update_chat(
         session.commit()
 
         logger.debug(
-            f"Successfully updated the chat for the chat with the id: {chat_id}, with the fields: {list(update_chat.keys())}"
+            f"Successfully updated the chat for the chat with the id: {details.chat_id}, with the fields: {list(update_chat.keys())}"
         )
 
         return old_chat.id
@@ -169,7 +166,7 @@ def update_chat(
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
         logger.error(
-            f"Failed to update the chat with the id:{chat_id}, error:{str(e)}",
+            f"Failed to update the chat with the id:{details.chat_id}, error:{str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -180,7 +177,7 @@ def update_chat(
     except Exception as e:
         session.rollback()
         logger.error(
-            f"Failed to update the chat with the id:{chat_id}, error:{str(e)}",
+            f"Failed to update the chat with the id:{details.chat_id}, error:{str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -221,38 +218,6 @@ def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database operation failed",
         )
-    except Exception as e:
-        logger.error(
-            f"Unexpected error while fetching the summary of the chat: {chat_id},error: {str(e)}",
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed",
-        )
-
-
-def update_docs(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
-    if not chat_id or not isinstance(chat_id, UUID):
-        raise TypeError("chat_id should be uuid")
-
-    if not user_id or not isinstance(user_id, UUID):
-        raise TypeError("user_id should be uuid")
-
-    try:
-        logger.debug(f"starting to update the summary text for chat_id:{chat_id}")
-        statement = (
-            select(Docs).where(Docs.chat_id == chat_id).where(Docs.user_id == user_id)
-        )
-        doc_data = session.exec(statement=statement).first()
-
-        if doc_data is None:
-            logger.error(f"No doc found with this chat_id: {chat_id}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid chat id for fetching the summary",
-            )
-
     except Exception as e:
         logger.error(
             f"Unexpected error while fetching the summary of the chat: {chat_id},error: {str(e)}",
@@ -307,3 +272,59 @@ def get_audio_url(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         )
 
 
+def get_chat_messages(chat_id: UUID, user_id: UUID, session: SessionDep):
+    try:
+        logger.debug(
+            "Getting strated to fetch the messages of user_id:{user_id} and cha_id:{chat_id}"
+        )
+
+        Question = aliased(Messages)
+        Answer = aliased(Messages)
+
+        statement = (
+            select(Question, Answer)
+            .outerjoin(
+                Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
+            )
+            .where(Question.chat_id == chat_id)
+            .where(Question.user_id == user_id)
+            .where(Question.sender == "user")
+            .order_by(Question.created_at.asc())
+        )
+
+        messages = session.exec(statement=statement).all()
+
+        messages_pair = []
+        for question, response in messages:
+            messages_pair.append(
+                {
+                    "question": MessageResponse.model_validate(question),
+                    "response": MessageResponse.model_validate(response)
+                    if response
+                    else None,
+                }
+            )
+
+        logger.info(f"Successfully got all the messages under the chat_id {chat_id}")
+
+        return messages_pair
+
+    except (IntegrityError, SQLAlchemyError) as e:
+        session.rollback()
+        logger.error(
+            f"Integrity constraint violation while getting all the messages in the chat with id: {chat_id}: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Violates database constraints"
+        )
+
+    except Exception as e:
+        session.rollback()
+        logger.error(
+            f"Unexpected error while getting all the messages in the chat with id {chat_id}: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred",
+        )

@@ -9,7 +9,7 @@ from app.services.db.chat import (
     remove_chat,
     get_summary as get_chat_summary,
 )
-from app.utils.token import get_user_id_from_access_token
+from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import UpdateChat
 

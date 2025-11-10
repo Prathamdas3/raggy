@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, HTTPException, Depends
 from app.utils.logger import get_logger
 from app.schemas.db.docs import DocsReq
-from app.utils.token import get_user_id_from_access_token
+from app.services.auth.token import get_user_id_from_access_token
 
 router = APIRouter()
 logger = get_logger(__name__)

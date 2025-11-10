@@ -1,15 +1,16 @@
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.utils.logger import get_logger
 from app.models.all_schema import Docs
 from app.schemas.db import docs
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from fastapi import HTTPException, status
+from app.schemas.db.docs import UpdateDocsData
 
 logger = get_logger(__name__)
 
 
-def create_original_text(session: Session, data: docs.CreateText) -> UUID:
+def save_original_text(session: Session, data: docs.CreateText) -> UUID:
     try:
         logger.debug("Started to store new docs with the create original text")
         new_doc = Docs(
@@ -36,6 +37,45 @@ def create_original_text(session: Session, data: docs.CreateText) -> UUID:
         session.rollback()
         logger.error(
             f"Unexpected error while creating the chat: {data.user_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+
+def update_docs(details: UpdateDocsData, session: Session) -> UUID:
+    try:
+        logger.debug(
+            f"starting to update the summary text for chat_id:{details.chat_id}"
+        )
+        statement = (
+            select(Docs)
+            .where(Docs.chat_id == details.chat_id)
+            .where(Docs.user_id == details.user_id)
+        )
+        doc_data = session.exec(statement=statement).first()
+
+        if doc_data is None:
+            logger.error(f"No doc found with this chat_id: {details.chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid chat id for fetching the summary",
+            )
+
+        for field, value in details.model_dump().items():
+            setattr(doc_data, field, value)
+
+        session.add(doc_data)
+        session.commit()
+
+        logger.debug(f"successfully updated the docs with chat_id of {details.chat_id}")
+        return doc_data.id
+
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while fetching the summary of the chat: {details.chat_id},error: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(
