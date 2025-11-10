@@ -1,4 +1,4 @@
-from app.models.all_schema import Chats
+from app.models.all_schema import Chats, Docs
 from fastapi import HTTPException, status
 from app.utils.logger import get_logger
 from sqlmodel import Session as SessionDep, select
@@ -10,9 +10,7 @@ from app.schemas.db.chat import UpdateChat
 logger = get_logger(__name__)
 
 
-def create_chat(
-    session: SessionDep, user_id: UUID 
-) -> UUID:
+def create_chat(session: SessionDep, user_id: UUID) -> UUID:
     """Creating chat for the user"""
     if not user_id or not isinstance(user_id, UUID):
         raise TypeError("user_id must be an uuid type")
@@ -48,9 +46,7 @@ def create_chat(
         )
 
 
-def get_chats(
-    session: SessionDep, user_id: UUID
-) -> list[Chats]:
+def get_chats(session: SessionDep, user_id: UUID) -> list[Chats]:
     if not user_id or not isinstance(user_id, UUID):
         raise TypeError("user_id must be an uuid type")
 
@@ -59,7 +55,7 @@ def get_chats(
         statement = select(Chats).where(Chats.user_id == user_id)
         chats = session.exec(statement=statement).all()
 
-        if not chats:
+        if chats is None:
             return []
 
         logger.debug("Successfully fetched the chats")
@@ -84,9 +80,7 @@ def get_chats(
         )
 
 
-def remove_chat(
-    session: SessionDep, chat_id: UUID, user_id:UUID
-) -> Response:
+def remove_chat(session: SessionDep, chat_id: UUID, user_id: UUID) -> Response:
     if not chat_id or not isinstance(chat_id, UUID):
         raise TypeError("chat_id should be uuid")
 
@@ -193,3 +187,48 @@ def update_chat(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database operation failed",
         )
+
+
+def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
+    if not chat_id or not isinstance(chat_id, UUID):
+        raise TypeError("chat_id should be uuid")
+
+    if not user_id or not isinstance(user_id, UUID):
+        raise TypeError("user_id should be uuid")
+
+    try:
+        logger.debug(f"Starting to fetch the summary for cht_id:{chat_id}")
+        statement = (
+            select(Docs).where(Docs.chat_id == chat_id).where(Docs.user_id == user_id)
+        )
+        doc_data = session.exec(statement=statement).first()
+
+        if doc_data is None:
+            logger.error(f"No doc found with this chat_id: {chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid chat id for fetching the summary",
+            )
+
+        logger.debug("Successfully fetched the docs for the summary")
+        return doc_data.summary_text
+    except (IntegrityError, SQLAlchemyError) as e:
+        logger.error(
+            f"Failed to fetch the summary for the chat for the user with user id: {user_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while fetching the summary of the chat: {chat_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+

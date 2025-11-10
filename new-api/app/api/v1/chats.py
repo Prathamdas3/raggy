@@ -7,17 +7,18 @@ from app.services.db.chat import (
     get_chats,
     update_chat as update_chat_fn,
     remove_chat,
+    get_summary as get_chat_summary,
 )
 from app.utils.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import UpdateChat
 
-router = APIRouter()
+router = APIRouter(prefix="/chats")
 
 logger = get_logger(__name__)
 
 
-@router.post("/chats", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_new_chat(
     session: SessionDep, user_id: UUID = Depends(get_user_id_from_access_token)
 ):
@@ -43,7 +44,7 @@ def create_new_chat(
         )
 
 
-@router.get("/chats", status_code=status.HTTP_200_OK)
+@router.get("/", status_code=status.HTTP_200_OK)
 def get_all_chats(
     session: SessionDep, user_id: UUID = Depends(get_user_id_from_access_token)
 ):
@@ -67,7 +68,7 @@ def get_all_chats(
         )
 
 
-@router.patch("/chats/{chat_id}", status_code=status.HTTP_200_OK)
+@router.patch("/{chat_id}", status_code=status.HTTP_200_OK)
 def update_chat(
     chat_id: UUID,
     session: SessionDep,
@@ -101,7 +102,7 @@ def update_chat(
         )
 
 
-@router.delete("/chats/{chat_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{chat_id}", status_code=status.HTTP_200_OK)
 def delete_chat(
     session: SessionDep,
     chat_id: UUID,
@@ -127,4 +128,32 @@ def delete_chat(
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while removing the chat",
+        )
+
+
+@router.get("/{chat_id}/summary", status_code=status.HTTP_200_OK)
+def get_summary(
+    chat_id: UUID,
+    session: SessionDep,
+    user_id: UUID = Depends(get_user_id_from_access_token),
+):
+    try:
+        logger.debug(f"Started to fetch the summary for the chat_id:{chat_id}")
+
+        summary = get_chat_summary(session=session, user_id=user_id, chat_id=chat_id)
+
+        logger.debug("Successfully fetched the summary for the docs")
+        return ReturnResponse(
+            status="Success",
+            message="successfully fetched the summary for the summary",
+            data={"summary": summary},
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get the summary for the chat: {str(e)}", exc_info=True)
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch the summary for the chat",
         )

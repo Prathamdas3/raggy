@@ -23,6 +23,19 @@ class Configs:
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
     )
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    QDRANT_HOST: str = os.getenv("QDRANT_HOST", "localhost")
+    QDRANT_PORT: int = int(os.getenv("QDRANT_PORT", "6333"))
+    QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME", "documents")
+    QDRANT_VECTOR_SIZE: int = int(os.getenv("QDRANT_VECTOR_SIZE", "384"))
+    QDRANT_USE_HTTPS: bool = bool(os.getenv("QDRANT_USE_HTTPS", "false"))
+    HUGGINGFACE_MODEL: str = os.getenv("HUGGINGFACE_MODEL", "")
+    HUGGINGFACE_DEVICE: str = os.getenv("HUGGINGFACE_DEVICE", "cpu")
+
+    MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "localhost:9000")
+    MINIO_ACCESS_KEY: str = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+    MINIO_SECRET_KEY: str = os.getenv("MINIO_SECRET_KEY", "")
+    MINIO_BUCKET_NAME: str = os.getenv("MINIO_BUCKET_NAME", "audio-files")
+    MINIO_SECURE: str= os.getenv("MINIO_SECURE", "false")
 
     class Config:
         env_file = ".env"
