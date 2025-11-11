@@ -12,6 +12,7 @@ dependencies = [
     "gtts>=2.5.4",
     "langchain-huggingface>=1.0.1",
     "langchain-qdrant>=1.1.0",
+    "langchain-text-splitters>=1.0.0",
     "minio>=7.2.18",
     "openai-whisper>=20250625",
     "passlib>=1.7.4",

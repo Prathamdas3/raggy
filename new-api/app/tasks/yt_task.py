@@ -1,6 +1,7 @@
 from app.configs.celery import celery
 from app.schemas.db.docs import CreateText, UpdateDocsData
 from app.schemas.input.yt import YTInput
+from app.schemas.rag.text_spliter import SplitTextArgs
 from app.services.common.model import get_response
 from app.utils.logger import get_logger
 from fastapi import HTTPException, status
@@ -9,6 +10,10 @@ from app.services.common.wav_converter import mp3_wav
 from app.services.common.wav_text import wav_text
 from app.services.db.docs import save_original_text, update_docs
 from app.schemas.response import Response
+from app.services.common.text_audio import text_audio
+from app.services.minio_save import save_audio_minio
+from app.services.rag.text_splitter import split_text
+from app.services.rag.store_data import save_vectorsore
 
 logger = get_logger(__name__)
 
@@ -52,16 +57,27 @@ def task_yt(self, data: YTInput):
         )  # pass the session here
 
         # 5. push the original data to a text spliter to save that in the vector store
-        # create the text spliter here and pass the content
+        text_split = SplitTextArgs(
+            chat_id=data.chat_id, user_id=data.user_id, text=text_wav
+        )
+        splited_text = split_text(data=text_split)
+
+        save_vectorsore(chunks=splited_text)
 
         # 6. start creating the summary text
         summary_text = get_response(query=save_text)
 
         # 7. start creating the audio of the summary text
+        temp_audio_path = text_audio(text=summary_text)
+
+        audio_url = save_audio_minio(temp_audio_path)
 
         # 8. save the audio url and the summary text in the db
         save_summary_and_audio = UpdateDocsData(
-            user_id=data.user_id, chat_id=data.chat_id, summary_text=summary_text
+            user_id=data.user_id,
+            chat_id=data.chat_id,
+            summary_text=summary_text,
+            audio_url=audio_url,
         )
         update_docs(save_summary_and_audio)
 
