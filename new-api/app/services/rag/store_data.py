@@ -6,7 +6,7 @@ from uuid import uuid4
 logger = get_logger(__name__)
 
 
-def save_vectorsore(chunks: list[ChunkData]):
+def save_vectorstore(chunks: list[ChunkData]):
     logger.debug("Started the process of the storing the chunks in the vector store")
 
     if not chunks or not isinstance(chunks, list):

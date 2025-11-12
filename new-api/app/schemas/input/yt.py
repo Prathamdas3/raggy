@@ -20,7 +20,7 @@ class YTInput(BaseModel):
 
         if not YT_REGEX.match(v):
             raise ValueError("Invalid data format")
-        
+
         return v
 
     @field_validator("user_id", "chat_id", mode="before")
@@ -29,5 +29,61 @@ class YTInput(BaseModel):
             raise ValueError(f"{info.field_name} cannot be empty")
         try:
             return UUID(str(v))
-        except ValueError:
+        except Exception:
+            raise ValueError(f"{info.field_name} must be a valid UUID")
+
+
+class TaskInput(BaseModel):
+    user_id: UUID
+    chat_id: UUID
+    text: str
+
+    @field_validator("text", mode="before")
+    def check_text(cls, v, info):
+        if not v or not isinstance(v, str):
+            raise TypeError(f"{info.field_name} must be string")
+
+        v = v.strip()
+
+        if not v:
+            raise ValueError(f"{info.field_name} must be not be empty")
+
+        return v
+
+    @field_validator("user_id", "chat_id", mode="before")
+    def verify_ids(cls, v, info):
+        if v is None:
+            raise ValueError(f"{info.field_name} can not be empty")
+
+        try:
+            return UUID(str(v))
+        except Exception:
+            raise ValueError(f"{info.field_name} must be a valid UUID")
+
+
+class SpechInput(BaseModel):
+    user_id:UUID
+    chat_id:UUID
+    summary_text:str
+
+    @field_validator("summary_text", mode="before")
+    def check_text(cls, v, info):
+        if not v or not isinstance(v, str):
+            raise TypeError(f"{info.field_name} must be string")
+
+        v = v.strip()
+
+        if not v:
+            raise ValueError(f"{info.field_name} must be not be empty")
+
+        return v
+
+    @field_validator("user_id", "chat_id", mode="before")
+    def verify_ids(cls, v, info):
+        if v is None:
+            raise ValueError(f"{info.field_name} can not be empty")
+
+        try:
+            return UUID(str(v))
+        except Exception:
             raise ValueError(f"{info.field_name} must be a valid UUID")
