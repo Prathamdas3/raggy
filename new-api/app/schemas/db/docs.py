@@ -53,6 +53,7 @@ class UpdateDocsData(BaseModel):
     chat_id: UUID
     summary_text: Optional[str] = None
     audio_url: Optional[str] = None
+    question_id: Optional[UUID] = None
 
     class Config:
         exclude_unset = True
@@ -72,9 +73,19 @@ class UpdateDocsData(BaseModel):
             return v
 
         if not isinstance(v, str):
-            TypeError(f"{info.field_name} must be string")
+            raise TypeError(f"{info.field_name} must be string")
 
         return v
+
+    @field_validator("question_id", mode="before")
+    def check_question_id(cls, v, info):
+        if not v:
+            return v
+
+        try:
+            UUID(str(v))
+        except Exception:
+            raise ValueError(f"{info.field_name} should be a valid UUID")
 
     def has_updates(self) -> bool:
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())

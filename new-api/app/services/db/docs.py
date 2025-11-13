@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from app.utils.logger import get_logger
-from app.models.all_schema import Docs
+from app.models.all_schema import Docs, Messages
 from app.schemas.db import docs
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -50,25 +50,46 @@ def update_docs(details: UpdateDocsData, session: Session) -> UUID:
         logger.debug(
             f"starting to update the summary text for chat_id:{details.chat_id}"
         )
-        statement = (
-            select(Docs)
-            .where(Docs.chat_id == details.chat_id)
-            .where(Docs.user_id == details.user_id)
-        )
-        doc_data = session.exec(statement=statement).first()
-
-        if doc_data is None:
-            logger.error(f"No doc found with this chat_id: {details.chat_id}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid chat id for fetching the summary",
+        if details.question_id in details:
+            statement = (
+                select(Docs)
+                .where(Docs.chat_id == details.chat_id)
+                .where(Docs.user_id == details.user_id)
             )
+            doc_data = session.exec(statement=statement).first()
 
-        for field, value in details.model_dump().items():
-            setattr(doc_data, field, value)
+            if doc_data is None:
+                logger.error(f"No doc found with this chat_id:   {details.chat_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid chat id for fetching the summary",
+                )
 
-        session.add(doc_data)
-        session.commit()
+            for field, value in details.model_dump().items():
+                setattr(doc_data, field, value)
+
+            session.add(doc_data)
+            session.commit()
+        else:
+            statement = (
+                select(Messages)
+                .where(Messages.chat_id == details.chat_id)
+                .where(Messages.user_id == details.user_id)
+                .where(Messages.question_id == details.question_id)
+            )
+            doc_data = session.exec(statement=statement).first()
+            if doc_data is None:
+                logger.error(f"No doc found with this chat_id:   {details.chat_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid chat id for fetching the summary",
+                )
+
+            for field, value in details.model_dump().items():
+                setattr(doc_data, field, value)
+
+            session.add(doc_data)
+            session.commit()
 
         logger.debug(f"successfully updated the docs with chat_id of {details.chat_id}")
         return doc_data.id

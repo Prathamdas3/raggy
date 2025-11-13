@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from app.schemas.db.docs import DocsReq
+from app.schemas.input.yt import YTInput
 from app.utils.logger import get_logger
 from app.configs.database import SessionDep
 from uuid import UUID
@@ -12,6 +14,7 @@ from app.services.db.chat import (
 from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import UpdateChat
+from app.tasks.chains import chain_yt
 
 router = APIRouter(prefix="/chats")
 
@@ -20,7 +23,9 @@ logger = get_logger(__name__)
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_new_chat(
-    session: SessionDep, user_id: UUID = Depends(get_user_id_from_access_token)
+    session: SessionDep,
+    data: DocsReq,
+    user_id: UUID = Depends(get_user_id_from_access_token),
 ):
     try:
         logger.debug("Starting the process of creating a chat")
@@ -31,6 +36,12 @@ def create_new_chat(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="No chat created ",
             )
+
+        if "link" in data:
+            details = YTInput(user_id=user_id, chat_id=new_id, link=data.link)
+            chain_yt(data=details)
+        else:
+            pass
 
         logger.debug(f"Successfully created the chat with the id {new_id}")
         return ReturnResponse(status="success", message="Successfully created the chat")

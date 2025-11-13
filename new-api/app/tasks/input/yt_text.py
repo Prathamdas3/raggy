@@ -3,16 +3,15 @@ from app.schemas.input.yt import TaskInput, YTInput
 from app.services.common.wav_converter import mp3_wav
 from app.services.common.wav_text import wav_text
 from app.services.input.yt import yt_mp3
-from app.tasks.core.save_text_db import task_save_text_db
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 @Celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_download_yt_wav(self, data: YTInput):
+def task_yt(self, data: dict):
     """Celery task for extracting the details from yt link, and coverteding them to text as well as to store them"""
-
+    data = YTInput(**data)
     logger.debug("starting the task to convert the yt link to wav")
 
     try:
@@ -31,7 +30,9 @@ def task_download_yt_wav(self, data: YTInput):
         save_text_db = TaskInput(
             chat_id=data.chat_id, user_id=data.user_id, text=text_wav
         )
-        task_save_text_db.delay(data=save_text_db)
 
-    except Exception:
-        raise
+        return save_text_db.model_dump().dict()
+
+    except Exception as e:
+        logger.error(f"Error while processing Celery task(yt): {e}", exc_info=True)
+        raise self.retry(exc=e)
