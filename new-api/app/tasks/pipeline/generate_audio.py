@@ -1,13 +1,13 @@
-from app.configs.celery import Celery
+from app.configs.celery import celery
 from app.services.common.text_audio import text_audio
-from app.services.minio_save import save_audio_minio
+from app.services.common.minio_save import save_audio_minio
 from app.utils.logger import get_logger
 from app.schemas.input.yt import SpechInput
 
 logger = get_logger(__name__)
 
 
-@Celery.task(bind=True, max_retries=3, default_retry_delay=10)
+@celery.task(bind=True, max_retries=3, default_retry_delay=10)
 def task_generate_audio(self, data=dict):
     data = SpechInput(**data)
     logger.debug(

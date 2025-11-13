@@ -77,9 +77,13 @@ class MinIOClientSingleton:
             client = cls.get_client()
 
             if not client.bucket_exists(config.MINIO_BUCKET_NAME):
-                logger.info(f"Bucket '{config.MINIO_BUCKET_NAME}' does not exist. Creating...")
+                logger.info(
+                    f"Bucket '{config.MINIO_BUCKET_NAME}' does not exist. Creating..."
+                )
                 client.make_bucket(config.MINIO_BUCKET_NAME)
-                logger.info(f"✓ Bucket '{config.MINIO_BUCKET_NAME}' created successfully")
+                logger.info(
+                    f"✓ Bucket '{config.MINIO_BUCKET_NAME}' created successfully"
+                )
             else:
                 logger.info(f"✓ Bucket '{config.MINIO_BUCKET_NAME}' already exists")
 

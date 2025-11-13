@@ -135,8 +135,6 @@ def update_chat(
     details: UpdateChat,
     session: SessionDep,
 ) -> UUID:
-
-
     try:
         logger.debug(f"Started with the updates of chat with id:{details.chat_id}")
         old_chat = session.get(Chats, details.chat_id)

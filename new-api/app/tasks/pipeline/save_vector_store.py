@@ -1,4 +1,4 @@
-from app.configs.celery import Celery
+from app.configs.celery import celery
 from app.schemas.rag.text_spliter import SplitTextArgs
 from app.services.rag.store_data import save_vectorstore
 from app.services.rag.text_splitter import split_text
@@ -8,7 +8,7 @@ from app.schemas.input.yt import TaskInput
 logger = get_logger(__name__)
 
 
-@Celery.task(bind=True, max_retries=3, default_retry_delay=10)
+@celery.task(bind=True, max_retries=3, default_retry_delay=10)
 def task_save_vector_store(self, data: dict):
     data = TaskInput(**data)
     logger.debug("Started the task of storing the data in vector store")

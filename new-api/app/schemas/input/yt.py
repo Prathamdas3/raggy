@@ -62,9 +62,9 @@ class TaskInput(BaseModel):
 
 
 class SpechInput(BaseModel):
-    user_id:UUID
-    chat_id:UUID
-    summary_text:str
+    user_id: UUID
+    chat_id: UUID
+    summary_text: str
 
     @field_validator("summary_text", mode="before")
     def check_text(cls, v, info):

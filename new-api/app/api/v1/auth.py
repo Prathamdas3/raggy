@@ -175,7 +175,7 @@ def on_signin(
 def on_signout(request: Request, response: Response, session: SessionDep):
     try:
         logger.debug("Starting to sign out process")
-        token_data= get_user_id_from_refresh_token(request=request)
+        token_data = get_user_id_from_refresh_token(request=request)
 
         if token_data.user_id is None or token_data.token is None:
             raise HTTPException(
@@ -209,7 +209,7 @@ def on_token_refresh(request: Request, response: Response, session: SessionDep):
     try:
         logger.debug("Starting to refresh the token")
         token_data = get_user_id_from_refresh_token(request=request)
-    
+
         if token_data.user_id is None and token_data.token is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
@@ -219,7 +219,9 @@ def on_token_refresh(request: Request, response: Response, session: SessionDep):
         old_session = sessions.get_session(data=params, session=session)
 
         if not old_session:
-            logger.error(f"Failed to found old session for the user_id:{token_data.user_id}")
+            logger.error(
+                f"Failed to found old session for the user_id:{token_data.user_id}"
+            )
             raise HTTPException(
                 detail="No user found", status_code=status.HTTP_401_UNAUTHORIZED
             )

@@ -206,7 +206,9 @@ class QdrantVectorStoreSingleton:
                 logger.info(f"  - Vector size: {actual_vector_size}")
                 logger.info("  - Distance metric: COSINE")
             else:
-                logger.info(f"✓ Collection '{config.QDRANT_COLLECTION_NAME}' already exists")
+                logger.info(
+                    f"✓ Collection '{config.QDRANT_COLLECTION_NAME}' already exists"
+                )
 
                 # Verify collection configuration
                 collection_info = client.get_collection(config.QDRANT_COLLECTION_NAME)

@@ -35,7 +35,7 @@ class Configs:
     MINIO_ACCESS_KEY: str = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
     MINIO_SECRET_KEY: str = os.getenv("MINIO_SECRET_KEY", "")
     MINIO_BUCKET_NAME: str = os.getenv("MINIO_BUCKET_NAME", "audio-files")
-    MINIO_SECURE: str= os.getenv("MINIO_SECURE", "false")
+    MINIO_SECURE: str = os.getenv("MINIO_SECURE", "false")
 
     class Config:
         env_file = ".env"

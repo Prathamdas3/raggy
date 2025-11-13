@@ -8,6 +8,7 @@ class UpdateChat(BaseModel):
     user_id: UUID
     chat_name: Optional[str] = None
     is_bookmarked: Optional[bool] = None
+
     class Config:
         exclude_unset = True
 

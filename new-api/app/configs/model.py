@@ -81,4 +81,3 @@ def get_model():
 
 def is_model_loaded():
     return _model_instance is not None
-

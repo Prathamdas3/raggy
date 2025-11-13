@@ -1,4 +1,4 @@
-from app.configs.celery import Celery
+from app.configs.celery import celery
 from app.services.common.model import get_response
 from app.utils.logger import get_logger
 from app.schemas.input.yt import TaskInput
@@ -6,7 +6,7 @@ from app.schemas.input.yt import TaskInput
 logger = get_logger(__name__)
 
 
-@Celery.task(bind=True, max_retries=3, default_retry_delay=10)
+@celery.task(bind=True, max_retries=3, default_retry_delay=10)
 def task_generate_summary(self, data: dict):
     data = TaskInput(**data)
     logger.debug("Started the task of summary generation")

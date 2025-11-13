@@ -5,6 +5,7 @@ import os
 
 logger = get_logger(__name__)
 
+
 def remove_file(file_path: Union[str, Path]) -> None:
     file_path = Path(file_path)
 

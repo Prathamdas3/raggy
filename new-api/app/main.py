@@ -6,7 +6,7 @@ import app.models.all_schema
 
 logger = get_logger()
 
-app = FastAPI(lifespan=lifespan,swagger_ui_parameters={"defaultModelsExpandDepth": -1})
+app = FastAPI(lifespan=lifespan, swagger_ui_parameters={"defaultModelsExpandDepth": -1})
 
 app.include_router(router.router)
 

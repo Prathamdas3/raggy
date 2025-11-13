@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 text_spliter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
 
-def split_text(data: SplitTextArgs)->list[ChunkData]:
+def split_text(data: SplitTextArgs) -> list[ChunkData]:
     try:
         split_text = text_spliter.split_text(data.text)
 

@@ -1,14 +1,14 @@
-from app.configs.celery import Celery
+from app.configs.celery import celery
+from app.schemas.db.docs import UpdateDocsData
 from app.services.db.docs import update_docs
 from app.utils.logger import get_logger
-from app.schemas.input.yt import UpdateDocsData
 from app.configs.database import engine
 from sqlmodel import Session
 
 logger = get_logger(__name__)
 
 
-@Celery.task(bind=True, max_retries=3, default_retry_delay=10)
+@celery.task(bind=True, max_retries=3, default_retry_delay=10)
 def task_update_db(self, data=dict):
     session = Session(engine)
     data = UpdateDocsData(**data)
