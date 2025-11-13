@@ -63,6 +63,7 @@ class UpdateMessage(BaseModel):
     chat_id: UUID
     question_id: UUID
     audio_url: str
+    content:str
 
     class Config:
         exclude_unset = True
@@ -77,7 +78,7 @@ class UpdateMessage(BaseModel):
         except Exception:
             raise ValueError(f"{info.field_name} should be a valid uuid")
 
-    @field_validator("audio_url", mode="before")
+    @field_validator("audio_url","content", mode="before")
     def check_audio_url(cls, v, info):
         if not v and not isinstance(v, str):
             raise TypeError(f"{info.field_name} should be string")
@@ -87,3 +88,35 @@ class UpdateMessage(BaseModel):
             raise ValueError(f"{info.field_name} can not be empty")
 
         return v
+
+
+class QueryInput(BaseModel):
+    question: str
+
+    @field_validator("question", mode="before")
+    def check_question(cls, v, info):
+        if not v or not isinstance(v, str):
+            raise TypeError(f"{info.field_name} should be type of string")
+
+        v = v.strip()
+
+        if not v:
+            raise ValueError(f"{info.field_name} can not be empty")
+
+        return v
+
+
+class GetAnswer(BaseModel):
+    user_id:UUID
+    chat_id:UUID
+    question_id:UUID
+
+    @field_validator("user_id","chat_id","question_id",mode="before")
+    def check_id(cls,v,info):
+        if not v:
+            raise ValueError(f"{info.field_name} should not be empty")
+        
+        try:
+            UUID(str(v))
+        except Exception:
+            raise ValueError(f"{info.field_name} should be a valid UUID")

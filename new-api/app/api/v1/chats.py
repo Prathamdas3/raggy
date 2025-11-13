@@ -14,7 +14,7 @@ from app.services.db.chat import (
 from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import UpdateChat
-from app.tasks.chains import chain_yt
+from app.tasks.chains import chain_input
 
 router = APIRouter(prefix="/chats")
 
@@ -38,8 +38,10 @@ def create_new_chat(
             )
 
         if "link" in data:
-            details = YTInput(user_id=user_id, chat_id=new_id, link=data.link)
-            chain_yt(data=details)
+            details = YTInput(
+                user_id=user_id, chat_id=new_id, link=data.link, input_type="yt"
+            )
+            chain_input(data=details)
         else:
             pass
 

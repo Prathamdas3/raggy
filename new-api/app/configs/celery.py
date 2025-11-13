@@ -8,5 +8,6 @@ celery = Celery(
         "app.tasks.input",
         "app.tasks.pipeline",
         "app.tasks.chains",
+        "app.tasks.rag"
     ],
 )
