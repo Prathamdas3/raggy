@@ -13,10 +13,10 @@ from app.tasks.rag.generate_answer import task_generate_answer
 logger = get_logger(__name__)
 
 
-def chain_input(data: YTInput):
+def chain_input_link(data: YTInput):
     try:
         # Step 1: Convert the Pydantic model to dict
-        payload = data.model_dump().dict()
+        payload = data.model_dump()
 
         # Step 2: Build the task chain
         workflow = chain(

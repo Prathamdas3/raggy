@@ -27,7 +27,7 @@ def task_generate_answer(self, data: dict):
             question_id=new_data.question_id,
             summary_text=answer,
         )
-        return details.model_dump().dict()
+        return details.model_dump()
 
     except Exception as e:
         logger.debug(

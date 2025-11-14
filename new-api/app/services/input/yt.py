@@ -1,5 +1,4 @@
 from app.utils.logger import get_logger
-from fastapi import HTTPException, status
 from pathlib import Path
 from datetime import datetime
 from uuid import uuid4
@@ -44,16 +43,14 @@ def yt_mp3(link: str) -> Path:
 
         except yt_dlp.utils.DownloadError as de:
             logger.error(f"Youtube download error: {str(de)}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to dowload youtube video, video may be unavailable private, or restricted",
+            raise ValueError(
+                "Failed to dowload youtube video, video may be unavailable private, or restricted",
             )
 
         except yt_dlp.utils.ExtractorError as ee:
             logger.error(f"Youtube extractor error: {str(ee)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to extract audio from youtube video",
+            raise ValueError(
+                "Failed to extract audio from youtube video",
             )
 
         except Exception as e:
@@ -77,12 +74,11 @@ def yt_mp3(link: str) -> Path:
 
         return actual_mp3_path
 
-    except (ValueError, RuntimeError, HTTPException):
+    except (ValueError, RuntimeError):
         raise
 
     except Exception as e:
         logger.error(f"Failed to convert the yt to mp3: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to convert the yt to mp3",
+        raise ValueError(
+            "Failed to convert the yt to mp3",
         )

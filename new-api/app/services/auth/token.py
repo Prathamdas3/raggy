@@ -4,6 +4,9 @@ from jose import jwt, JWTError
 from fastapi import HTTPException, status, Request
 from app.schemas.db.user import ResponseFromToken
 from uuid import UUID
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_access_token(data: dict) -> str:
@@ -83,11 +86,6 @@ def get_user_id_from_access_token(request: Request) -> UUID:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
         )
 
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-    )
-
     try:
         if not config.SECRET_KEY:
             raise ValueError("SECRET_KEY missing in the env")
@@ -100,10 +98,21 @@ def get_user_id_from_access_token(request: Request) -> UUID:
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
 
-    except JWTError:
-        raise credentials_exception
-    except Exception:
-        raise credentials_exception
+    except JWTError as je:
+        logger.error(f"Failed to fetch the creads from the access_token:{str(je)}",exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to extract the user id from the access token: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to validate the user details",
+        )
 
     return user_id
 
@@ -117,10 +126,6 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
         )
 
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-    )
 
     try:
         if not config.SECRET_KEY:
@@ -134,9 +139,20 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
 
-    except JWTError:
-        raise credentials_exception
-    except Exception:
-        raise credentials_exception
+    except JWTError as je:
+        logger.error(f"Failed to fetch the creds form the refresh token: {str(je)}",exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to extract the user id from the refresh token: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to validate the user details",
+        )
 
     return ResponseFromToken(user_id=user_id, token=token)

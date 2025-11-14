@@ -14,6 +14,7 @@ class YTInput(BaseModel):
     chat_id: UUID
     link: str
     input_type:Type
+    model_config = {"use_enum_values": True}
 
     @field_validator("link", mode="before")
     def check_link(cls, v, info):

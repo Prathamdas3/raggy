@@ -4,19 +4,24 @@ from typing import Optional
 from uuid import UUID
 
 
-class DocsReq(BaseModel):
-    file: Optional[UploadFile] = None
+class DocsReqLink(BaseModel):
     link: Optional[str] = None
 
     @model_validator(mode="after")
-    def check_deatils(self):
-        if not self.file or not self.link:
-            raise ValueError(
-                "file or link should be provided,req data can not be empty"
-            )
+    def check_details(self):
+        if self.link is None:
+            raise ValueError("link should be provided")
 
-        if self.file and self.link:
-            self.link = None
+        return self
+
+
+class DocsReqFile(BaseModel):
+    file: Optional[UploadFile] = None
+
+    @model_validator(mode="after")
+    def check_details(self):
+        if self.file is None:
+            raise ValueError("file should be provided")
 
         return self
 

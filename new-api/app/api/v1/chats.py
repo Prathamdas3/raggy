@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from app.schemas.db.docs import DocsReq
+from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
+from app.schemas.db.docs import DocsReqLink, DocsReqFile
 from app.schemas.input.yt import YTInput
 from app.utils.logger import get_logger
 from app.configs.database import SessionDep
@@ -14,19 +14,20 @@ from app.services.db.chat import (
 from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import UpdateChat
-from app.tasks.chains import chain_input
+from app.tasks.chains import chain_input_link
 
 router = APIRouter(prefix="/chats")
 
 logger = get_logger(__name__)
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-def create_new_chat(
+@router.post("/links", status_code=status.HTTP_201_CREATED)
+def create_new_links_chat(
     session: SessionDep,
-    data: DocsReq,
+    link: str | None = Form(None),
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
+    data = DocsReqLink(link=link)
     try:
         logger.debug("Starting the process of creating a chat")
         new_id = create_chat(user_id=UUID(str(user_id)), session=session)
@@ -37,13 +38,10 @@ def create_new_chat(
                 detail="No chat created ",
             )
 
-        if "link" in data:
-            details = YTInput(
-                user_id=user_id, chat_id=new_id, link=data.link, input_type="yt"
-            )
-            chain_input(data=details)
-        else:
-            pass
+        details = YTInput(
+            user_id=user_id, chat_id=new_id, link=data.link, input_type="yt"
+        )
+        chain_input_link(data=details)
 
         logger.debug(f"Successfully created the chat with the id {new_id}")
         return ReturnResponse(status="success", message="Successfully created the chat")
@@ -55,6 +53,16 @@ def create_new_chat(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while chat creation",
         )
+
+
+@router.post("/files", status_code=status.HTTP_202_ACCEPTED)
+def create_new_files_chat(
+    session: SessionDep,
+    file: UploadFile | None = File(None),
+    user_id: UUID = Depends(get_user_id_from_access_token),
+):
+    data = DocsReqFile(file=file)
+    pass
 
 
 @router.get("/", status_code=status.HTTP_200_OK)

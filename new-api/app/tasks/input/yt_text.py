@@ -31,7 +31,7 @@ def task_yt(self, data: dict):
             chat_id=data.chat_id, user_id=data.user_id, text=text_wav
         )
 
-        return save_text_db.model_dump().dict()
+        return save_text_db.model_dump()
 
     except Exception as e:
         logger.error(f"Error while processing Celery task(yt): {e}", exc_info=True)

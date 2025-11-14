@@ -15,3 +15,5 @@ class Response(BaseModel, Generic[T]):
     message: str
     data: Optional[T] = None
     error: Optional[str] = None
+
+    model_config = {"use_enum_values": True}
