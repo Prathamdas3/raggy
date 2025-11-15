@@ -43,57 +43,77 @@ def save_original_text(session: Session, data: docs.CreateText) -> UUID:
         )
         raise
 
+logger = get_logger(__name__)
 
-def update_docs(details: UpdateDocsData, session: Session) -> UUID:
+def update_docs(session: Session, details: UpdateDocsData) -> UUID:
     try:
-        logger.debug(
-            f"starting to update the summary text for chat_id:{details.chat_id}"
-        )
-        if details.question_id in details:
+        logger.debug(f"Starting update for chat_id={details.chat_id}, question_id={details.question_id}")
+        
+        # If no question_id, update Docs table
+        if details.question_id is None:
+            logger.debug("Updating Docs table (no question_id)")
+            
             statement = (
                 select(Docs)
                 .where(Docs.chat_id == details.chat_id)
                 .where(Docs.user_id == details.user_id)
             )
-            doc_data = session.exec(statement=statement).first()
-
-            if doc_data is None:
-                logger.error(f"No doc found with this chat_id:   {details.chat_id}")
-                raise ValueError("Invalid chat id for fetching the summary")
-
-            for field, value in details.model_dump().items():
-                setattr(doc_data, field, value)
-
-            session.add(doc_data)
-            session.commit()
+            doc = session.exec(statement).first()
+            
+            if doc is None:
+                logger.error(f"No doc found for chat_id={details.chat_id}, user_id={details.user_id}")
+                raise ValueError(f"No doc found for chat_id={details.chat_id}")
+            
+            # Only update the fields that are provided
+            if details.summary_text is not None:
+                doc.summary_text = details.summary_text
+                logger.debug(f"Updated summary_text (length: {len(details.summary_text)})")
+            
+            if details.audio_url is not None:
+                doc.audio_url = details.audio_url
+                logger.debug(f"Updated audio_url: {details.audio_url}")
+            
+            session.add(doc)
+            session.flush()  # Flush but don't commit
+            
+            logger.info(f"✅ Updated doc {doc.id} for chat_id={details.chat_id}")
+            return doc.id
+        
+        # If question_id provided, update Messages table
         else:
+            logger.debug(f"Updating Messages table (question_id={details.question_id})")
+            
             statement = (
                 select(Messages)
+                .where(Messages.id == details.question_id)
                 .where(Messages.chat_id == details.chat_id)
                 .where(Messages.user_id == details.user_id)
-                .where(Messages.question_id == details.question_id)
             )
-            doc_data = session.exec(statement=statement).first()
-            if doc_data is None:
-                logger.error(f"No doc found with this chat_id:   {details.chat_id}")
-                raise ValueError(
-                    "Invalid chat id for fetching the summary",
-                )
-
-            for field, value in details.model_dump().items():
-                setattr(doc_data, field, value)
-
-            session.add(doc_data)
-            session.commit()
-
-        logger.debug(f"successfully updated the docs with chat_id of {details.chat_id}")
-        return doc_data.id
-
+            message = session.exec(statement).first()
+            
+            if message is None:
+                logger.error(f"No message found for question_id={details.question_id}")
+                raise ValueError(f"No message found for question_id={details.question_id}")
+            
+            # Update message fields
+            if details.audio_url is not None:
+                message.audio_url = details.audio_url
+                logger.debug(f"Updated message audio_url: {details.audio_url}")
+            
+            if details.summary_text is not None:
+                message.content = details.summary_text  # Assuming content field
+                logger.debug(f"Updated message content (length: {len(details.summary_text)})")
+            
+            session.add(message)
+            session.flush()  # Flush but don't commit
+            
+            logger.info(f"✅ Updated message {message.id} for question_id={details.question_id}")
+            return message.id
+            
+    except ValueError as e:
+        # Don't catch and re-raise as generic error
+        logger.error(f"ValueError in update_docs: {e}")
+        raise
     except Exception as e:
-        logger.error(
-            f"Unexpected error while fetching the summary of the chat: {details.chat_id},error: {str(e)}",
-            exc_info=True,
-        )
-        raise ValueError(
-            "Database operation failed",
-        )
+        logger.error(f"Unexpected error in update_docs: {e}", exc_info=True)
+        raise
