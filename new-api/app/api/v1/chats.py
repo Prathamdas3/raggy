@@ -43,7 +43,6 @@ def create_new_links_chat(
         )
         chain_input_link(data=details)
 
-        logger.debug(f"Successfully created the chat with the id {new_id}")
         return ReturnResponse(status="success", message="Successfully created the chat")
     except HTTPException:
         raise

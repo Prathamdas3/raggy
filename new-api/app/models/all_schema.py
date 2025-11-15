@@ -123,15 +123,14 @@ class Docs(SQLModel, table=True):
     chat_id: UUID = Field(
         foreign_key="chats.id",
         nullable=False,
-        unique=True,  # unique=True for 1:1
+        unique=True,
     )
-    original_text: str = ""
-    summary_text: str = ""
-    audio_url: str = ""
+    original_text: str = Field(default="", sa_type=sa.Text())
+    summary_text: str = Field(default="", sa_type=sa.Text())
+    audio_url: str = Field(default="", sa_type=sa.String())
 
     # Relationships
     user: User = Relationship(back_populates="docs")
-    # FIXED: Changed back_populates from "docs" to "doc" to match the property name in Chats model
     chat: Chats = Relationship(back_populates="doc")
 
     created_at: datetime | None = Field(
