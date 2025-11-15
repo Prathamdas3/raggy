@@ -25,7 +25,7 @@ class SplitTextArgs(BaseModel):
             raise ValueError(f"{info.field_name} can not be empty")
 
         try:
-            UUID(str(v))
+            return UUID(str(v))
         except Exception:
             raise ValueError(f"{info.field_name} must be a valid UUID type")
 

@@ -68,7 +68,7 @@ def save_vectorstore(chunks: list[ChunkData]):
         ids.append(str(uuid4()))
 
     try:
-        document_ids = vector_store.add_texts(texts=texts, metadatas=metadata, ids=ids)
+        document_ids = vector_store.add_texts(texts=texts, metadatas=metadatas, ids=ids)
 
         logger.debug(
             f"✓ Successfully added {len(document_ids)} documents to vector store"

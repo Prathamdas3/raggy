@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_generate_answer(self, data: dict):
+def task_generate_answer(self, data: dict)->dict:
     new_data = AnswerInput(**data)
     logger.debug("starting the task of answer generation")
     try:
@@ -34,4 +34,4 @@ def task_generate_answer(self, data: dict):
             f"Error while processing Celery task(answer_generation): {e}",
             exc_info=True,
         )
-        raise self.retry(exec=e)
+        raise self.retry(exc=e)

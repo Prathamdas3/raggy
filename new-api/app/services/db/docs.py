@@ -60,10 +60,7 @@ def update_docs(details: UpdateDocsData, session: Session) -> UUID:
 
             if doc_data is None:
                 logger.error(f"No doc found with this chat_id:   {details.chat_id}")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid chat id for fetching the summary",
-                )
+                raise ValueError("Invalid chat id for fetching the summary")
 
             for field, value in details.model_dump().items():
                 setattr(doc_data, field, value)
@@ -80,9 +77,8 @@ def update_docs(details: UpdateDocsData, session: Session) -> UUID:
             doc_data = session.exec(statement=statement).first()
             if doc_data is None:
                 logger.error(f"No doc found with this chat_id:   {details.chat_id}")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid chat id for fetching the summary",
+                raise ValueError(
+                    "Invalid chat id for fetching the summary",
                 )
 
             for field, value in details.model_dump().items():
@@ -99,7 +95,6 @@ def update_docs(details: UpdateDocsData, session: Session) -> UUID:
             f"Unexpected error while fetching the summary of the chat: {details.chat_id},error: {str(e)}",
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed",
+        raise ValueError(
+            "Database operation failed",
         )

@@ -73,7 +73,7 @@ class SpechInput(BaseModel):
     user_id: UUID
     chat_id: UUID
     summary_text: str
-    question_id: Optional[UUID]
+    question_id: Optional[UUID]=None
 
     @field_validator("summary_text", mode="before")
     def check_text(cls, v, info):

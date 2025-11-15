@@ -88,7 +88,7 @@ class UpdateDocsData(BaseModel):
             return v
 
         try:
-            UUID(str(v))
+            return UUID(str(v))
         except Exception:
             raise ValueError(f"{info.field_name} should be a valid UUID")
 

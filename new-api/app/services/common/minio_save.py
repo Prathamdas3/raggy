@@ -33,7 +33,7 @@ def save_audio_minio(path: Path, chat_id: UUID) -> str:
         logger.error(f"Path is not a file: {path}", exc_info=True)
         raise IsADirectoryError("given path is a folder not a file")
 
-    file_size = path.stat().st_size()
+    file_size = path.stat().st_size
     if file_size == 0:
         logger.error(f"Given file path content is empty: {path}")
 
@@ -70,7 +70,8 @@ def save_audio_minio(path: Path, chat_id: UUID) -> str:
 
     try:
         stat = minio_client.stat_object(
-            bucket_name=bucket_name, minio_object_name=minio_object_name
+            bucket_name=bucket_name,
+            object_name=minio_object_name,
         )
         logger.debug(f"Upload verified, object size: {stat.size}", exc_info=True)
 

@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_save_vector_store(self, data: dict):
+def task_save_vector_store(self, data: dict)->dict:
     data = TaskInput(**data)
     logger.debug("Started the task of storing the data in vector store")
     try:
@@ -18,10 +18,11 @@ def task_save_vector_store(self, data: dict):
         )
         splited_text = split_text(data=text_split)
         save_vectorstore(chunks=splited_text)
-        return data.dict()
+        return data.model_dump()
     except Exception as e:
         logger.debug(
             f"Error while processing Celery task(save_vector_store): {e}",
             exc_info=True,
         )
-        raise self.retry(exec=e)
+        raise self.retry(exc=e)
+

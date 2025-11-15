@@ -117,6 +117,6 @@ class GetAnswer(BaseModel):
             raise ValueError(f"{info.field_name} should not be empty")
         
         try:
-            UUID(str(v))
+            return UUID(str(v))
         except Exception:
             raise ValueError(f"{info.field_name} should be a valid UUID")

@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_update_db(self, data=dict):
+def task_update_db(self, data=dict)->dict:
     session = Session(engine)
     data = UpdateDocsData(**data)
     logger.debug("Starting the task of saving audio and summary in the db")
@@ -43,6 +43,6 @@ def task_update_db(self, data=dict):
             f"Error while processing Celery task(update_db_summary_audio): {e}",
             exc_info=True,
         )
-        raise self.retry(exec=e)
+        raise self.retry(exc=e)
     finally:
         session.close()

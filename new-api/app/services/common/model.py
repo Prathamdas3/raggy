@@ -2,12 +2,11 @@ from app.configs.model import get_model
 from app.utils.logger import get_logger
 from app.constants import MODEL_PROMPT_SUMMARY, MODEL_PROMPT_QUERY
 from langchain_core.messages import HumanMessage, SystemMessage
-from typing import Optional
 
 logger = get_logger(__name__)
 
 
-def get_response(query: str, question: Optional[str]) -> str:
+def get_response(query: str, question: str|None=None) -> str:
     """Get reponse for the summary"""
     if not query or not query.strip():
         logger.error("Empty query provided")
