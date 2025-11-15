@@ -130,7 +130,12 @@ def get_answer(session: Session, details: GetAnswer) -> Messages:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="check chat_id, user_id or question_id",
             )
-        return message
+        return {
+            "answer_id":message.id,
+            "question_id":message.question_id,
+            "answer":message.content,
+            "audio_url":message.audio_url
+        }
     except HTTPException:
         raise
 

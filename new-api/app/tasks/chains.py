@@ -42,7 +42,7 @@ def chain_input_link(data: YTInput):
 
 def chain_answer(data: AnswerInput):
     try:
-        payload = data.model_dump().dic()
+        payload = data.model_dump()
         workflow = chain(
             task_generate_answer.s(payload), task_generate_audio.s(), task_update_db.s()
         )

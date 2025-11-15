@@ -5,7 +5,7 @@ from sqlmodel import Session as SessionDep, select
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.schemas.response import Response
-from app.schemas.db.chat import UpdateChat
+from app.schemas.db.chat import GetSummary, UpdateChat
 from sqlalchemy.orm import aliased
 from app.schemas.db.message import MessageResponse
 
@@ -134,10 +134,11 @@ def remove_chat(session: SessionDep, chat_id: UUID, user_id: UUID) -> Response:
 def update_chat(
     details: UpdateChat,
     session: SessionDep,
+    chat_id:UUID
 ) -> UUID:
     try:
-        logger.debug(f"Started with the updates of chat with id:{details.chat_id}")
-        old_chat = session.get(Chats, details.chat_id)
+        logger.debug(f"Started with the updates of chat with id:{chat_id}")
+        old_chat = session.get(Chats, chat_id)
         if not old_chat:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -153,7 +154,7 @@ def update_chat(
         session.commit()
 
         logger.debug(
-            f"Successfully updated the chat for the chat with the id: {details.chat_id}, with the fields: {list(update_chat.keys())}"
+            f"Successfully updated the chat for the chat with the id: {chat_id}, with the fields: {list(update_chat.keys())}"
         )
 
         return old_chat.id
@@ -164,7 +165,7 @@ def update_chat(
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
         logger.error(
-            f"Failed to update the chat with the id:{details.chat_id}, error:{str(e)}",
+            f"Failed to update the chat with the id:{chat_id}, error:{str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -175,7 +176,7 @@ def update_chat(
     except Exception as e:
         session.rollback()
         logger.error(
-            f"Failed to update the chat with the id:{details.chat_id}, error:{str(e)}",
+            f"Failed to update the chat with the id:{chat_id}, error:{str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -184,22 +185,17 @@ def update_chat(
         )
 
 
-def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
-    if not chat_id or not isinstance(chat_id, UUID):
-        raise TypeError("chat_id should be uuid")
-
-    if not user_id or not isinstance(user_id, UUID):
-        raise TypeError("user_id should be uuid")
+def get_summary(details:GetSummary, session: SessionDep) -> str:
 
     try:
-        logger.debug(f"Starting to fetch the summary for cht_id:{chat_id}")
+        logger.debug(f"Starting to fetch the summary for cht_id:{details.chat_id}")
         statement = (
-            select(Docs).where(Docs.chat_id == chat_id).where(Docs.user_id == user_id)
+            select(Docs).where(Docs.chat_id == details.chat_id).where(Docs.user_id == details.user_id)
         )
         doc_data = session.exec(statement=statement).first()
 
         if doc_data is None:
-            logger.error(f"No doc found with this chat_id: {chat_id}")
+            logger.error(f"No doc found with this chat_id: {details.chat_id}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid chat id for fetching the summary",
@@ -209,7 +205,7 @@ def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         return doc_data.summary_text
     except (IntegrityError, SQLAlchemyError) as e:
         logger.error(
-            f"Failed to fetch the summary for the chat for the user with user id: {user_id},error: {str(e)}",
+            f"Failed to fetch the summary for the chat for the user with user id: {details.user_id},error: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -218,7 +214,7 @@ def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         )
     except Exception as e:
         logger.error(
-            f"Unexpected error while fetching the summary of the chat: {chat_id},error: {str(e)}",
+            f"Unexpected error while fetching the summary of the chat: {details.chat_id},error: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -227,22 +223,17 @@ def get_summary(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         )
 
 
-def get_audio_url(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
-    if not chat_id or not isinstance(chat_id, UUID):
-        raise TypeError("chat_id should be uuid")
-
-    if not user_id or not isinstance(user_id, UUID):
-        raise TypeError("user_id should be uuid")
+def get_audio_url(details:GetSummary, session: SessionDep) -> str:
 
     try:
-        logger.debug(f"Starting to fetch the audio url of the summary: {chat_id}")
+        logger.debug(f"Starting to fetch the audio url of the summary: {details.chat_id}")
         statement = (
-            select(Docs).where(Docs.chat_id == chat_id).where(Docs.user_id == user_id)
+            select(Docs).where(Docs.chat_id == details.chat_id).where(Docs.user_id == details.user_id)
         )
         doc_data = session.exec(statement=statement).first()
 
         if doc_data is None:
-            logger.error(f"No doc found with this chat_id: {chat_id}")
+            logger.error(f"No doc found with this chat_id: {details.chat_id}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid chat id for fetching the summary",
@@ -252,7 +243,7 @@ def get_audio_url(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         return doc_data.audio_url
     except (IntegrityError, SQLAlchemyError) as e:
         logger.error(
-            f"Failed to fetch the summary audio for the chat id: {chat_id} for the user with user id: {user_id},error: {str(e)}",
+            f"Failed to fetch the summary audio for the chat id: {details.chat_id} for the user with user id: {details.Iuser_id},error: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -261,7 +252,7 @@ def get_audio_url(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         )
     except Exception as e:
         logger.error(
-            f"Unexpected error while fetching the summary audio url of the chat: {chat_id} for the user with user id: {user_id},error: {str(e)}",
+            f"Unexpected error while fetching the summary audio url of the chat: {details.chat_id} for the user with user id: {details.Iuser_id},error: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(
@@ -270,7 +261,7 @@ def get_audio_url(chat_id: UUID, user_id: UUID, session: SessionDep) -> str:
         )
 
 
-def get_chat_messages(chat_id: UUID, user_id: UUID, session: SessionDep):
+def get_chat_messages(details:GetSummary,session: SessionDep):
     try:
         logger.debug(
             "Getting strated to fetch the messages of user_id:{user_id} and cha_id:{chat_id}"
@@ -284,8 +275,8 @@ def get_chat_messages(chat_id: UUID, user_id: UUID, session: SessionDep):
             .outerjoin(
                 Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
             )
-            .where(Question.chat_id == chat_id)
-            .where(Question.user_id == user_id)
+            .where(Question.chat_id == details.chat_id)
+            .where(Question.user_id == details.user_id)
             .where(Question.sender == "user")
             .order_by(Question.created_at.asc())
         )
@@ -303,14 +294,14 @@ def get_chat_messages(chat_id: UUID, user_id: UUID, session: SessionDep):
                 }
             )
 
-        logger.info(f"Successfully got all the messages under the chat_id {chat_id}")
+        logger.info(f"Successfully got all the messages under the chat_id {details.chat_id}")
 
         return messages_pair
 
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
         logger.error(
-            f"Integrity constraint violation while getting all the messages in the chat with id: {chat_id}: {str(e)}"
+            f"Integrity constraint violation while getting all the messages in the chat with id: {details.chat_id}: {str(e)}"
         )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Violates database constraints"
@@ -319,7 +310,7 @@ def get_chat_messages(chat_id: UUID, user_id: UUID, session: SessionDep):
     except Exception as e:
         session.rollback()
         logger.error(
-            f"Unexpected error while getting all the messages in the chat with id {chat_id}: {str(e)}",
+            f"Unexpected error while getting all the messages in the chat with id {details.chat_id}: {str(e)}",
             exc_info=True,
         )
         raise HTTPException(

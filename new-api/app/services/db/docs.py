@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from app.utils.logger import get_logger
-from app.models.all_schema import Docs, Messages
+from app.models.all_schema import Docs, Messages,Sender
 from app.schemas.db import docs
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -81,34 +81,32 @@ def update_docs(session: Session, details: UpdateDocsData) -> UUID:
         
         # If question_id provided, update Messages table
         else:
-            logger.debug(f"Updating Messages table (question_id={details.question_id})")
+            logger.debug(f"Creating new LLM message (answer to question_id={details.question_id})")
             
-            statement = (
-                select(Messages)
-                .where(Messages.id == details.question_id)
-                .where(Messages.chat_id == details.chat_id)
-                .where(Messages.user_id == details.user_id)
+            # First verify the question exists
+            question = session.exec(
+                select(Messages).where(Messages.id == details.question_id)
+            ).first()
+            
+            if question is None:
+                logger.error(f"Question message {details.question_id} not found")
+                raise ValueError(f"Question message {details.question_id} not found")
+            
+            # Create new message for LLM's answer
+            llm_message = Messages(
+                chat_id=details.chat_id,
+                user_id=details.user_id,
+                question_id=details.question_id,  # References the user's question
+                sender=Sender.llm,  # This is the LLM's response
+                content=details.summary_text or "",
+                audio_url=details.audio_url or ""
             )
-            message = session.exec(statement).first()
             
-            if message is None:
-                logger.error(f"No message found for question_id={details.question_id}")
-                raise ValueError(f"No message found for question_id={details.question_id}")
+            session.add(llm_message)
+            session.flush()  
             
-            # Update message fields
-            if details.audio_url is not None:
-                message.audio_url = details.audio_url
-                logger.debug(f"Updated message audio_url: {details.audio_url}")
-            
-            if details.summary_text is not None:
-                message.content = details.summary_text  # Assuming content field
-                logger.debug(f"Updated message content (length: {len(details.summary_text)})")
-            
-            session.add(message)
-            session.flush()  # Flush but don't commit
-            
-            logger.info(f"✅ Updated message {message.id} for question_id={details.question_id}")
-            return message.id
+            logger.info(f"✅ Created LLM message {llm_message.id} in response to question {details.question_id}")
+            return llm_message.id
             
     except ValueError as e:
         # Don't catch and re-raise as generic error

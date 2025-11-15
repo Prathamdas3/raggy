@@ -10,10 +10,12 @@ from app.services.db.chat import (
     update_chat as update_chat_fn,
     remove_chat,
     get_summary as get_chat_summary,
+    get_audio_url,
+    get_chat_messages,
 )
 from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
-from app.schemas.db.chat import UpdateChat
+from app.schemas.db.chat import GetSummary, UpdateChat
 from app.tasks.chains import chain_input_link
 
 router = APIRouter(prefix="/chats")
@@ -99,12 +101,7 @@ def update_chat(
         logger.debug(
             f"Starting to update the chat with the user_id:{user_id} and chat_id:{chat_id}"
         )
-        chat = update_chat_fn(
-            chat_id=UUID(str(chat_id)),
-            user_id=UUID(str(user_id)),
-            session=session,
-            details=details,
-        )
+        chat = update_chat_fn(session=session, details=details, chat_id=chat_id)
         if not chat:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -160,11 +157,12 @@ def get_summary(
     try:
         logger.debug(f"Started to fetch the summary for the chat_id:{chat_id}")
 
-        summary = get_chat_summary(session=session, user_id=user_id, chat_id=chat_id)
+        get_summary_args = GetSummary(user_id=user_id, chat_id=chat_id)
+        summary = get_chat_summary(session=session, details=get_summary_args)
 
         logger.debug("Successfully fetched the summary for the docs")
         return ReturnResponse(
-            status="Success",
+            status="success",
             message="successfully fetched the summary for the summary",
             data={"summary": summary},
         )
@@ -176,4 +174,66 @@ def get_summary(
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch the summary for the chat",
+        )
+
+
+@router.get("/{chat_id}/summary-audio", status_code=status.HTTP_200_OK)
+def get_summary_audio(
+    chat_id: UUID,
+    session: SessionDep,
+    user_id: UUID = Depends(get_user_id_from_access_token),
+):
+    try:
+        logger.debug(
+            f"Started to fetch the audio url for the summary for the chat with id: {chat_id}"
+        )
+        get_summary_audio_args = GetSummary(user_id=user_id, chat_id=chat_id)
+
+        audio_url = get_audio_url(session=session, details=get_summary_audio_args)
+        logger.debug("Successfully fetched the audio for the summary for the docs")
+        return ReturnResponse(
+            status="success",
+            message="successfully fetched the audio of summary",
+            data={"audio_url": audio_url},
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Failed to get the audio of summary for the chat: {str(e)}", exc_info=True
+        )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch the audio of summary for the chat",
+        )
+
+
+@router.get("/{chat_id}/messages", status_code=status.HTTP_200_OK)
+def get_chats_message(
+    chat_id: UUID,
+    session: SessionDep,
+    user_id: UUID = Depends(get_user_id_from_access_token),
+):
+    try:
+        logger.debug(f"Fetching all the messages in the chat with the id: {chat_id}")
+        args = GetSummary(user_id=user_id, chat_id=chat_id)
+        messages = get_chat_messages(details=args, session=session)
+        logger.debug(
+            f"Successfully fetched all the messages for the chat with the id: {chat_id}"
+        )
+        return ReturnResponse(
+            status="success",
+            message="Successfully fetched all the messages of the chat",
+            data=messages,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Failed to fetch all the messages for the chat: {str(e)}", exc_info=True
+        )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch the audio of summary for the chat",
         )

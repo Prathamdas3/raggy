@@ -23,11 +23,11 @@ def generate_answer(data: QueryInput)->str:
                     must=[
                         models.FieldCondition(
                             key="metadata.chat_id",
-                            match=models.MatchValue(value=data.chat_id),
+                            match=models.MatchValue(value=str(data.chat_id)),
                         ),
                         models.FieldCondition(
                             key="metadata.user_id",
-                            match=models.MatchValue(value=data.user_id),
+                            match=models.MatchValue(value=str(data.user_id)),
                         ),
                     ]
                 ),

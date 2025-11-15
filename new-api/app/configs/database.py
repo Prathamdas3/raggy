@@ -13,7 +13,7 @@ def get_engine():
     try:
         engine = create_engine(
             URL,
-            echo=True,
+            echo=False,
             pool_pre_ping=True,
             pool_recycle=1800,
             pool_size=10,  # Add pool size

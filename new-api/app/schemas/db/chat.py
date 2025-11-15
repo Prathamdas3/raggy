@@ -2,10 +2,7 @@ from pydantic import BaseModel, field_validator
 from typing import Optional
 from uuid import UUID
 
-
 class UpdateChat(BaseModel):
-    chat_id: UUID
-    user_id: UUID
     chat_name: Optional[str] = None
     is_bookmarked: Optional[bool] = None
 
@@ -35,16 +32,22 @@ class UpdateChat(BaseModel):
 
         return v
 
-    @field_validator("chat_id", "user_id", mode="before")
-    def check_ids(cls, v, info):
-        if not v:
-            raise ValueError(f"{info.field_name} should not be empty")
-
-        try:
-            return UUID(str(v))
-        except Exception:
-            raise ValueError(f"{info.field_name} should be a valid UUID")
 
     def has_updates(self) -> bool:
         """Check if any fields were provided for update"""
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())
+
+
+class GetSummary(BaseModel):
+    user_id:UUID
+    chat_id:UUID
+
+    @field_validator("chat_id","user_id",mode="before")
+    def check_ids(cls,v,info):
+        if not v:
+            raise ValueError(f"{info.field_name} can not be empty")
+        
+        try:
+            return UUID(str(v))
+        except Exception :
+            raise ValueError(f"{info.field_name} should be a valid uuid")
