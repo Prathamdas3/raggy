@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
-from app.schemas.db.docs import DocsReqLink, DocsReqFile
+from app.schemas.db.docs import DocsReqLink
+from app.schemas.input.file import FileMeta
 from app.schemas.input.yt import YTInput
 from app.utils.logger import get_logger
 from app.configs.database import SessionDep
@@ -41,7 +42,7 @@ def create_new_links_chat(
             )
 
         details = YTInput(
-            user_id=user_id, chat_id=new_id, link=data.link, input_type="yt"
+            user_id=user_id, chat_id=new_id, link=data.link, 
         )
         chain_input_link(data=details)
 
@@ -62,7 +63,7 @@ def create_new_files_chat(
     file: UploadFile | None = File(None),
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
-    data = DocsReqFile(file=file)
+    meta = FileMeta.from_upload(file)
     pass
 
 

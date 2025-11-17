@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 def task_yt(self, data: dict):
     """Celery task for extracting the details from yt link, and coverteding them to text as well as to store them"""
     data = YTInput(**data)
-    logger.debug("starting the task to convert the yt link to wav")
+    logger.debug("starting the task to convert the yt link to text")
 
     try:
         mp3_link = yt_mp3(link=data.link)
@@ -23,16 +23,16 @@ def task_yt(self, data: dict):
         if not wav_link:
             raise ValueError("Wav link conversion failed")
 
-        text_wav = wav_text(wav_link)
-        if not text_wav:
-            raise ValueError("Text generation failed from wav")
+        wav_path_text = wav_text(wav_link)
+        if not wav_path_text or not wav_path_text.strip():
+            raise ValueError("Wav to text conversion failed")
 
         save_text_db = TaskInput(
-            chat_id=data.chat_id, user_id=data.user_id, text=text_wav
+            chat_id=data.chat_id, user_id=data.user_id, text=wav_path_text
         )
 
         return save_text_db.model_dump()
 
     except Exception as e:
-        logger.error(f"Error while processing Celery task(yt): {e}", exc_info=True)
+        logger.error(f"Error while processing Celery task(yt): {str(e)}", exc_info=True)
         raise self.retry(exc=e)

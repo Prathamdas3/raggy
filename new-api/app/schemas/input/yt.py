@@ -2,19 +2,12 @@ from pydantic import BaseModel, field_validator
 from uuid import UUID
 from app.constants import YT_REGEX
 from typing import Optional
-from enum import Enum
-
-
-class Type(Enum):
-    yt = "yt"
 
 
 class YTInput(BaseModel):
     user_id: UUID
     chat_id: UUID
     link: str
-    input_type:Type
-    model_config = {"use_enum_values": True}
 
     @field_validator("link", mode="before")
     def check_link(cls, v, info):
