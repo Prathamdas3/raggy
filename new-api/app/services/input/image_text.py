@@ -1,6 +1,6 @@
 from app.utils.logger import get_logger
 from pathlib import Path
-from app.utils.file import remove_file
+from app.utils.remove_file import remove_file
 from PIL import Image, ImageEnhance
 from app.services.input.images_to_png import convert_to_png
 import pytesseract

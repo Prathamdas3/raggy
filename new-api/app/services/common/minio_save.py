@@ -5,7 +5,7 @@ from app.configs.minio import get_minio_client, get_bucket_name
 from minio import S3Error
 from fastapi import HTTPException, status
 from datetime import timedelta
-from app.utils.file import remove_file
+from app.utils.remove_file import remove_file
 
 logger = get_logger(__name__)
 

@@ -4,7 +4,7 @@ from app.config import config
 from uuid import uuid4
 from app.utils.logger import get_logger
 import subprocess
-from app.utils.file import remove_file
+from app.utils.remove_file import remove_file
 
 logger = get_logger(__name__)
 

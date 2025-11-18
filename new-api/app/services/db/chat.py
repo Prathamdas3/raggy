@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.schemas.response import Response
 from app.schemas.db.chat import GetSummary, UpdateChat
 from sqlalchemy.orm import aliased
+from typing import Dict
 from app.schemas.db.message import MessageResponse
 
 logger = get_logger(__name__)
@@ -131,11 +132,7 @@ def remove_chat(session: SessionDep, chat_id: UUID, user_id: UUID) -> Response:
         )
 
 
-def update_chat(
-    details: UpdateChat,
-    session: SessionDep,
-    chat_id:UUID
-) -> UUID:
+def update_chat(details: UpdateChat, session: SessionDep, chat_id: UUID) -> UUID:
     try:
         logger.debug(f"Started with the updates of chat with id:{chat_id}")
         old_chat = session.get(Chats, chat_id)
@@ -185,12 +182,13 @@ def update_chat(
         )
 
 
-def get_summary(details:GetSummary, session: SessionDep) -> str:
-
+def get_summary(details: GetSummary, session: SessionDep) -> Dict[str,str]:
     try:
         logger.debug(f"Starting to fetch the summary for cht_id:{details.chat_id}")
         statement = (
-            select(Docs).where(Docs.chat_id == details.chat_id).where(Docs.user_id == details.user_id)
+            select(Docs)
+            .where(Docs.chat_id == details.chat_id)
+            .where(Docs.user_id == details.user_id)
         )
         doc_data = session.exec(statement=statement).first()
 
@@ -202,7 +200,7 @@ def get_summary(details:GetSummary, session: SessionDep) -> str:
             )
 
         logger.debug("Successfully fetched the docs for the summary")
-        return doc_data.summary_text
+        return {"summary_text":doc_data.summary_text,"audio_url":doc_data.audio_url}
     except (IntegrityError, SQLAlchemyError) as e:
         logger.error(
             f"Failed to fetch the summary for the chat for the user with user id: {details.user_id},error: {str(e)}",
@@ -223,45 +221,7 @@ def get_summary(details:GetSummary, session: SessionDep) -> str:
         )
 
 
-def get_audio_url(details:GetSummary, session: SessionDep) -> str:
-
-    try:
-        logger.debug(f"Starting to fetch the audio url of the summary: {details.chat_id}")
-        statement = (
-            select(Docs).where(Docs.chat_id == details.chat_id).where(Docs.user_id == details.user_id)
-        )
-        doc_data = session.exec(statement=statement).first()
-
-        if doc_data is None:
-            logger.error(f"No doc found with this chat_id: {details.chat_id}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid chat id for fetching the summary",
-            )
-
-        logger.debug("Successfully fetched the docs for the summary")
-        return doc_data.audio_url
-    except (IntegrityError, SQLAlchemyError) as e:
-        logger.error(
-            f"Failed to fetch the summary audio for the chat id: {details.chat_id} for the user with user id: {details.Iuser_id},error: {str(e)}",
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed",
-        )
-    except Exception as e:
-        logger.error(
-            f"Unexpected error while fetching the summary audio url of the chat: {details.chat_id} for the user with user id: {details.Iuser_id},error: {str(e)}",
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed",
-        )
-
-
-def get_chat_messages(details:GetSummary,session: SessionDep):
+def get_chat_messages(details: GetSummary, session: SessionDep):
     try:
         logger.debug(
             "Getting strated to fetch the messages of user_id:{user_id} and cha_id:{chat_id}"
@@ -294,7 +254,9 @@ def get_chat_messages(details:GetSummary,session: SessionDep):
                 }
             )
 
-        logger.info(f"Successfully got all the messages under the chat_id {details.chat_id}")
+        logger.info(
+            f"Successfully got all the messages under the chat_id {details.chat_id}"
+        )
 
         return messages_pair
 

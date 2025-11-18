@@ -2,6 +2,7 @@ from celery import chain
 from app.schemas.input.file import OtherInput, Type
 from app.tasks.input.audio_video_text import task_audio_video_text
 from app.tasks.input.image import task_png_text
+from app.tasks.input.other import task_other_files_text
 from app.utils.logger import get_logger
 from app.schemas.rag.query import AnswerInput
 from app.schemas.input.yt import YTInput
@@ -16,9 +17,10 @@ from app.tasks.rag.generate_answer import task_generate_answer
 logger = get_logger(__name__)
 
 TASK_MAP = {
-    Type.audio_video: task_audio_video_text,
     Type.image: task_png_text,
-    
+    Type.audio: task_audio_video_text,
+    Type.video: task_audio_video_text,
+    Type.document: task_other_files_text,
 }
 
 COMMON_TASKS = [

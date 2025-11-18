@@ -2,6 +2,7 @@ from pydantic import BaseModel, field_validator
 from fastapi import UploadFile
 from pathlib import Path
 from uuid import UUID
+from typing import Optional
 from app.constants import (
     ALLOWED_AUDIO_TYPES,
     ALLOWED_DOC_TYPES,
@@ -14,8 +15,9 @@ from enum import Enum
 
 class Type(Enum):
     image = "image"
-    audio_video = "audio_video"
-    other="other"
+    audio = "audio"
+    video = "video"
+    document = "document"
 
 
 class FileMeta(BaseModel):
@@ -34,8 +36,10 @@ class FileMeta(BaseModel):
         # category detection
         if content_type in ALLOWED_IMAGE_TYPES:
             category = "image"
-        elif content_type in (ALLOWED_AUDIO_TYPES | ALLOWED_VIDEO_TYPES):
-            category = "audio_video"
+        elif content_type in ALLOWED_AUDIO_TYPES:
+            category = "audio"
+        elif content_type in ALLOWED_VIDEO_TYPES:
+            category = "video"
         elif content_type in ALLOWED_DOC_TYPES:
             category = "document"
         else:
@@ -58,6 +62,7 @@ class OtherInput(BaseModel):
     user_id: UUID
     chat_id: UUID
     type: Type
+    sub_type: Optional[str] = None
 
     @field_validator("path", mode="before")
     def validate_path(cls, v):
@@ -78,3 +83,13 @@ class OtherInput(BaseModel):
             return UUID(str(v))
         except Exception:
             raise ValueError(f"{info.field_name} must be a valid UUID")
+
+    @field_validator("sub_type", mode="before")
+    def validate_sub_type(cls, v, info):
+        if not v:
+            return v
+
+        if not isinstance(v, str):
+            raise TypeError(f"{info.field_name} should be a type of string")
+
+        return v

@@ -2,7 +2,7 @@ from app.utils.logger import get_logger
 from pathlib import Path
 from app.configs.whisper import get_whisper_model
 from fastapi import HTTPException, status
-from app.utils.file import remove_file
+from app.utils.remove_file import remove_file
 
 logger = get_logger(__name__)
 

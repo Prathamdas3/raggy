@@ -1,5 +1,5 @@
 from pathlib import Path
-from app.utils.file import remove_file
+from app.utils.remove_file import remove_file
 from app.utils.logger import get_logger
 from PIL import Image
 

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
 from app.schemas.db.docs import DocsReqLink
-from app.schemas.input.file import FileMeta
+from app.schemas.input.file import FileMeta, OtherInput
 from app.schemas.input.yt import YTInput
 from app.utils.logger import get_logger
 from app.configs.database import SessionDep
@@ -11,13 +11,13 @@ from app.services.db.chat import (
     update_chat as update_chat_fn,
     remove_chat,
     get_summary as get_chat_summary,
-    get_audio_url,
     get_chat_messages,
 )
 from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import GetSummary, UpdateChat
-from app.tasks.chains import chain_input_link
+from app.tasks.chains import chain_input_link, chain_input_others
+from app.utils.save_file import save_file
 
 router = APIRouter(prefix="/chats")
 
@@ -42,7 +42,9 @@ def create_new_links_chat(
             )
 
         details = YTInput(
-            user_id=user_id, chat_id=new_id, link=data.link, 
+            user_id=user_id,
+            chat_id=new_id,
+            link=data.link,
         )
         chain_input_link(data=details)
 
@@ -63,8 +65,38 @@ def create_new_files_chat(
     file: UploadFile | None = File(None),
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
-    meta = FileMeta.from_upload(file)
-    pass
+    try:
+        logger.debug("Starting the process of creating a chat")
+        new_id = create_chat(user_id=UUID(str(user_id)), session=session)
+
+        if not new_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No chat created ",
+            )
+
+        meta = FileMeta.from_upload(file)
+        final_path = save_file(file_type=meta.category, file=file)
+
+        details = OtherInput(
+            user_id=user_id,
+            chat_id=new_id,
+            path=final_path,
+            sub_type=meta.subtype,
+            type=meta.category,
+        )
+
+        chain_input_others(details)
+
+        return ReturnResponse(status="success", message="Successfully created the chat")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create the chat, {str(e)}", exc_info=True)
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while chat creation",
+        )
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
@@ -159,13 +191,13 @@ def get_summary(
         logger.debug(f"Started to fetch the summary for the chat_id:{chat_id}")
 
         get_summary_args = GetSummary(user_id=user_id, chat_id=chat_id)
-        summary = get_chat_summary(session=session, details=get_summary_args)
+        data = get_chat_summary(session=session, details=get_summary_args)
 
         logger.debug("Successfully fetched the summary for the docs")
         return ReturnResponse(
             status="success",
-            message="successfully fetched the summary for the summary",
-            data={"summary": summary},
+            message="successfully fetched the summary",
+            data=data,
         )
 
     except HTTPException:
@@ -175,38 +207,6 @@ def get_summary(
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch the summary for the chat",
-        )
-
-
-@router.get("/{chat_id}/summary-audio", status_code=status.HTTP_200_OK)
-def get_summary_audio(
-    chat_id: UUID,
-    session: SessionDep,
-    user_id: UUID = Depends(get_user_id_from_access_token),
-):
-    try:
-        logger.debug(
-            f"Started to fetch the audio url for the summary for the chat with id: {chat_id}"
-        )
-        get_summary_audio_args = GetSummary(user_id=user_id, chat_id=chat_id)
-
-        audio_url = get_audio_url(session=session, details=get_summary_audio_args)
-        logger.debug("Successfully fetched the audio for the summary for the docs")
-        return ReturnResponse(
-            status="success",
-            message="successfully fetched the audio of summary",
-            data={"audio_url": audio_url},
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to get the audio of summary for the chat: {str(e)}", exc_info=True
-        )
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch the audio of summary for the chat",
         )
 
 
