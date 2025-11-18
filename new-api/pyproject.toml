@@ -5,12 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aioredis>=2.0.1",
     "bcrypt>=4.1.2",
     "celery>=5.5.3",
     "docx>=0.2.4",
     "docx2python>=3.5.0",
     "dotenv>=0.9.9",
     "fastapi>=0.121.0",
+    "fastapi-limiter>=0.1.6",
     "gtts>=2.5.4",
     "langchain-huggingface>=1.0.1",
     "langchain-qdrant>=1.1.0",

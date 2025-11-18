@@ -1,4 +1,5 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
+from app.configs.rate_limiter import rate_limit_default
 from app.schemas.db.docs import DocsReqLink
 from app.schemas.input.file import FileMeta, OtherInput
 from app.schemas.input.yt import YTInput
@@ -24,7 +25,9 @@ router = APIRouter(prefix="/chats")
 logger = get_logger(__name__)
 
 
-@router.post("/links", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/links", status_code=status.HTTP_201_CREATED, dependencies=[rate_limit_default()]
+)
 def create_new_links_chat(
     session: SessionDep,
     link: str | None = Form(None),
@@ -59,7 +62,9 @@ def create_new_links_chat(
         )
 
 
-@router.post("/files", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/files", status_code=status.HTTP_202_ACCEPTED, dependencies=[rate_limit_default()]
+)
 def create_new_files_chat(
     session: SessionDep,
     file: UploadFile | None = File(None),
@@ -99,7 +104,7 @@ def create_new_files_chat(
         )
 
 
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get("/", status_code=status.HTTP_200_OK, dependencies=[rate_limit_default()])
 def get_all_chats(
     session: SessionDep, user_id: UUID = Depends(get_user_id_from_access_token)
 ):
@@ -123,7 +128,9 @@ def get_all_chats(
         )
 
 
-@router.patch("/{chat_id}", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/{chat_id}", status_code=status.HTTP_200_OK, dependencies=[rate_limit_default()]
+)
 def update_chat(
     chat_id: UUID,
     session: SessionDep,
@@ -152,7 +159,9 @@ def update_chat(
         )
 
 
-@router.delete("/{chat_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/{chat_id}", status_code=status.HTTP_200_OK, dependencies=[rate_limit_default()]
+)
 def delete_chat(
     session: SessionDep,
     chat_id: UUID,
@@ -181,7 +190,11 @@ def delete_chat(
         )
 
 
-@router.get("/{chat_id}/summary", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{chat_id}/summary",
+    status_code=status.HTTP_200_OK,
+    dependencies=[rate_limit_default()],
+)
 def get_summary(
     chat_id: UUID,
     session: SessionDep,
@@ -210,7 +223,11 @@ def get_summary(
         )
 
 
-@router.get("/{chat_id}/messages", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{chat_id}/messages",
+    status_code=status.HTTP_200_OK,
+    dependencies=[rate_limit_default()],
+)
 def get_chats_message(
     chat_id: UUID,
     session: SessionDep,

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status, HTTPException, Depends
+from app.configs.rate_limiter import rate_limit_default
 from app.schemas.rag.query import AnswerInput
 from app.schemas.response import Response
 from app.services.db.message import create_message, get_answer as get_answer_generated
@@ -9,11 +10,15 @@ from app.services.auth.token import get_user_id_from_access_token
 from app.configs.database import SessionDep
 from uuid import UUID
 
-router = APIRouter()
+router = APIRouter(prefix="/messages")
 logger = get_logger(__name__)
 
 
-@router.post("{chat_id}/query", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "{chat_id}/query",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[rate_limit_default()],
+)
 def ask_question(
     data: QueryInput,
     chat_id: UUID,
@@ -54,7 +59,11 @@ def ask_question(
         )
 
 
-@router.get("/{chat_id}/query/{question_id}")
+@router.get(
+    "/{chat_id}/query/{question_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[rate_limit_default()],
+)
 def get_answer(
     question_id: UUID,
     chat_id: UUID,
