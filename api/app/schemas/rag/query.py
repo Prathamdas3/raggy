@@ -31,10 +31,10 @@ class QueryInput(BaseModel):
 
 
 class AnswerInput(BaseModel):
-    chat_id:UUID
-    user_id:UUID
-    question_id:UUID
-    question:str
+    chat_id: UUID
+    user_id: UUID
+    question_id: UUID
+    question: str
 
     @field_validator("chat_id", "user_id", "question_id", mode="before")
     def check_ids(cls, v, info):

@@ -38,12 +38,12 @@ class Configs:
     MINIO_BUCKET_NAME: str = os.getenv("MINIO_BUCKET_NAME", "audio-files")
     MINIO_SECURE: str = os.getenv("MINIO_SECURE", "false")
 
-    REDIS_HOST:str=str(os.getenv("REDIS_HOST","localhost"))
-    REDIS_PORT:int=int(os.getenv("REDIS_PORT","6379"))
+    REDIS_HOST: str = str(os.getenv("REDIS_HOST", "localhost"))
+    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
 
-    RATE_LIMIT_ENABLED:bool=bool(os.getenv("RATE_LIMIT_ENABLED","true"))
-    RATE_LIMIT_TIMES:int=int(os.getenv("RATE_LIMIT_TIMES","100"))
-    RATE_LIMIT_SECONDS:int=int(os.getenv("RATE_LIMIT_SECONDS","60"))
+    RATE_LIMIT_ENABLED: bool = bool(os.getenv("RATE_LIMIT_ENABLED", "true"))
+    RATE_LIMIT_TIMES: int = int(os.getenv("RATE_LIMIT_TIMES", "100"))
+    RATE_LIMIT_SECONDS: int = int(os.getenv("RATE_LIMIT_SECONDS", "60"))
 
     class Config:
         env_file = ".env"

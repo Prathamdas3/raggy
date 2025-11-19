@@ -93,7 +93,7 @@ def chain_input_others(data: OtherInput):
         raise
 
 
-def chain_answer(data: AnswerInput)->str:
+def chain_answer(data: AnswerInput) -> str:
     try:
         payload = data.model_dump()
         workflow = chain(

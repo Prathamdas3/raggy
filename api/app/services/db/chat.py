@@ -182,7 +182,7 @@ def update_chat(details: UpdateChat, session: SessionDep, chat_id: UUID) -> UUID
         )
 
 
-def get_summary(details: GetSummary, session: SessionDep) -> Dict[str,str]:
+def get_summary(details: GetSummary, session: SessionDep) -> Dict[str, str]:
     try:
         logger.debug(f"Starting to fetch the summary for cht_id:{details.chat_id}")
         statement = (
@@ -200,7 +200,7 @@ def get_summary(details: GetSummary, session: SessionDep) -> Dict[str,str]:
             )
 
         logger.debug("Successfully fetched the docs for the summary")
-        return {"summary_text":doc_data.summary_text,"audio_url":doc_data.audio_url}
+        return {"summary_text": doc_data.summary_text, "audio_url": doc_data.audio_url}
     except (IntegrityError, SQLAlchemyError) as e:
         logger.error(
             f"Failed to fetch the summary for the chat for the user with user id: {details.user_id},error: {str(e)}",

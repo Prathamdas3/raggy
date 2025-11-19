@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 logger = get_logger(__name__)
 
 
-def get_response(query: str, question: str|None=None) -> str:
+def get_response(query: str, question: str | None = None) -> str:
     """Get reponse for the summary"""
     if not query or not query.strip():
         logger.error("Empty query provided")

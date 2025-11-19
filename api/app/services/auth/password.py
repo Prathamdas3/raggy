@@ -47,7 +47,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(prepared_password, hashed_password)
     except Exception as e:
         # Log the error in production
-       
+
         return False
 
 
@@ -82,7 +82,6 @@ def get_hashed_password(password: str) -> str:
             detail=str(e),
         )
     except Exception as e:
-        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error processing password",

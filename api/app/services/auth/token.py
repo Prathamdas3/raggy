@@ -99,7 +99,9 @@ def get_user_id_from_access_token(request: Request) -> UUID:
             )
 
     except JWTError as je:
-        logger.error(f"Failed to fetch the creads from the access_token:{str(je)}",exc_info=True)
+        logger.error(
+            f"Failed to fetch the creads from the access_token:{str(je)}", exc_info=True
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -126,7 +128,6 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
         )
 
-
     try:
         if not config.SECRET_KEY:
             raise ValueError("SECRET_KEY missing in the env")
@@ -140,7 +141,10 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
             )
 
     except JWTError as je:
-        logger.error(f"Failed to fetch the creds form the refresh token: {str(je)}",exc_info=True)
+        logger.error(
+            f"Failed to fetch the creds form the refresh token: {str(je)}",
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

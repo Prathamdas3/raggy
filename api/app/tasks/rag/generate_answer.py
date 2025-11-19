@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_generate_answer(self, data: dict)->dict:
+def task_generate_answer(self, data: dict) -> dict:
     new_data = AnswerInput(**data)
     logger.debug("starting the task of answer generation")
     try:

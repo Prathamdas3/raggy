@@ -113,7 +113,7 @@ def update_message(session: Session, details: UpdateMessage) -> UUID:
         )
 
 
-def get_answer(session: Session, details: GetAnswer) -> Messages:
+def get_answer(session: Session, details: GetAnswer):
     try:
         logger.debug(
             f"Started to fetch the answer with the question_id: {details.question_id}"
@@ -131,10 +131,10 @@ def get_answer(session: Session, details: GetAnswer) -> Messages:
                 detail="check chat_id, user_id or question_id",
             )
         return {
-            "answer_id":message.id,
-            "question_id":message.question_id,
-            "answer":message.content,
-            "audio_url":message.audio_url
+            "answer_id": message.id,
+            "question_id": message.question_id,
+            "answer": message.content,
+            "audio_url": message.audio_url,
         }
     except HTTPException:
         raise
@@ -152,6 +152,51 @@ def get_answer(session: Session, details: GetAnswer) -> Messages:
     except Exception as e:
         logger.error(
             f"Failed to fetch the message with question id:{details.question_id}, error:{str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+
+def get_question(session: Session, details: GetAnswer):
+    try:
+        logger.debug(
+            f"Started to fetch the question with the id: {details.question_id}"
+        )
+        statement = (
+            select(Messages)
+            .where(Messages.user_id == details.user_id)
+            .where(Messages.chat_id == details.chat_id)
+            .where(Messages.id == details.question_id)
+        )
+        message = session.exec(statement=statement).first()
+        if not message:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="check chat_id, user_id or question_id",
+            )
+        return {
+            "id": message.id,
+            "question": message.content,
+        }
+    except HTTPException:
+        raise
+
+    except (IntegrityError, SQLAlchemyError) as e:
+        logger.error(
+            f"Failed to fetch the question with the question id:{details.question_id}, error:{str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Failed to fetch the question with question id:{details.question_id}, error:{str(e)}",
             exc_info=True,
         )
         raise HTTPException(

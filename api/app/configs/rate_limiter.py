@@ -16,9 +16,7 @@ async def init_rate_limiter():
     global redis_client
     try:
         redis_client = Redis.from_url(
-            config.REDIS_URL,
-            encoding="utf-8",
-            decode_responses=True
+            config.REDIS_URL, encoding="utf-8", decode_responses=True
         )
         await redis_client.ping()
         await FastAPILimiter.init(redis_client)
@@ -51,8 +49,8 @@ async def rate_limit_callback(request: Request, response, pexpire: int):
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail={
             "error": "Rate limit exceeded",
-            "message": f"Too many requests. Try again in {pexpire / 1000:.0f} seconds."
-        }
+            "message": f"Too many requests. Try again in {pexpire / 1000:.0f} seconds.",
+        },
     )
 
 
@@ -63,7 +61,7 @@ def rate_limit_default():
             times=config.RATE_LIMIT_TIMES,
             seconds=config.RATE_LIMIT_SECONDS,
             callback=rate_limit_callback,
-            identifier=get_identifier
+            identifier=get_identifier,
         )
     )
 
@@ -75,6 +73,6 @@ def rate_limit_custom(times: int, seconds: int):
             times=times,
             seconds=seconds,
             callback=rate_limit_callback,
-            identifier=get_identifier
+            identifier=get_identifier,
         )
     )

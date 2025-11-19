@@ -22,7 +22,7 @@ async def init_redis():
             config.REDIS_URL,
             encoding="utf-8",
             decode_responses=True,
-            password=config.REDIS_PASSWORD
+            password=config.REDIS_PASSWORD,
         )
         # Test connection
         await redis_client.ping()

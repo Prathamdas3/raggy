@@ -143,7 +143,6 @@ class QdrantVectorStoreSingleton:
                         # Get client and embeddings
                         client = cls.get_qdrant_client()
                         embeddings = cls.get_embeddings()
-                       
 
                         # Initialize vector store
                         cls._vector_store = QdrantVectorStore(

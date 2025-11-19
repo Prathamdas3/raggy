@@ -9,6 +9,7 @@ from contextlib import contextmanager
 logger = get_logger(__name__)
 URL = config.DATABASE_URI
 
+
 def get_engine():
     try:
         engine = create_engine(
@@ -25,8 +26,10 @@ def get_engine():
         logger.error(f"Error creating database engine: {e}")
         raise
 
+
 # Global engine instance
 engine = get_engine()
+
 
 def init_db():
     """Run this once on startup — creates tables if not exist."""
@@ -36,6 +39,7 @@ def init_db():
     except SQLAlchemyError as e:
         logger.error(f"Error creating database tables: {e}")
         raise
+
 
 def get_session():
     """Yields a database session safely for FastAPI dependency injection."""
@@ -49,9 +53,11 @@ def get_session():
     finally:
         session.close()
 
+
 SessionDep = Annotated[Session, Depends(get_session)]
 
 # ===== CELERY-SPECIFIC SESSION MANAGEMENT =====
+
 
 @contextmanager
 def get_celery_session():
@@ -69,6 +75,7 @@ def get_celery_session():
         raise
     finally:
         session.close()
+
 
 def get_celery_session_no_autocommit():
     """

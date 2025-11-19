@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_save_vector_store(self, data: dict)->dict:
+def task_save_vector_store(self, data: dict) -> dict:
     data = TaskInput(**data)
     logger.debug("Started the task of storing the data in vector store")
     try:
@@ -25,4 +25,3 @@ def task_save_vector_store(self, data: dict)->dict:
             exc_info=True,
         )
         raise self.retry(exc=e)
-

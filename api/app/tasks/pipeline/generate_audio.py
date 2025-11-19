@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_generate_audio(self, data=dict)->dict:
+def task_generate_audio(self, data=dict) -> dict:
     data = SpechInput(**data)
     logger.debug(
         "Starting the task of audio generation and saving in minio from summary text"
@@ -20,7 +20,7 @@ def task_generate_audio(self, data=dict)->dict:
         if not temp_audio_path:
             raise ValueError("Failed to get the temp audio path")
 
-        audio_url = save_audio_minio(path=temp_audio_path,chat_id=data.chat_id)
+        audio_url = save_audio_minio(path=temp_audio_path, chat_id=data.chat_id)
 
         if not audio_url:
             raise ValueError("Failed to get the minio audio url")

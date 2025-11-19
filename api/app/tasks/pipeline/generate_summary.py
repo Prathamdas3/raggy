@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 @celery.task(bind=True, max_retries=3, default_retry_delay=10)
-def task_generate_summary(self, data: dict)->dict:
+def task_generate_summary(self, data: dict) -> dict:
     data = TaskInput(**data)
     logger.debug("Started the task of summary generation")
 
@@ -16,7 +16,7 @@ def task_generate_summary(self, data: dict)->dict:
         if not summary_text:
             raise ValueError("Failed to generate summary text")
 
-        details=data.model_dump()
+        details = data.model_dump()
         details["summary_text"] = summary_text
         return details
 
