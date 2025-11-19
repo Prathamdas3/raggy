@@ -40,12 +40,12 @@ def ask_question(
             question_id=question_id,
             question=data.question,
         )
-        chain_answer(data=details)
+        chain_id = chain_answer(data=details)
 
         return Response(
             status="success",
             message="Successfully recived the question",
-            data={"question_id": question_id},
+            data={"question_id": question_id, "task_id": chain_id},
         )
     except HTTPException:
         raise

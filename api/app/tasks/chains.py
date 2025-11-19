@@ -32,7 +32,7 @@ COMMON_TASKS = [
 ]
 
 
-def chain_input_link(data: YTInput):
+def chain_input_link(data: YTInput) -> str:
     try:
         # Step 1: Convert the Pydantic model to dict
         payload = data.model_dump()
@@ -48,10 +48,11 @@ def chain_input_link(data: YTInput):
         )
 
         # Step 3: Run the chain asynchronously
-        workflow.apply_async()
+        result = workflow.apply_async()
         logger.info(
             f"Started chain_input workflow for: {payload.get('chat_id', 'unknown')}"
         )
+        return result.id
 
     except Exception as e:
         logger.error(f"Failed to start chain_input workflow: {e}", exc_info=True)
@@ -69,33 +70,40 @@ def chain_input_others(data: OtherInput):
 
     if not data.path.is_file():
         raise IsADirectoryError(f"Path is not a file: {data.path}")
+    try:
+        payload = data.model_dump()
 
-    payload = data.model_dump()
+        # -------- Select first task -------- #
+        first_task = TASK_MAP.get(data.type)
+        if not first_task:
+            raise ValueError(f"No workflow defined for type: {data.type}")
 
-    # -------- Select first task -------- #
-    first_task = TASK_MAP.get(data.type)
-    if not first_task:
-        raise ValueError(f"No workflow defined for type: {data.type}")
+        # -------- Build full workflow -------- #
+        workflow = chain(first_task.s(payload), *(task.s() for task in COMMON_TASKS))
 
-    # -------- Build full workflow -------- #
-    workflow = chain(first_task.s(payload), *(task.s() for task in COMMON_TASKS))
+        # -------- Execute -------- #
+        result = workflow.apply_async()
 
-    # -------- Execute -------- #
-    workflow.apply_async()
+        logger.info(f"Started workflow for chat_id={payload.get('chat_id')}")
 
-    logger.info(f"Started workflow for chat_id={payload.get('chat_id')}")
+        return result.id
+    except Exception as e:
+        logger.error(f"Failed to start chain_input_others workflow: {e}", exc_info=True)
+        # Optionally raise or return response for API usage
+        raise
 
 
-def chain_answer(data: AnswerInput):
+def chain_answer(data: AnswerInput)->str:
     try:
         payload = data.model_dump()
         workflow = chain(
             task_generate_answer.s(payload), task_generate_audio.s(), task_update_db.s()
         )
-        workflow.apply_async()
+        result = workflow.apply_async()
         logger.info(
             f"Started chain_answer workflow for: {payload.get('question_id', 'unknown')}"
         )
+        return result.id
     except Exception as e:
         logger.error(f"Failed to start chain_yt workflow: {e}", exc_info=True)
         # Optionally raise or return response for API usage

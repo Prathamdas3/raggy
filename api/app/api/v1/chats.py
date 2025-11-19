@@ -49,9 +49,13 @@ def create_new_links_chat(
             chat_id=new_id,
             link=data.link,
         )
-        chain_input_link(data=details)
+        chain_id = chain_input_link(data=details)
 
-        return ReturnResponse(status="success", message="Successfully created the chat")
+        return ReturnResponse(
+            status="success",
+            message="Successfully created the chat",
+            data={"task_id": chain_id},
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -91,9 +95,13 @@ def create_new_files_chat(
             type=meta.category,
         )
 
-        chain_input_others(details)
+        chain_id = chain_input_others(details)
 
-        return ReturnResponse(status="success", message="Successfully created the chat")
+        return ReturnResponse(
+            status="success",
+            message="Successfully created the chat",
+            data={"task_id": chain_id},
+        )
     except HTTPException:
         raise
     except Exception as e:
