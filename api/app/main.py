@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from app.lifecycle import lifespan
 from app.utils.logger import get_logger
-from app.api.v1 import router
+from app.api.v1.router import router
+from app.api.task import router as task_router
 import app.models.all_schema
 
 logger = get_logger()
 
 app = FastAPI(lifespan=lifespan, swagger_ui_parameters={"defaultModelsExpandDepth": -1})
 
-app.include_router(router.router)
+app.include_router(router)
+app.include_router(task_router)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-from configs.celery import celery
-from utils.logger import get_logger
+from app.configs.celery import celery
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

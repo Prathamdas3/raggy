@@ -2,8 +2,7 @@ from fastapi import APIRouter, HTTPException
 from celery.result import AsyncResult
 from app.configs.celery import celery
 
-router = APIRouter()
-
+router = APIRouter(prefix="/api/v1")
 
 @router.get("/tasks/{task_id}")
 def get_task_status(task_id: str):

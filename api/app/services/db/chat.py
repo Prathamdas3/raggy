@@ -279,3 +279,48 @@ def get_chat_messages(details: GetSummary, session: SessionDep):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
         )
+
+
+def get_original_text(details: GetSummary, session: SessionDep):
+    try:
+        logger.debug(
+            f"Starting to fetch the original and summary also the tile of the chat with cht_id:{details.chat_id}"
+        )
+        statement = (
+            select(Docs)
+            .where(Docs.chat_id == details.chat_id)
+            .where(Docs.user_id == details.user_id)
+        )
+        doc_data = session.exec(statement=statement).first()
+
+        if doc_data is None:
+            logger.error(f"No doc found with this chat_id: {details.chat_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid chat id for fetching the summary",
+            )
+
+        logger.debug("Successfully fetched the docs for the summary")
+        return {
+            "summary_text": doc_data.summary_text,
+            "original_text": doc_data.original_text,
+            "title": doc_data.chat.chat_name,
+        }
+    except (IntegrityError, SQLAlchemyError) as e:
+        logger.error(
+            f"Failed to fetch the summary for the chat for the user with user id: {details.user_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while fetching the summary of the chat: {details.chat_id},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )

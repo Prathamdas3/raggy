@@ -17,7 +17,7 @@ from app.services.db.chat import (
 from app.services.auth.token import get_user_id_from_access_token
 from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import GetSummary, UpdateChat
-from app.tasks.chains import chain_input_link, chain_input_others
+from app.tasks.chains import chain_input_link, chain_input_others, chain_export_pdf
 from app.utils.save_file import save_file
 
 router = APIRouter(prefix="/chats")
@@ -60,7 +60,7 @@ def create_new_links_chat(
         raise
     except Exception as e:
         logger.error(f"Failed to create the chat, {str(e)}", exc_info=True)
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while chat creation",
         )
@@ -106,7 +106,7 @@ def create_new_files_chat(
         raise
     except Exception as e:
         logger.error(f"Failed to create the chat, {str(e)}", exc_info=True)
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while chat creation",
         )
@@ -130,7 +130,7 @@ def get_all_chats(
         raise
     except Exception as e:
         logger.error(f"Failed to get all the chat, {str(e)}", exc_info=True)
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while fetching all the chats",
         )
@@ -161,7 +161,7 @@ def update_chat(
         raise
     except Exception as e:
         logger.error(f"Failed to updating the chat, {str(e)}", exc_info=True)
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while updating the chat",
         )
@@ -192,7 +192,7 @@ def delete_chat(
 
     except Exception as e:
         logger.error(f"Failed to remove the chat, {str(e)}", exc_info=True)
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while removing the chat",
         )
@@ -225,7 +225,7 @@ def get_summary(
         raise
     except Exception as e:
         logger.error(f"Failed to get the summary for the chat: {str(e)}", exc_info=True)
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch the summary for the chat",
         )
@@ -259,7 +259,41 @@ def get_chats_message(
         logger.error(
             f"Failed to fetch all the messages for the chat: {str(e)}", exc_info=True
         )
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch the audio of summary for the chat",
+        )
+
+
+@router.get(
+    "/{chat_id}/export",
+    status_code=status.HTTP_200_OK,
+    dependencies=[rate_limit_default()],
+)
+def get_chat_pdf(chat_id: UUID, user_id: UUID = Depends(get_user_id_from_access_token)):
+    try:
+        logger.debug(f"Starting the export message and generating the pdf: {chat_id}")
+
+        details = GetSummary(user_id=user_id, chat_id=chat_id)
+        chain_id = chain_export_pdf(data=details)
+        if not chain_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to start the export process",
+            )
+
+        return ReturnResponse(
+            status="success",
+            message="Successfully started the proccess for the export chat generation",
+            data={"task_id": chain_id},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Failed to start the task of export chat creation: error:{str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to export the chat generation",
         )

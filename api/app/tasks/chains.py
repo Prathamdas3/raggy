@@ -1,4 +1,5 @@
 from celery import chain
+from app.schemas.db.chat import GetSummary
 from app.schemas.input.file import OtherInput, Type
 from app.tasks.input.audio_video_text import task_audio_video_text
 from app.tasks.input.image import task_png_text
@@ -13,6 +14,7 @@ from app.tasks.pipeline.generate_audio import task_generate_audio
 from app.tasks.pipeline.update_db import task_update_db
 from app.tasks.input.yt_text import task_yt
 from app.tasks.rag.generate_answer import task_generate_answer
+from app.tasks.pipeline.export_pdf import task_export_chat
 
 logger = get_logger(__name__)
 
@@ -105,6 +107,21 @@ def chain_answer(data: AnswerInput) -> str:
         )
         return result.id
     except Exception as e:
-        logger.error(f"Failed to start chain_yt workflow: {e}", exc_info=True)
+        logger.error(f"Failed to start chain_answer workflow: {str(e)}", exc_info=True)
         # Optionally raise or return response for API usage
+        raise
+
+
+def chain_export_pdf(data: GetSummary) -> str:
+    try:
+        payload = data.model_dump()
+        workflow = chain(task_export_chat.s(payload))
+        result = workflow.apply_async()
+
+        logger.info("Stated the chain for export pdf workflow")
+        return result.id
+    except Exception as e:
+        logger.error(
+            f"Failed to start chain_export_pdf workflow: {str(e)}", exc_info=True
+        )
         raise

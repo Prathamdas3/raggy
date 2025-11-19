@@ -7,7 +7,6 @@ from app.config import config
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
-
 redis_client: Redis | None = None
 
 
@@ -15,8 +14,9 @@ async def init_rate_limiter():
     """Initialize Redis and rate limiter on startup."""
     global redis_client
     try:
+        redis_url = f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/2"
         redis_client = Redis.from_url(
-            config.REDIS_URL, encoding="utf-8", decode_responses=True
+            redis_url, encoding="utf-8", decode_responses=True
         )
         await redis_client.ping()
         await FastAPILimiter.init(redis_client)
@@ -35,12 +35,12 @@ async def close_rate_limiter():
         logger.info("Rate limiter closed")
 
 
-def get_identifier(request: Request) -> str:
+async def get_identifier(request: Request) -> str:  # ← ADD async HERE
     """Get client identifier (IP address)."""
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0]
-    return request.client.host
+    return request.client.host if request.client else "unknown"
 
 
 async def rate_limit_callback(request: Request, response, pexpire: int):

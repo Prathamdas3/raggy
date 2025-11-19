@@ -1,6 +1,6 @@
 from app.configs.celery import celery
 from app.services.common.text_audio import text_audio
-from app.services.common.minio_save import save_audio_minio
+from app.services.common.minio_save import upload_to_minio
 from app.utils.logger import get_logger
 from app.schemas.input.yt import SpechInput
 
@@ -20,7 +20,7 @@ def task_generate_audio(self, data=dict) -> dict:
         if not temp_audio_path:
             raise ValueError("Failed to get the temp audio path")
 
-        audio_url = save_audio_minio(path=temp_audio_path, chat_id=data.chat_id)
+        audio_url = upload_to_minio(file_path=temp_audio_path, chat_id=data.chat_id,folder="audio",content_type="audio/mpeg")
 
         if not audio_url:
             raise ValueError("Failed to get the minio audio url")
