@@ -2,6 +2,7 @@ from app.models.all_schema import User
 from sqlmodel import Session as SessionDep
 from app.schemas.db import user
 from app.utils.logger import get_logger
+from app.services.auth.password import get_hashed_password, verify_password
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from pydantic import EmailStr
@@ -252,3 +253,57 @@ def delete_user_by_id(user_id: UUID, session: SessionDep) -> response.Response:
 
 
 # update password
+def update_user_password(
+    data: user.UpdatePassword, session: SessionDep
+) -> response.Response:
+    """Updating the user password"""
+    try:
+        logger.debug("Update user password")
+        old_user = get_user_by_id(user_id=data.user_id, session=session)
+        if not old_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No user found",
+            )
+
+        check_password = verify_password(
+            plain_password=data.old_password, hashed_password=old_user.password
+        )
+        if not check_password:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Password does not match please check the password",
+            )
+
+        new_hashed_password = get_hashed_password(data.new_password)
+        new_user: User = User(password=new_hashed_password)
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+        return response.Response(
+            status="success",
+            message="Successfully updated the password",
+        )
+    except HTTPException:
+        raise
+
+    except (IntegrityError, SQLAlchemyError) as e:
+        session.rollback()
+        logger.error(
+            f"Failed to update the user password:{user['email']},error: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+    except Exception as e:
+        session.rollback()
+        logger.error(
+            f"Unexpected error while updating the user password: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred",
+        )
