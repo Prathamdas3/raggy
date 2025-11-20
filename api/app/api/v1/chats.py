@@ -8,6 +8,7 @@ from app.configs.database import SessionDep
 from uuid import UUID
 from app.services.db.chat import (
     create_chat,
+    create_share_id,
     get_chats,
     update_chat as update_chat_fn,
     remove_chat,
@@ -19,6 +20,7 @@ from app.schemas.response import Response as ReturnResponse
 from app.schemas.db.chat import GetSummary, UpdateChat
 from app.tasks.chains import chain_input_link, chain_input_others, chain_export_pdf
 from app.utils.save_file import save_file
+from app.config import config
 
 router = APIRouter(prefix="/chats")
 
@@ -296,4 +298,39 @@ def get_chat_pdf(chat_id: UUID, user_id: UUID = Depends(get_user_id_from_access_
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export the chat generation",
+        )
+
+
+@router.get(
+    "/{chat_id}/share",
+    status_code=status.HTTP_200_OK,
+    dependencies=[rate_limit_default()],
+)
+def get_share_url(
+    chat_id: UUID,
+    session: SessionDep,
+    user_id: UUID = Depends(get_user_id_from_access_token),
+):
+    try:
+        logger.debug("Fetching the share url for the user")
+        share_chat = GetSummary(chat_id=chat_id, user_id=user_id)
+        share_obj = create_share_id(details=share_chat, session=session)
+        if not share_obj["share_id"]:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate the share id",
+            )
+
+        return ReturnResponse(
+            status="success",
+            message="Successfully generated the share url",
+            data={"url": f"{config.FRONTEND_URL}share/{share_obj["share_id"]}"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate a share url error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate a share url",
         )

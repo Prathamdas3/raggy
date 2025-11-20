@@ -26,6 +26,7 @@ class Configs:
     QDRANT_HOST: str = os.getenv("QDRANT_HOST", "localhost")
     HUGGINGFACE_MODEL: str = os.getenv("HUGGINGFACE_MODEL", "")
     HUGGINGFACE_DEVICE: str = os.getenv("HUGGINGFACE_DEVICE", "cpu")
+    FRONTEND_URL:str=os.getenv("FRONTEND_URL","")
 
     QDRANT_PORT: int = int(os.getenv("QDRANT_PORT", "6333"))
     QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME", "documents")

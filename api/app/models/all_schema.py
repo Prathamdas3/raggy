@@ -95,6 +95,7 @@ class Chats(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     chat_name: str | None = None
     is_bookmarked: bool = False
+    share_id: str | None = Field(default=None, unique=True, nullable=True)
 
     # Relationships
     user: User = Relationship(back_populates="chats")

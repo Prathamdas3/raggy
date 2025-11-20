@@ -1,3 +1,4 @@
+import secrets
 from app.models.all_schema import Chats, Docs, Messages
 from fastapi import HTTPException, status
 from app.utils.logger import get_logger
@@ -236,7 +237,6 @@ def get_chat_messages(details: GetSummary, session: SessionDep):
                 Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
             )
             .where(Question.chat_id == details.chat_id)
-            .where(Question.user_id == details.user_id)
             .where(Question.sender == "user")
             .order_by(Question.created_at.asc())
         )
@@ -324,3 +324,139 @@ def get_original_text(details: GetSummary, session: SessionDep):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database operation failed",
         )
+
+
+def create_share_id(details: GetSummary, session: SessionDep) -> dict:
+    try:
+        logger.debug(f"Creating share id for chat: {details.chat_id}")
+
+        chat = session.exec(
+            select(Chats)
+            .where(Chats.id == details.chat_id)
+            .where(Chats.user_id == details.user_id)
+        ).first()
+
+        if not chat:
+            raise HTTPException(
+                status_code=400, detail="Chat not found or you do not own it"
+            )
+
+        # If already shared, return existing share_id
+        if chat.share_id:
+            return {"share_id": chat.share_id}
+
+        # Generate opaque secure token
+        new_share_id = secrets.token_urlsafe(16)
+
+        chat.share_id = new_share_id
+        session.add(chat)
+        session.commit()
+        session.refresh(chat)
+
+        logger.debug(f"Successfully set share_id = {new_share_id} for chat {chat.id}")
+
+        return {"share_id": chat.share_id}
+
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error while creating share ID: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+def get_chat_share_id(share_id: UUID, new_user_id: UUID, session: SessionDep) -> UUID:
+    if not share_id:
+        raise HTTPException(status_code=400, detail="Missing share_id")
+
+    try:
+        # 1. Fetch original chat
+        old_chat = session.exec(select(Chats).where(Chats.share_id == share_id)).first()
+
+        if not old_chat:
+            raise HTTPException(status_code=404, detail="Shared chat not found")
+
+        # 2. Create new chat
+        new_chat = Chats(
+            user_id=new_user_id,
+            chat_name=old_chat.chat_name,
+            is_bookmarked=False,
+            share_id=None,  # forked chats are not shareable
+        )
+
+        session.add(new_chat)
+        session.flush()  # new_chat.id is available now
+
+        # 3. Clone Docs if exists
+        old_docs = session.exec(select(Docs).where(Docs.chat_id == old_chat.id)).first()
+
+        if old_docs:
+            new_docs = Docs(
+                user_id=new_user_id,
+                chat_id=new_chat.id,
+                summary_text=old_docs.summary_text,
+                audio_url=old_docs.audio_url,
+                original_text=old_docs.original_text,
+            )
+            session.add(new_docs)
+
+        session.flush()
+
+        # 4. Fetch all messages from old chat
+        old_messages = session.exec(
+            select(Messages)
+            .where(Messages.chat_id == old_chat.id)
+            .order_by(Messages.created_at.asc())
+        ).all()
+
+        # Mapping: old_message_id -> new_message_id
+        id_map = {}
+
+        # 5. First pass — create all messages (without question_id)
+        for msg in old_messages:
+            new_msg = Messages(
+                chat_id=new_chat.id,
+                user_id=new_user_id,
+                sender=msg.sender,
+                content=msg.content,
+                audio_url=msg.audio_url,
+                question_id=msg.question_id,  
+            )
+            session.add(new_msg)
+            session.flush()
+
+            if new_msg.question_id is not None:
+                id_map[msg.id] = new_msg.id
+
+        # 6. Second pass — fix question_id mapping
+        for msg in old_messages:
+            if msg.sender == "llm" and msg.question_id:
+                old_answer_id = id_map[msg.id]
+                new_answer = session.get(Messages, old_answer_id)
+
+                if msg.question_id in id_map:
+                    new_answer.question_id = id_map[msg.question_id]
+
+        # 7. Commit everything
+        session.commit()
+
+        return new_chat.id
+
+    except HTTPException:
+        raise
+
+    except (IntegrityError, SQLAlchemyError) as e:
+        logger.error(
+            f"failed to clone the chat with share id {share_id}, error:{str(e)}",
+            exc_info=True,
+        )
+        session.rollback()
+        raise HTTPException(
+            status_code=500, detail="Database operation failed (SQL issue)"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"failed to clone the chat with share id {share_id}, error:{str(e)}",
+            exc_info=True,
+        )
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Failed to fork chat")
