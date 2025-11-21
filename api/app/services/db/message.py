@@ -121,7 +121,7 @@ def update_message(session: Session, details: UpdateMessage) -> UUID:
         )
 
 
-def get_answer(session: Session, details: GetAnswer):
+def get_answer(session: Session, details: GetAnswer) -> list:
     try:
         logger.debug(
             f"Started to fetch the answer with the question_id: {details.question_id}"
@@ -132,18 +132,19 @@ def get_answer(session: Session, details: GetAnswer):
             .where(Messages.chat_id == details.chat_id)
             .where(Messages.question_id == details.question_id)
         )
-        message = session.exec(statement=statement).first()
-        if not message:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="check chat_id, user_id or question_id",
+        messages = session.exec(statement=statement).all()
+
+        new_messages = []
+        for i in messages:
+            new_messages.append(
+                {
+                    "answer_id": i.id,
+                    "question_id": i.question_id,
+                    "answer": i.content,
+                    "audio_url": i.audio_url,
+                }
             )
-        return {
-            "answer_id": message.id,
-            "question_id": message.question_id,
-            "answer": message.content,
-            "audio_url": message.audio_url,
-        }
+        return new_messages
     except HTTPException:
         raise
 

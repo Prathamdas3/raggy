@@ -15,6 +15,7 @@ class Type(Enum):
 class Sender(Enum):
     user = "user"
     llm = "llm"
+    system="system"
 
 
 class User(SQLModel, table=True):

@@ -42,9 +42,9 @@ class CreateMessage(BaseModel):
 
         try:
             return UUID(str(v))
-        except Exception: 
+        except Exception:
             raise ValueError(f"{info.field_name} should be an UUID type")
-        
+
     @field_validator("content", mode="before")
     def check_content(cls, v, info):
         if not v or not isinstance(v, str):

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, status, HTTPException, Depends
+
+from fastapi import APIRouter, Query, status, HTTPException, Depends
 from app.configs.rate_limiter import rate_limit_default
 from app.schemas.rag.query import AnswerInput
 from app.schemas.response import Response
@@ -7,7 +8,7 @@ from app.services.db.message import (
     get_answer as get_answer_generated,
     get_question,
 )
-from app.tasks.chains import chain_answer,chain_update_answer
+from app.tasks.chains import chain_answer
 from app.utils.logger import get_logger
 from app.schemas.db.message import QueryInput, CreateMessage, GetAnswer
 from app.services.auth.token import get_user_id_from_access_token
@@ -30,9 +31,10 @@ def ask_question(
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
     try:
+
         question_details = CreateMessage(
-            user_id=user_id, chat_id=chat_id, content=data.question
-        )
+                user_id=user_id, chat_id=chat_id, content=data.question
+            )
         question_id = create_message(details=question_details, session=session)
         if not question_id:
             raise HTTPException(
@@ -78,18 +80,12 @@ def get_answer(
 ):
     try:
         details = GetAnswer(user_id=user_id, chat_id=chat_id, question_id=question_id)
-        answer = get_answer_generated(details=details, session=session)
-
-        if not answer:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No answer found for the given question id:{question_id}",
-            )
+        answers = get_answer_generated(details=details, session=session)
 
         return Response(
             status="success",
             message="Successfully fetched answer for the asked question",
-            data=answer,
+            data=answers,
         )
     except HTTPException:
         raise
@@ -138,7 +134,7 @@ def get_retry_answer_generation(
         )
 
         # Start Celery chain
-        chain_id = chain_update_answer(data=answer_payload)
+        chain_id = chain_answer(data=answer_payload)
 
         return Response(
             status="success",

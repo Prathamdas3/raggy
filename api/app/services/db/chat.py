@@ -231,35 +231,55 @@ def get_chat_messages(details: GetSummary, session: SessionDep):
         Question = aliased(Messages)
         Answer = aliased(Messages)
 
-        statement = (
-            select(Question, Answer)
-            .outerjoin(
-                Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
-            )
+        # 1. Get all user questions
+        q_stmt = (
+            select(Question)
             .where(Question.chat_id == details.chat_id)
-            .where(Question.user_id==details.user_id)
+            .where(Question.user_id == details.user_id)
             .where(Question.sender == "user")
             .order_by(Question.created_at.asc())
         )
+        questions = session.exec(q_stmt).all()
 
-        messages = session.exec(statement=statement).all()
+        if not questions:
+            return []
 
-        messages_pair = []
-        for question, response in messages:
-            messages_pair.append(
+        # 2. Get all answers to those questions
+        q_ids = [q.id for q in questions]
+
+        a_stmt = (
+            select(Answer)
+            .where(Answer.question_id.in_(q_ids))
+            .where(Answer.sender == "llm")
+            .order_by(Answer.created_at.asc())
+        )
+        answers = session.exec(a_stmt).all()
+
+        # 3. Map answers to their questions
+        answers_map = {qid: [] for qid in q_ids}
+        for ans in answers:
+            answers_map[ans.question_id].append(ans)
+
+        # 4. Build final result
+        result = []
+        for q in questions:
+            result.append(
                 {
-                    "question": MessageResponse.model_validate(question),
-                    "response": MessageResponse.model_validate(response)
-                    if response
-                    else None,
+                    "question": MessageResponse.model_validate(q),
+                    "responses": (
+                        [MessageResponse.model_validate(a) for a in answers_map[q.id]]
+                        if answers_map[q.id]
+                        else None
+                    ),
                 }
             )
-
         logger.info(
             f"Successfully got all the messages under the chat_id {details.chat_id}"
         )
 
-        return messages_pair
+        return result
+
+        # return messages_pair
 
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
