@@ -40,11 +40,11 @@ class CreateMessage(BaseModel):
         if not v:
             return v
 
-        if not isinstance(v, str):
-            raise TypeError(f"{info.field_name} should be UUID")
-
-        return v
-
+        try:
+            return UUID(str(v))
+        except Exception: 
+            raise ValueError(f"{info.field_name} should be an UUID type")
+        
     @field_validator("content", mode="before")
     def check_content(cls, v, info):
         if not v or not isinstance(v, str):
@@ -63,7 +63,7 @@ class UpdateMessage(BaseModel):
     chat_id: UUID
     question_id: UUID
     audio_url: str
-    content: str
+    summary_text: str
 
     class Config:
         exclude_unset = True
@@ -78,7 +78,7 @@ class UpdateMessage(BaseModel):
         except Exception:
             raise ValueError(f"{info.field_name} should be a valid uuid")
 
-    @field_validator("audio_url", "content", mode="before")
+    @field_validator("audio_url", "summary_text", mode="before")
     def check_audio_url(cls, v, info):
         if not v and not isinstance(v, str):
             raise TypeError(f"{info.field_name} should be string")

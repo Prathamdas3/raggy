@@ -48,7 +48,7 @@ def generate_answer(data: QueryInput) -> str:
     try:
         logger.debug("Generating answer using language model")
 
-        answer = get_response(query=content, question=data.question)
+        answer,_ = get_response(query=content, question=data.question)
 
         if not answer or not answer.strip():
             logger.error("Failed generate the answer")
@@ -60,8 +60,8 @@ def generate_answer(data: QueryInput) -> str:
 
         answer = answer.strip()
 
-    except Exception:
-        logger.error("Failed to generate answers")
+    except Exception as e:
+        logger.error(f"Failed to generate answers error: {str(e)}",exc_info=True)
         raise ValueError("NO answer got generated")
 
     return answer

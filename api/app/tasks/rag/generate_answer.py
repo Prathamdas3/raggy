@@ -17,7 +17,7 @@ def task_generate_answer(self, data: dict) -> dict:
             user_id=new_data.user_id,
             question=new_data.question,
         )
-        answer,_ = generate_answer(data=query_data)
+        answer= generate_answer(data=query_data)
         if not answer or not answer.strip():
             raise ValueError("No answer found,it might be empty")
 

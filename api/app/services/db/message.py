@@ -71,15 +71,28 @@ def update_message(session: Session, details: UpdateMessage) -> UUID:
         )
         message = session.exec(statement=statement).first()
 
-        if not message:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="check chat_id, user_id or question_id",
+        if message is None:
+            raise ValueError(
+                "check chat_id, user_id or question_id",
             )
 
-        for field, value in details.model_dump().items():
-            setattr(message, field, value)
+        update_data = details.model_dump(exclude_unset=True, exclude_none=True)
+        if "summary_text" in update_data:
+            update_data["content"] = update_data.pop("summary_text")
+        fields_to_exclude = {"user_id", "chat_id", "question_id"}
+        update_data = {
+            k: v for k, v in update_data.items() if k not in fields_to_exclude
+        }
+        if not update_data:
+            logger.warning("No fields to update")
+            return message.id
 
+        # Update only the fields that are present
+        for field, value in update_data.items():
+            if hasattr(message, field):
+                setattr(message, field, value)
+            else:
+                logger.warning(f"Field '{field}' does not exist on Messages model")
         session.add(message)
         session.commit()
 
@@ -87,18 +100,14 @@ def update_message(session: Session, details: UpdateMessage) -> UUID:
 
         return message.id
 
-    except HTTPException:
-        raise
-
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
         logger.error(
             f"Failed to update the message with the audio the id:{details.chat_id}, error:{str(e)}",
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed",
+        raise RuntimeError(
+            "Database operation failed",
         )
 
     except Exception as e:
@@ -107,9 +116,8 @@ def update_message(session: Session, details: UpdateMessage) -> UUID:
             f"Failed to update the message with the audio the id:{details.chat_id}, error:{str(e)}",
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database operation failed",
+        raise RuntimeError(
+            "Database operation failed",
         )
 
 

@@ -123,3 +123,5 @@ def update_docs(session: Session, details: UpdateDocsData) -> UUID:
     except Exception as e:
         logger.error(f"Unexpected error in update_docs: {e}", exc_info=True)
         raise
+
+

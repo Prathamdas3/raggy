@@ -34,5 +34,5 @@ def task_update_db(self, data: dict) -> dict:
             return {"status": "completed", "doc_id": str(doc_id), **data.model_dump()}
 
     except Exception as e:
-        logger.error(f"Error in task_update_db: {e}", exc_info=True)
+        logger.error(f"Error in task_update_db: {str(e)}", exc_info=True)
         raise self.retry(exc=e)

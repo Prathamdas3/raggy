@@ -7,7 +7,7 @@ from app.services.db.message import (
     get_answer as get_answer_generated,
     get_question,
 )
-from app.tasks.chains import chain_answer
+from app.tasks.chains import chain_answer,chain_update_answer
 from app.utils.logger import get_logger
 from app.schemas.db.message import QueryInput, CreateMessage, GetAnswer
 from app.services.auth.token import get_user_id_from_access_token
@@ -115,7 +115,7 @@ def get_retry_answer_generation(
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
     try:
-        question_details = CreateMessage(
+        question_details = GetAnswer(
             user_id=user_id, chat_id=chat_id, question_id=question_id
         )
         data = get_question(details=question_details, session=session)
@@ -125,7 +125,7 @@ def get_retry_answer_generation(
                 detail="Question not found",
             )
 
-        if not getattr(data, "question", None):
+        if not data["question"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid question data",
@@ -134,11 +134,11 @@ def get_retry_answer_generation(
             chat_id=chat_id,
             user_id=user_id,
             question_id=question_id,
-            question=data.question,
+            question=data["question"],
         )
 
         # Start Celery chain
-        chain_id = chain_answer(data=answer_payload)
+        chain_id = chain_update_answer(data=answer_payload)
 
         return Response(
             status="success",
