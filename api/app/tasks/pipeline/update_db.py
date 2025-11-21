@@ -1,3 +1,5 @@
+from app.schemas.db.chat import UpdateChat
+from app.services.db.chat import update_chat
 from app.configs.celery import celery
 from app.schemas.db.docs import UpdateDocsData
 from app.services.db.docs import update_docs
@@ -19,6 +21,12 @@ def task_update_db(self, data: dict) -> dict:
         with get_celery_session() as session:
             # The update_docs function handles both cases internally
             doc_id = update_docs(session=session, details=data)
+            if data.title:
+                new_update_details = UpdateChat(chat_name=data.title)
+                chat_id = update_chat(
+                    details=new_update_details, session=session, chat_id=data.chat_id
+                )
+                logger.info(f"✅ Successfully updated chat with id: {chat_id}")
 
             logger.info(f"✅ Successfully updated: {doc_id}")
 

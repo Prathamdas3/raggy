@@ -7,9 +7,10 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.schemas.response import Response
 from app.schemas.db.chat import GetSummary, UpdateChat
-from sqlalchemy.orm import aliased
+
+# from sqlalchemy.orm import aliased
 from typing import Dict
-from app.schemas.db.message import MessageResponse
+# from app.schemas.db.message import MessageResponse
 
 logger = get_logger(__name__)
 
@@ -228,37 +229,43 @@ def get_chat_messages(details: GetSummary, session: SessionDep):
             "Getting strated to fetch the messages of user_id:{user_id} and cha_id:{chat_id}"
         )
 
-        Question = aliased(Messages)
-        Answer = aliased(Messages)
+        # Question = aliased(Messages)
+        # Answer = aliased(Messages)
 
+        # statement = (
+        #     select(Question, Answer)
+        #     .outerjoin(
+        #         Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
+        #     )
+        #     .where(Question.chat_id == details.chat_id)
+        #      .where(Question.user_id==details.user_id)
+        #     .where(Question.sender == "user")
+        #     .order_by(Question.created_at.asc())
+        # )
         statement = (
-            select(Question, Answer)
-            .outerjoin(
-                Answer, (Answer.question_id == Question.id) & (Answer.sender == "llm")
-            )
-            .where(Question.chat_id == details.chat_id)
-            .where(Question.sender == "user")
-            .order_by(Question.created_at.asc())
+            select(Messages)
+            .where(Messages.chat_id == details.chat_id)
+            .where(Messages.user_id == details.user_id)
+            .order_by(Messages.created_at.asc())
         )
-
         messages = session.exec(statement=statement).all()
 
-        messages_pair = []
-        for question, response in messages:
-            messages_pair.append(
-                {
-                    "question": MessageResponse.model_validate(question),
-                    "response": MessageResponse.model_validate(response)
-                    if response
-                    else None,
-                }
-            )
+        # messages_pair = []
+        # for question, response in messages:
+        #     messages_pair.append(
+        #         {
+        #             "question": MessageResponse.model_validate(question),
+        #             "response": MessageResponse.model_validate(response)
+        #             if response
+        #             else None,
+        #         }
+        #     )
 
         logger.info(
             f"Successfully got all the messages under the chat_id {details.chat_id}"
         )
 
-        return messages_pair
+        return messages
 
     except (IntegrityError, SQLAlchemyError) as e:
         session.rollback()
@@ -418,7 +425,7 @@ def get_chat_share_id(share_id: UUID, new_user_id: UUID, session: SessionDep) ->
                 sender=msg.sender,
                 content=msg.content,
                 audio_url=msg.audio_url,
-                question_id=msg.question_id,  
+                question_id=msg.question_id,
             )
             session.add(new_msg)
             session.flush()

@@ -67,6 +67,7 @@ class SpechInput(BaseModel):
     chat_id: UUID
     summary_text: str
     question_id: Optional[UUID] = None
+    title: Optional[str] = None
 
     @field_validator("summary_text", mode="before")
     def check_text(cls, v, info):
@@ -99,3 +100,18 @@ class SpechInput(BaseModel):
             return UUID(str(v))
         except Exception:
             raise ValueError(f"{info.field_name} must be a valid UUID")
+        
+    @field_validator("title", mode="before")
+    def check_title(cls, v, info):
+        if not v:
+            return v
+
+        if not isinstance(v, str):
+            raise TypeError(f"{info.field_name} must be string")
+
+        v = v.strip()
+
+        if not v:
+            raise ValueError(f"{info.field_name} must be not be empty")
+
+        return v

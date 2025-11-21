@@ -23,7 +23,6 @@ def save_original_text(session: Session, data: docs.CreateText) -> UUID:
         session.commit()
         session.refresh(new_doc)
 
-        print(new_doc)
         logger.debug(
             f"docs created successfully for the user_id: {data.user_id}, chat_id:{data.chat_id}, with the id:{new_doc.id}"
         )
@@ -42,9 +41,6 @@ def save_original_text(session: Session, data: docs.CreateText) -> UUID:
             exc_info=True,
         )
         raise
-
-
-logger = get_logger(__name__)
 
 
 def update_docs(session: Session, details: UpdateDocsData) -> UUID:

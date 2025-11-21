@@ -12,14 +12,21 @@ def task_generate_summary(self, data: dict) -> dict:
     logger.debug("Started the task of summary generation")
 
     try:
-        summary_text = get_response(query=data.text)
+        summary_text, title = get_response(query=data.text)
         if not summary_text:
             raise ValueError("Failed to generate summary text")
 
+        if not title:
+            raise ValueError("Failed to generate title")
+
         details = data.model_dump()
         details["summary_text"] = summary_text
-        return details
+        details["title"] = title
 
+        logger.info(f"Title in details: '{details.get('title')}'")
+        return details
+    except ValueError:
+        raise
     except Exception as e:
         logger.debug(
             f"Error while processing Celery task(summary_generation): {e}",

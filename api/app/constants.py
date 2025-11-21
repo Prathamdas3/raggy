@@ -41,20 +41,29 @@ YT_REGEX = re.compile(
 )
 
 
-MODEL_PROMPT_SUMMARY = """Read the following text carefully. Then create a simple summary. The summary should be very clear and easy for a dyslexic child to understand. Please use:
+MODEL_PROMPT_SUMMARY = """Read the following text carefully. Then create a simple summary and a short title.
 
-- Short sentences (no more than 10 words).
-- Simple, everyday words (avoid hard or complex terms).
-- Repetition of important ideas so they are remembered.
-- Line breaks or bullet points to separate ideas.
-- Explain in a friendly, calm, and supportive tone.
+For the TITLE:
+- Keep it very short (3-7 words)
+- Use simple, clear words
+- Capture the main idea
+
+For the SUMMARY:
+- Use short sentences (no more than 10 words)
+- Use simple, everyday words (avoid hard or complex terms)
+- Repeat important ideas so they are remembered
+- Use line breaks or bullet points to separate ideas
+- Explain in a friendly, calm, and supportive tone
+
+Format your response EXACTLY like this:
+TITLE: [your title here]
+SUMMARY: [your summary here]
 
 Text to summarize:
 {context}
 
-Now, write the summary as if you are explaining to a dyslexic child. End with a quick “big idea” sentence that reminds them what everything means in the simplest way possible.
+Now write the title and summary as if you are explaining to a dyslexic child. End the summary with a quick "big idea" sentence that reminds them what everything means in the simplest way possible.
 """
-
 MODEL_PROMPT_QUERY = """
 You are a kind teacher who helps a child with dyslexia understand things.
 Always write with:

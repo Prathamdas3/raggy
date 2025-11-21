@@ -59,6 +59,7 @@ class UpdateDocsData(BaseModel):
     summary_text: Optional[str] = None
     audio_url: Optional[str] = None
     question_id: Optional[UUID] = None
+    title: Optional[str] = None
 
     class Config:
         exclude_unset = True
@@ -72,7 +73,7 @@ class UpdateDocsData(BaseModel):
         except ValueError:
             raise ValueError(f"{info.field_name} must be a valid UUID")
 
-    @field_validator("summary_text", "audio_url", mode="before")
+    @field_validator("summary_text", "audio_url","title", mode="before")
     def check_details(cls, v, info):
         if not v:
             return v

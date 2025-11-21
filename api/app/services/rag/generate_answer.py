@@ -1,7 +1,7 @@
 from app.schemas.rag.query import QueryInput
 from app.services.common.model import get_response
 from app.configs.qdrant import get_vector_store
-from qdrant_client import models
+# from qdrant_client import models
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,18 +19,18 @@ def generate_answer(data: QueryInput) -> str:
         retriever = vector_store.similarity_search(
             query=data.question,
             k=1,
-            filter=models.Filter(
-                must=[
-                    models.FieldCondition(
-                        key="metadata.chat_id",
-                        match=models.MatchValue(value=str(data.chat_id)),
-                    ),
-                    models.FieldCondition(
-                        key="metadata.user_id",
-                        match=models.MatchValue(value=str(data.user_id)),
-                    ),
-                ]
-            ),
+            # filter=models.Filter(
+            #     must=[
+            #         models.FieldCondition(
+            #             key="metadata.chat_id",
+            #             match=models.MatchValue(value=str(data.chat_id)),
+            #         ),
+            #         models.FieldCondition(
+            #             key="metadata.user_id",
+            #             match=models.MatchValue(value=str(data.user_id)),
+            #         ),
+            #     ]
+            # ),
         )
 
         content = "\n".join([doc.page_content for doc in retriever])

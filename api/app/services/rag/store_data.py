@@ -35,7 +35,7 @@ def save_vectorstore(chunks: list[ChunkData]):
             raise ValueError("chunk content is empty")
 
         metadata = chunk.get("metadata", {})
-        required_metadata = ["user_id", "chat_id", "chunk_index"]
+        required_metadata = ["chunk_index"]
         for field in required_metadata:
             if field not in metadata:
                 logger.error(f"Chunk {i} metadata missing '{field}' field")
@@ -58,8 +58,6 @@ def save_vectorstore(chunks: list[ChunkData]):
     for chunk in chunks:
         content = chunk["content"].strip()
         metadata = {
-            "user_id": chunk["metadata"]["user_id"],
-            "chat_id": chunk["metadata"]["chat_id"],
             "chunk_index": chunk["metadata"]["chunk_index"],
         }
 

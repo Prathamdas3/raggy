@@ -1,5 +1,4 @@
 from app.configs.celery import celery
-from app.schemas.rag.text_spliter import SplitTextArgs
 from app.services.rag.store_data import save_vectorstore
 from app.services.rag.text_splitter import split_text
 from app.utils.logger import get_logger
@@ -13,10 +12,7 @@ def task_save_vector_store(self, data: dict) -> dict:
     data = TaskInput(**data)
     logger.debug("Started the task of storing the data in vector store")
     try:
-        text_split = SplitTextArgs(
-            chat_id=data.chat_id, user_id=data.user_id, text=data.text
-        )
-        splited_text = split_text(data=text_split)
+        splited_text = split_text(text=data.text)
         save_vectorstore(chunks=splited_text)
         return data.model_dump()
     except Exception as e:
