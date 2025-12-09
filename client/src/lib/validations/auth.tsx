@@ -19,11 +19,17 @@ export const loginSchema = z.object({
 });
 
 // Signup schema
-export const signupSchema = z.object({
-	name: z.string().min(2, "Name must be at least 2 characters"),
-	email: z.string().email("Please enter a valid email address"),
-	password: passwordSchema,
-});
+export const signupSchema = z
+	.object({
+		// name: z.string().min(2, "Name must be at least 2 characters"),
+		email: z.email("Please enter a valid email address"),
+		password: passwordSchema,
+		confirmPassword: z.string(),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords don't match",
+		path: ["confirmPassword"],
+	});
 
 // Forgot password schema
 export const forgotPasswordSchema = z.object({

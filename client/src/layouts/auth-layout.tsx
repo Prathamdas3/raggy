@@ -13,7 +13,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               "This authentication system has streamlined our workflow and improved security across our entire
               platform."
             </p>
-            <footer className="text-sm text-muted-foreground">— Alex Johnson, CTO</footer>
+            <footer className="text-sm text-muted-foreground">— Pratham Das, CTO</footer>
           </blockquote>
         </div>
       </div>

@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,23 +15,34 @@ import {
 } from "@/components/ui/form";
 import { signupSchema, type SignupInput } from "@/lib/validations/auth";
 import { PasswordRequirements } from "./password";
+import { useSignup } from "@/hooks/auth";
+import { useNavigate } from "@tanstack/react-router";
 
 export function SignupForm() {
+	const { mutate } = useSignup();
+	const router = useNavigate();
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 	const form = useForm<SignupInput>({
 		resolver: zodResolver(signupSchema),
 		defaultValues: {
-			name: "",
+			// name: "",
 			email: "",
 			password: "",
+			confirmPassword: "",
 		},
 	});
 
 	const password = form.watch("password");
 
 	const onSubmit = async (data: SignupInput) => {
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-		console.log("Signup attempt:", data);
+		mutate(data, {
+			onSuccess: () => {
+				router({ from: "/auth/signup", to: "/chats", replace: true });
+				form.reset();
+			},
+		});
 	};
 
 	return (
@@ -45,24 +58,24 @@ export function SignupForm() {
 
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					<FormField
-						control={form.control}
-						name="name"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Full Name</FormLabel>
-								<FormControl>
-									<Input
-										type="text"
-										placeholder="John Doe"
-										disabled={form.formState.isSubmitting}
-										{...field}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+					{/* <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="text"
+                                        placeholder="John Doe"
+                                        disabled={form.formState.isSubmitting}
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    /> */}
 
 					<FormField
 						control={form.control}
@@ -90,18 +103,69 @@ export function SignupForm() {
 							<FormItem>
 								<FormLabel>Password</FormLabel>
 								<FormControl>
-									<Input
-										type="password"
-										placeholder="Create a password"
-										disabled={form.formState.isSubmitting}
-										{...field}
-									/>
+									<div className="relative">
+										<Input
+											type={showPassword ? "text" : "password"}
+											placeholder="Create a password"
+											disabled={form.formState.isSubmitting}
+											className="pr-10"
+											{...field}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowPassword(!showPassword)}
+											className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+											disabled={form.formState.isSubmitting}
+										>
+											{showPassword ? (
+												<EyeOff className="h-4 w-4" />
+											) : (
+												<Eye className="h-4 w-4" />
+											)}
+										</button>
+									</div>
 								</FormControl>
 								<FormMessage />
-								<PasswordRequirements password={password} />
 							</FormItem>
 						)}
 					/>
+
+					<FormField
+						control={form.control}
+						name="confirmPassword"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Confirm Password</FormLabel>
+								<FormControl>
+									<div className="relative">
+										<Input
+											type={showConfirmPassword ? "text" : "password"}
+											placeholder="Confirm your password"
+											disabled={form.formState.isSubmitting}
+											className="pr-10"
+											{...field}
+										/>
+										<button
+											type="button"
+											onClick={() =>
+												setShowConfirmPassword(!showConfirmPassword)
+											}
+											className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+											disabled={form.formState.isSubmitting}
+										>
+											{showConfirmPassword ? (
+												<EyeOff className="h-4 w-4" />
+											) : (
+												<Eye className="h-4 w-4" />
+											)}
+										</button>
+									</div>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<PasswordRequirements password={password} />
 
 					<Button
 						type="submit"

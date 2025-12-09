@@ -19,7 +19,6 @@ export function Provider({
   
 }
 
-
 export default {
   name: 'Tanstack Query',
   render: <ReactQueryDevtoolsPanel />

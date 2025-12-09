@@ -52,7 +52,7 @@ export default function AppSidebar() {
 				<SidebarGroup>
 					{open && (
 						<>
-							<h4>Folders</h4>
+							<h4 className="font-bold text-lg">Folders</h4>
 							<div className="flex gap-2 h-12 items-center">
 								<Button size="icon" variant="ghost" className="h-12">
 									<FolderPlus className="h-12 w-12" />
@@ -68,7 +68,7 @@ export default function AppSidebar() {
 				</SidebarGroup>
 				<SidebarGroup>
 					{open&&<>
-					<h4>Your chats</h4>
+					<h4 className="font-bold text-lg">Your chats</h4>
 					<div className=""></div>
 					</>}
 				</SidebarGroup>
