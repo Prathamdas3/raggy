@@ -3,17 +3,20 @@ from fastapi import UploadFile
 from typing import Optional
 from uuid import UUID
 
+class CreateLink(BaseModel):
+    link:str
 
-class DocsReqLink(BaseModel):
-    link: Optional[str] = None
+    @field_validator("link", mode="before")
+    def check_link(cls, v, info):
+        if not v or not isinstance(v, str):
+            raise TypeError(f"{info.field_name} should be string")
 
-    @model_validator(mode="after")
-    def check_details(self):
-        if self.link is None:
-            raise ValueError("link should be provided")
+        v = v.strip()
 
-        return self
+        if not v:
+            raise ValueError(f"{info.field_name} can not be empty")
 
+        return v
 
 class DocsReqFile(BaseModel):
     file: Optional[UploadFile] = None

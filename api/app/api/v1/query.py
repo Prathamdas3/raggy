@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Query, status, HTTPException, Depends
+from fastapi import APIRouter,  status, HTTPException, Depends
 from app.configs.rate_limiter import rate_limit_default
 from app.schemas.rag.query import AnswerInput
 from app.schemas.response import Response

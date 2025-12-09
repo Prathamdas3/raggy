@@ -9,6 +9,7 @@ from app.schemas.response import Response
 from app.schemas.db.chat import GetSummary, UpdateChat
 from sqlalchemy.orm import aliased
 from typing import Dict
+from uuid import uuid4
 from app.schemas.db.message import MessageResponse
 
 logger = get_logger(__name__)
@@ -20,7 +21,8 @@ def create_chat(session: SessionDep, user_id: UUID) -> UUID:
         raise TypeError("user_id must be an uuid type")
     try:
         logger.debug(f"Starting to create the chat with the user id: {user_id}")
-        new_chat = Chats(user_id=user_id, is_bookmarked=False, chat_name=None)
+        chat_name = f"chat_{uuid4()}"
+        new_chat = Chats(user_id=user_id, is_bookmarked=False, chat_name=chat_name)
         session.add(new_chat)
         session.commit()
         session.refresh(new_chat)
@@ -51,7 +53,7 @@ def create_chat(session: SessionDep, user_id: UUID) -> UUID:
         )
 
 
-def get_chats(session: SessionDep, user_id: UUID) -> list[Chats]:
+def get_chats(session: SessionDep, user_id: UUID) -> list[Dict]:
     if not user_id or not isinstance(user_id, UUID):
         raise TypeError("user_id must be an uuid type")
 
@@ -63,6 +65,16 @@ def get_chats(session: SessionDep, user_id: UUID) -> list[Chats]:
         if chats is None:
             return []
 
+        chats = [
+            {
+                "id": chat.id,
+                "chat_name": chat.chat_name,
+                "is_bookmarked": chat.is_bookmarked,
+                "created_at": chat.created_at,
+                "updated_at": chat.updated_at,
+            }
+            for chat in chats
+        ]
         logger.debug("Successfully fetched the chats")
         return chats
     except (IntegrityError, SQLAlchemyError) as e:

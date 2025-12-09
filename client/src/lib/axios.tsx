@@ -18,7 +18,7 @@ const apiClient = axios.create({
 
 const authClient = axios.create({
 	baseURL: env.VITE_API_URL,
-	withCredentials: false,
+	withCredentials: true,
 	headers: {
 		"Content-Type": "application/json",
 	},

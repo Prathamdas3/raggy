@@ -1,5 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import {
+	ArrowBigRightDash,
+	Bookmark,
+	FolderPlus,
+	SquarePen,
+	User,
+} from "lucide-react";
+import ChatsList from "./ChatList";
+import { Button } from "./ui/button";
+import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
@@ -8,9 +17,7 @@ import {
 	SidebarTrigger,
 	useSidebar,
 } from "./ui/sidebar";
-import { Button } from "./ui/button";
-import { ArrowBigRightDash, FolderPlus, User } from "lucide-react";
-import { SquarePen, Search, Bookmark } from "lucide-react";
+import { SearchModalExample } from "./Search";
 
 export default function AppSidebar() {
 	const { open, setOpen } = useSidebar();
@@ -36,24 +43,19 @@ export default function AppSidebar() {
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>
-					<div className="flex gap-2 h-10 items-center">
-						<Button size="icon" variant="ghost">
-							<SquarePen className="h-8 w-8" />
+					<Link to="/chats" className="no-underline flex gap-2 items-center">
+						<Button variant="ghost" className="flex gap-2 h-10 items-center">
+							<SquarePen className="h-12 w-12" />
 						</Button>
-						{open && "New Chat"}
-					</div>
-					<div className="flex gap-2 h-10 items-center">
-						<Button size="icon" variant="ghost" className="h-12">
-							<Search className="h-12 w-12" />
-						</Button>
-						{open && "Search Chat"}
-					</div>
+						{open && <span>New Chat</span>}
+					</Link>
+					<SearchModalExample sidebarOpen={open} />
 				</SidebarGroup>
 				<SidebarGroup>
 					{open && (
 						<>
-							<h4 className="font-bold text-lg">Folders</h4>
-							<div className="flex gap-2 h-12 items-center">
+							<h4 className="text-sm ">Folders</h4>
+							<div className="flex gap-1 h-12 items-center">
 								<Button size="icon" variant="ghost" className="h-12">
 									<FolderPlus className="h-12 w-12" />
 								</Button>
@@ -67,10 +69,14 @@ export default function AppSidebar() {
 					)}
 				</SidebarGroup>
 				<SidebarGroup>
-					{open&&<>
-					<h4 className="font-bold text-lg">Your chats</h4>
-					<div className=""></div>
-					</>}
+					{open && (
+						<>
+							<h4 className="text-sm ">Chats</h4>
+							<div className="">
+								<ChatsList />
+							</div>
+						</>
+					)}
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter className={`${open && "border-t"}`}>

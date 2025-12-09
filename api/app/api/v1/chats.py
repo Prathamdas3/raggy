@@ -1,6 +1,6 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
+from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends
 from app.configs.rate_limiter import rate_limit_default
-from app.schemas.db.docs import DocsReqLink
+from app.schemas.db.docs import CreateLink
 from app.schemas.input.file import FileMeta, OtherInput
 from app.schemas.input.yt import YTInput
 from app.utils.logger import get_logger
@@ -32,10 +32,9 @@ logger = get_logger(__name__)
 )
 def create_new_links_chat(
     session: SessionDep,
-    link: str | None = Form(None),
+    payload: CreateLink,
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
-    data = DocsReqLink(link=link)
     try:
         logger.debug("Starting the process of creating a chat")
         new_id = create_chat(user_id=UUID(str(user_id)), session=session)
@@ -49,14 +48,14 @@ def create_new_links_chat(
         details = YTInput(
             user_id=user_id,
             chat_id=new_id,
-            link=data.link,
+            link=payload.link,
         )
         chain_id = chain_input_link(data=details)
 
         return ReturnResponse(
             status="success",
             message="Successfully created the chat",
-            data={"task_id": chain_id},
+            data={"task_id": chain_id, "chat_id": new_id},
         )
     except HTTPException:
         raise
@@ -102,7 +101,7 @@ def create_new_files_chat(
         return ReturnResponse(
             status="success",
             message="Successfully created the chat",
-            data={"task_id": chain_id},
+            data={"task_id": chain_id, "chat_id": new_id},
         )
     except HTTPException:
         raise
@@ -114,7 +113,7 @@ def create_new_files_chat(
         )
 
 
-@router.get("/", status_code=status.HTTP_200_OK, dependencies=[rate_limit_default()])
+@router.get("/", status_code=status.HTTP_200_OK)
 def get_all_chats(
     session: SessionDep, user_id: UUID = Depends(get_user_id_from_access_token)
 ):
@@ -324,7 +323,7 @@ def get_share_url(
         return ReturnResponse(
             status="success",
             message="Successfully generated the share url",
-            data={"url": f"{config.FRONTEND_URL}share/{share_obj["share_id"]}"},
+            data={"url": f"{config.FRONTEND_URL}share/{share_obj['share_id']}"},
         )
     except HTTPException:
         raise
