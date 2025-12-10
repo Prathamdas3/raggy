@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
 	ChevronRight,
-	Bookmark,
-	FolderPlus,
+	// Bookmark,
+	// FolderPlus,
 	MessageSquarePlus,
 	User,
 	LogOut,
@@ -27,11 +27,11 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { SearchModalExample } from "./Search";
+import { SearchModalExample } from "./modals/SearchModal";
 import { Separator } from "./ui/separator";
 import { useSignout } from "@/hooks/auth";
 import { useState } from "react";
-import { UserDetailsModal } from "./Usermodal";
+import { UserDetailsModal } from "./modals/Usermodal";
 
 export default function AppSidebar() {
 	const { open, setOpen } = useSidebar();
@@ -94,10 +94,10 @@ export default function AppSidebar() {
 						<SearchModalExample sidebarOpen={open} />
 					</SidebarGroup>
 
-					<Separator className="my-3" />
+					{/* <Separator className="my-3" /> */}
 
 					{/* Folders Section */}
-					<SidebarGroup>
+					{/* <SidebarGroup>
 						{open && (
 							<SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
 								Organize
@@ -123,7 +123,7 @@ export default function AppSidebar() {
 								{open && <span className="text-sm">Bookmarks</span>}
 							</Button>
 						</div>
-					</SidebarGroup>
+					</SidebarGroup> */}
 
 					<Separator className="my-3" />
 

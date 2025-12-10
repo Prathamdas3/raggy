@@ -21,12 +21,9 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import {
-	useLocation,
-	useNavigate,
-} from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useChatStore } from "@/store/chats";
-import { RenameChatModal } from "../RenameModal";
+import { RenameChatModal } from "../modals/RenameModal";
 
 function ListSkeleton({ rows = 6 }: { rows?: number }) {
 	return (
@@ -217,9 +214,14 @@ export default function ChatsList() {
 
 	return (
 		<ul className="space-y-1 p-2">
-			{data.map((chat) => (
-				<ChatItem key={chat.id} chat={chat} />
-			))}
+			{data
+				.sort(
+					(a, b) =>
+						new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+				)
+				.map((chat) => (
+					<ChatItem key={chat.id} chat={chat} />
+				))}
 		</ul>
 	);
 }

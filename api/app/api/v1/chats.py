@@ -202,7 +202,6 @@ def delete_chat(
 @router.get(
     "/{chat_id}/summary",
     status_code=status.HTTP_200_OK,
-    dependencies=[rate_limit_default()],
 )
 def get_summary(
     chat_id: UUID,
@@ -235,7 +234,6 @@ def get_summary(
 @router.get(
     "/{chat_id}/messages",
     status_code=status.HTTP_200_OK,
-    dependencies=[rate_limit_default()],
 )
 def get_chats_message(
     chat_id: UUID,
