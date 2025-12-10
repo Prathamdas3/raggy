@@ -26,6 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useCreateChat } from "@/hooks/chats";
 import { useNavigate } from "@tanstack/react-router";
+import { useTasksIdStore } from "@/store/task";
 
 // Validation schema for link
 const linkSchema = z.object({
@@ -47,6 +48,7 @@ type LinkFormValues = z.infer<typeof linkSchema>;
 export default function UploadDocs() {
 	const [activeTab, setActiveTab] = useState<"file" | "link">("file");
 	const [submittedLink, setSubmittedLink] = useState<string | null>(null);
+	const setTaskId = useTasksIdStore((s) => s.setTaskId);
 
 	const form = useForm<LinkFormValues>({
 		resolver: zodResolver(linkSchema),
@@ -101,6 +103,7 @@ export default function UploadDocs() {
 				{
 					onSuccess: (data) => {
 						setSubmittedLink(null);
+						setTaskId(data?.task_id);
 						form.reset();
 						router({ to: `/chats/${data?.chat_id}`, from: "/chats" });
 					},

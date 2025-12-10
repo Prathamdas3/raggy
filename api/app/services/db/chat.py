@@ -206,11 +206,7 @@ def get_summary(details: GetSummary, session: SessionDep) -> Dict[str, str]:
         doc_data = session.exec(statement=statement).first()
 
         if doc_data is None:
-            logger.error(f"No doc found with this chat_id: {details.chat_id}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid chat id for fetching the summary",
-            )
+            return {"summary_text": "", "audio_url": ""}
 
         logger.debug("Successfully fetched the docs for the summary")
         return {"summary_text": doc_data.summary_text, "audio_url": doc_data.audio_url}
