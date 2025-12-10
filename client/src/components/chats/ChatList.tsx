@@ -19,14 +19,14 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import {
 	useLocation,
 	useNavigate,
 } from "@tanstack/react-router";
 import { useChatStore } from "@/store/chats";
-import { RenameChatModal } from "./RenameModal";
+import { RenameChatModal } from "../RenameModal";
 
 function ListSkeleton({ rows = 6 }: { rows?: number }) {
 	return (

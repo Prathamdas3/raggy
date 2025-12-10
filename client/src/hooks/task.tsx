@@ -23,7 +23,7 @@ export function useGetTaskDetails(taskId?: string) {
 			if (!data) return false;
 
 			if (data.status === "PENDING" || data.status === "STARTED") {
-				return 2000; // poll every 2 seconds
+				return 5000; // poll every 2 seconds
 			}
 
 			return false; // stop polling

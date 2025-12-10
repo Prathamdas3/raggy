@@ -16,12 +16,6 @@ logger = get_logger(__name__)
 
 def get_user_by_id(user_id: UUID, session: SessionDep) -> User:
     """Getting the user from the user id"""
-    if not user_id or not isinstance(user_id, str):
-        raise ValueError("No user id found ")
-
-    if user_id.strip():
-        raise ValueError("User id can not be empty")
-
     try:
         logger.info(f"Fetching the user with the id of {user_id}")
         user_id = user_id.strip()
