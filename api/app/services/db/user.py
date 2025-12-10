@@ -115,7 +115,11 @@ def create_user(user: user.UserCreate, session: SessionDep) -> response.Response
         return response.Response(
             status="success",
             message="Successfully registered",
-            data={"id": new_user.id, "email": new_user.email},
+            data={
+                "id": new_user.id,
+                "email": new_user.email,
+                "name": f"{new_user.first_name} {new_user.last_name}",
+            },
         )
     except HTTPException:
         raise
@@ -301,7 +305,8 @@ def update_user_password(
     except Exception as e:
         session.rollback()
         logger.error(
-            f"Unexpected error while updating the user password: {str(e)}", exc_info=True
+            f"Unexpected error while updating the user password: {str(e)}",
+            exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

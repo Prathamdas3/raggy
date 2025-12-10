@@ -10,7 +10,7 @@ export function useSignup() {
 		mutationKey: ["signup"],
 		mutationFn: async (payload: SignupInput) => {
 			const { data, error } = await tryCatch(
-				authClient.post("/auth/sign_up", payload),
+				authClient.post("/auth/sign-up", payload),
 			);
 			if (error) {
 				throw error;
@@ -37,7 +37,7 @@ export function useSignin() {
 		mutationKey: ["signin"],
 		mutationFn: async (payload: LoginInput) => {
 			const { data, error } = await tryCatch(
-				authClient.post("/auth/sign_in", payload),
+				authClient.post("/auth/sign-in", payload),
 			);
 			if (error) {
 				throw error;
@@ -60,7 +60,7 @@ export function useSignout() {
 		mutationKey: ["signout"],
 		mutationFn: async () => {
 			const { data, error } = await tryCatch(
-				apiClient.delete("/auth/sign_out"),
+				apiClient.delete("/auth/sign-out"),
 			);
 			if (error) {
 				throw error;

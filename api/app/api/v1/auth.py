@@ -24,7 +24,7 @@ router = APIRouter(prefix="/auth")
 logger = get_logger(__name__)
 
 
-@router.post("/sign_up", status_code=status.HTTP_201_CREATED)
+@router.post("/sign-up", status_code=status.HTTP_201_CREATED)
 def on_signup(
     data: userschema.UserCreate,
     request: Request,
@@ -99,7 +99,7 @@ def on_signup(
         )
 
 
-@router.post("/sign_in", status_code=status.HTTP_200_OK)
+@router.post("/sign-in", status_code=status.HTTP_200_OK)
 def on_signin(
     data: auth.SignIn, request: Request, response: Response, session: SessionDep
 ):
@@ -171,7 +171,7 @@ def on_signin(
         )
 
 
-@router.delete("/sign_out", status_code=status.HTTP_200_OK)
+@router.delete("/sign-out", status_code=status.HTTP_200_OK)
 def on_signout(request: Request, response: Response, session: SessionDep):
     try:
         logger.debug("Starting to sign out process")
@@ -248,3 +248,8 @@ def on_token_refresh(request: Request, response: Response, session: SessionDep):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during refresh",
         )
+
+
+@router.post("/reset-password",status_code=status.HTTP_200_OK)
+def on_reset_password(request:Request,response:Response,session:SessionDep):
+    pass

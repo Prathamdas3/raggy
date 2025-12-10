@@ -20,8 +20,13 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import {
+	useLocation,
+	useNavigate,
+} from "@tanstack/react-router";
+import { useChatStore } from "@/store/chats";
+import { RenameChatModal } from "./RenameModal";
 
 function ListSkeleton({ rows = 6 }: { rows?: number }) {
 	return (
@@ -44,58 +49,88 @@ function ListSkeleton({ rows = 6 }: { rows?: number }) {
 }
 
 function Dropdown({ chat }: { chat: Chat }) {
+	const [open, setOpen] = useState<boolean>(false);
+	const params = useLocation().pathname.split("/").reverse()[0];
 	const { mutate: deleteChat } = useDeleteChat();
 	const { mutate: updateChat } = useUpdateChat();
+	const router = useNavigate();
+
+	const onRename = (chat_name: string) => {
+		updateChat({ chat_id: chat.id, chat_name: chat_name });
+	};
+
+	const onDelete = () => {
+		deleteChat(chat.id, {
+			onSuccess: () => {
+				if (chat.id === params) {
+					router({ to: "/chats", replace: true });
+				}
+			},
+		});
+	};
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<button
-					className="h-8 w-8 rounded-md hover:bg-accent flex items-center justify-center transition-colors"
-					onClick={(e) => e.stopPropagation()}
-					type="button"
-				>
-					<Ellipsis className="h-4 w-4" />
-				</button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-48" side="right">
-				<DropdownMenuItem className="gap-2 cursor-pointer">
-					<Pencil className="h-4 w-4" />
-					<span>Rename</span>
-				</DropdownMenuItem>
-				<DropdownMenuItem
-					className="gap-2 cursor-pointer"
-					onClick={() =>
-						updateChat({
-							chat_id: chat.id,
-							is_bookmarked: !chat.is_bookmarked,
-						})
-					}
-				>
-					<Bookmark className="h-4 w-4" />
-					<span>Bookmark</span>
-				</DropdownMenuItem>
-				<DropdownMenuItem className="gap-2 cursor-pointer">
-					<Share className="h-4 w-4" />
-					<span>Share</span>
-				</DropdownMenuItem>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-					onClick={() => deleteChat(chat.id)}
-				>
-					<Trash className="h-4 w-4 text-red-500" />
-					<span>Delete</span>
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
+		<>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<button
+						className="h-8 w-8 rounded-md hover:bg-accent flex items-center justify-center transition-colors"
+						onClick={(e) => e.stopPropagation()}
+						type="button"
+					>
+						<Ellipsis className="h-4 w-4" />
+					</button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="w-48" side="right">
+					<DropdownMenuItem
+						className="gap-2 cursor-pointer"
+						onClick={() => {
+							setOpen(true);
+						}}
+					>
+						<Pencil className="h-4 w-4" />
+						<span>Rename</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						className="gap-2 cursor-pointer"
+						onClick={() =>
+							updateChat({
+								chat_id: chat.id,
+								is_bookmarked: !chat.is_bookmarked,
+							})
+						}
+					>
+						<Bookmark className="h-4 w-4" />
+						<span>Bookmark</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem className="gap-2 cursor-pointer">
+						<Share className="h-4 w-4" />
+						<span>Share</span>
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+						onClick={onDelete}
+					>
+						<Trash className="h-4 w-4 text-red-500" />
+						<span>Delete</span>
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<RenameChatModal
+				open={open}
+				onOpenChange={setOpen}
+				currentName={chat.chat_name}
+				onRename={onRename}
+			/>
+		</>
 	);
 }
 
 function ChatItem({ chat }: { chat: Chat }) {
 	const [isHovered, setIsHovered] = useState(false);
 	const router = useNavigate();
-
+	const { mutate: updateChat } = useUpdateChat();
 	return (
 		<li
 			key={chat.id}
@@ -111,6 +146,19 @@ function ChatItem({ chat }: { chat: Chat }) {
 		>
 			<div className="flex items-center gap-3 p-1 px-2">
 				{/* Chat Info */}
+				<Bookmark
+					className={`${
+						chat.is_bookmarked ? "text-primary" : "text-muted-foreground"
+					} h-4 w-4 ${!chat.is_bookmarked && "hidden"} `}
+					fill={chat.is_bookmarked ? "currentColor" : "none"}
+					stroke="currentColor"
+					onClick={() => {
+						updateChat({
+							chat_id: chat.id,
+							is_bookmarked: !chat.is_bookmarked,
+						});
+					}}
+				/>
 				<div className="flex-1 min-w-0">
 					<h3 className="text-sm font-medium text-foreground truncate">
 						{chat.chat_name}
@@ -130,6 +178,13 @@ function ChatItem({ chat }: { chat: Chat }) {
 
 export default function ChatsList() {
 	const { data, isLoading, isError } = useGetAllChats();
+	const updateChats = useChatStore((s) => s.updateChat);
+
+	useEffect(() => {
+		if (data && data.length > 0) {
+			updateChats(data);
+		}
+	}, [data, updateChats]);
 
 	if (isLoading) {
 		return <ListSkeleton />;

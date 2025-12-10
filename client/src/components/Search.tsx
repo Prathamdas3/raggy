@@ -6,17 +6,12 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-	Search,
-	MessageSquare,
-	Bookmark,
-	Clock,
-	X,
-	SidebarOpen,
-} from "lucide-react";
+import { Search, MessageSquare, Bookmark, Clock, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import type { Chat } from "@/hooks/chats";
+import { useNavigate } from "@tanstack/react-router";
+import { useChatStore } from "@/store/chats";
 
 interface SearchModalProps {
 	open: boolean;
@@ -154,67 +149,29 @@ export function SearchModal({
 // Example usage component
 export function SearchModalExample({ sidebarOpen }: { sidebarOpen: boolean }) {
 	const [open, setOpen] = useState(false);
+	const router = useNavigate();
+	const chats = useChatStore((s) => s.chats);
 
-	// Dummy data
-	const dummyChats: Chat[] = [
-		{
-			id: "1",
-			chat_name: "Machine Learning Basics",
-			is_bookmarked: true,
-			created_at: "2024-01-15T10:00:00Z",
-			updated_at: "2024-01-20T15:30:00Z",
-		},
-		{
-			id: "2",
-			chat_name: "React Best Practices",
-			is_bookmarked: false,
-			created_at: "2024-01-16T11:00:00Z",
-			updated_at: "2024-01-21T09:15:00Z",
-		},
-		{
-			id: "3",
-			chat_name: "TypeScript Advanced Topics",
-			is_bookmarked: true,
-			created_at: "2024-01-17T14:00:00Z",
-			updated_at: "2024-01-22T16:45:00Z",
-		},
-		{
-			id: "4",
-			chat_name: "Database Design Patterns",
-			is_bookmarked: false,
-			created_at: "2024-01-18T09:00:00Z",
-			updated_at: "2024-01-23T11:20:00Z",
-		},
-		{
-			id: "5",
-			chat_name: "API Development Guide",
-			is_bookmarked: false,
-			created_at: "2024-01-19T13:00:00Z",
-			updated_at: "2024-01-24T14:10:00Z",
-		},
-	];
-
-	const handleSelectChat = (chatId: string) => {
-		console.log("Selected chat:", chatId);
-		// Navigate to chat or perform action
+	const handleSelectChat = (id: string) => {
+		router({ to: `/chats/${id}` });
 	};
 
 	return (
-		<div className="flex gap-2 h-10 items-center cursor-pointer">
+		<div>
 			<Button
-				size="icon"
 				variant="ghost"
+				className={`w-full h-10 mb-2 ${sidebarOpen ? "justify-start  gap-2 px-3 " : "justify-center"} `}
+				size={open ? "default" : "icon"}
 				onClick={() => setOpen(true)}
-				className="h-12"
 			>
-				<Search className="h-8 w-8" />
+				<Search className="h-4 w-4 flex-shrink-0" />
+				{sidebarOpen && <span className="font-medium">Search Chats</span>}
 			</Button>
-			{sidebarOpen && <span>Search Chats</span>}
 
 			<SearchModal
 				open={open}
 				onOpenChange={setOpen}
-				chats={dummyChats}
+				chats={chats}
 				onSelectChat={handleSelectChat}
 			/>
 		</div>

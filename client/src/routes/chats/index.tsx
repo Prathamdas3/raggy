@@ -14,7 +14,7 @@ function App() {
 		<SidebarProvider>
 			<AppSidebar />
 			<div className="max-h-dvh w-full">
-				<Header />
+				<Header tools={false} />
 				<main className="w-full h-[calc(100dvh-3.5rem)] flex justify-center items-center">
 					<div>
 					<h3 className="text-center font-semibold text-3xl text-gray-600 mb-4">Wellcome, how can I help you today...</h3>

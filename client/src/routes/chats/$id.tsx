@@ -58,7 +58,7 @@ function MessageBubble({ message }: { message: Message }) {
 		<div
 			className={cn(
 				"flex gap-3 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500",
-				isUser ? "flex-row-reverse" : "flex-row"
+				isUser ? "flex-row-reverse" : "flex-row",
 			)}
 		>
 			{/* Avatar */}
@@ -67,7 +67,7 @@ function MessageBubble({ message }: { message: Message }) {
 					"h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
 					isUser
 						? "bg-primary text-primary-foreground"
-						: "bg-muted text-muted-foreground"
+						: "bg-muted text-muted-foreground",
 				)}
 			>
 				{isUser ? "You" : "AI"}
@@ -79,7 +79,7 @@ function MessageBubble({ message }: { message: Message }) {
 					"rounded-2xl px-4 py-3 max-w-[80%]",
 					isUser
 						? "bg-primary text-primary-foreground"
-						: "bg-muted text-foreground"
+						: "bg-muted text-foreground",
 				)}
 			>
 				{isUser ? (
@@ -218,7 +218,9 @@ Would you like me to elaborate on any of these points?`,
 						<>
 							<SystemMessage>
 								<Clock className="h-4 w-4" />
-								<span>We're processing your content. This may take a minute.</span>
+								<span>
+									We're processing your content. This may take a minute.
+								</span>
 							</SystemMessage>
 							<ChatSkeleton />
 							<ChatSkeleton />
@@ -283,7 +285,7 @@ function RouteComponent() {
 		<SidebarProvider>
 			<AppSidebar />
 			<div className="max-h-dvh w-full">
-				<Header />
+				<Header tools={true} />
 				<main className="w-full h-[calc(100dvh-3.5rem)]">
 					<ChatView />
 				</main>
