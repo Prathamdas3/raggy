@@ -36,6 +36,14 @@ type SingleChat = {
 	};
 };
 
+interface ExportChat{
+	data:{
+		task_id:string
+	},
+	message:string
+	status:string
+}
+
 export function useGetAllChats() {
 	return useQuery({
 		queryKey: ["getAllChats"],
@@ -170,6 +178,29 @@ export function useUpdateChat() {
 		},
 		onError: () => {
 			toast.error("Failed to update the chat");
+		},
+	});
+}
+
+export function useExportChat() {
+	return useMutation({
+		mutationKey: ["exportChat"],
+		mutationFn: async (chatId: string) => {
+			const { data, error } = await tryCatch(
+				apiClient.get<ExportChat>(`/chats/${chatId}/export`),
+			);
+			if (error) {
+				throw error;
+			}
+			return data?.data?.data;
+		},
+		gcTime: 10 * 60 * 1000,
+		retry: false,
+		onError: () => {
+			toast.error("Failed to Export your chat");
+		},
+		onSuccess: () => {
+			toast.success("Successfully started exporting your chat");
 		},
 	});
 }

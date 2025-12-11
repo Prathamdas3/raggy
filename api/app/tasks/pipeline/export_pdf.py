@@ -46,7 +46,7 @@ def task_export_chat(self, details: dict):
             minio_url = upload_to_minio(
                 file_path=temp_path,
                 chat_id=data.chat_id,
-                folder="pdf",  # <— separate folder from audio
+                folder="pdf", 
                 content_type="application/pdf",
                 expires_days=7,
             )

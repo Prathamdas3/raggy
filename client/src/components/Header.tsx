@@ -1,15 +1,80 @@
 import { Download, Forward, Trash } from "lucide-react";
 import TooltipIcon from "./TooltipIcons";
-import { useDeleteChat } from "@/hooks/chats";
+import { useDeleteChat, useExportChat } from "@/hooks/chats";
 import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useGetTaskDetails } from "@/hooks/task";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
 interface Props {
 	tools: boolean;
 }
 
+async function downloadPdf(url: string) {
+	try {
+		// Show loading toast
+		const toastId = toast.loading("Preparing download...");
+
+		// Fetch the PDF
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			throw new Error("Failed to fetch PDF");
+		}
+
+		// Convert to blob
+		const blob = await response.blob();
+
+		// Create blob URL
+		const blobUrl = URL.createObjectURL(blob);
+
+		// Extract filename from URL or use default
+		const urlPath = new URL(url).pathname;
+		const filename = urlPath.split("/").pop() || "chat-export.pdf";
+
+		// Create and trigger download
+		const link = document.createElement("a");
+		link.href = blobUrl;
+		link.download = filename;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+
+		// Cleanup blob URL
+		setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+
+		// Update toast
+		toast.success("Download started!", { id: toastId });
+	} catch (error) {
+		console.error("Download failed:", error);
+		toast.error("Failed to download PDF. Opening in new tab instead...");
+
+		// Fallback: open in new tab
+		window.open(url, "_blank", "noopener,noreferrer");
+	}
+}
+
 export default function Header({ tools }: Props) {
 	const { mutate: deleteChat } = useDeleteChat();
+	const { mutate: exportChat, isPending } = useExportChat();
+
 	const router = useNavigate();
 	const params = useLocation().pathname.split("/").reverse()[0];
+
+	const [taskId, setTaskId] = useState<string | undefined>();
+	const { data: task } = useGetTaskDetails(taskId);
+
+	const hasHandledResult = useRef(false);
+
+	useEffect(() => {
+		if (!task) return;
+		if (task.status !== "SUCCESS") return;
+		if (!task.result) return;
+		if (hasHandledResult.current) return;
+
+		hasHandledResult.current = true;
+		downloadPdf(task.result as string);
+	}, [task]);
 
 	const onDelete = () => {
 		deleteChat(params, {
@@ -19,12 +84,28 @@ export default function Header({ tools }: Props) {
 		});
 	};
 
+	const onExport = () => {
+		hasHandledResult.current = false; // reset for new export
+
+		exportChat(params, {
+			onSuccess: (res) => {
+				setTaskId(res.task_id);
+			},
+		});
+	};
+
 	return (
-		<header className="flex justify-between border-b py-3 items-center px-3  w-full">
+		<header className="flex justify-between border-b py-3 items-center px-3 w-full">
 			<h3 className="text-xl font-semibold">App Name</h3>
+
 			{tools && (
-				<nav className="flex justify-evenly gap-2">
-					<TooltipIcon Icon={Download} content="Download chat" />
+				<nav className="flex gap-2">
+					<TooltipIcon
+						Icon={Download}
+						content="Download chat"
+						action={onExport}
+						disabled={isPending}
+					/>
 					<TooltipIcon Icon={Forward} content="Share chat" />
 					<TooltipIcon Icon={Trash} content="Delete chat" action={onDelete} />
 				</nav>

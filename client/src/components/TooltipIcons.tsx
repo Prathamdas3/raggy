@@ -17,6 +17,7 @@ interface Props {
 	content: string;
 	type?: btnType;
 	side?: "top" | "bottom" | "left" | "right";
+	disabled?: boolean;
 	action?: <T>(arg?: T) => void;
 }
 
@@ -26,6 +27,7 @@ export default function TooltipIcon({
 	action,
 	type = "outline",
 	side = "bottom",
+	disabled,
 }: Props) {
 	return (
 		<Tooltip>
@@ -34,6 +36,7 @@ export default function TooltipIcon({
 					onClick={action}
 					className="w-8 h-8 p-1"
 					size="icon"
+					disabled={disabled}
 					variant={type}
 				>
 					<Icon className="w-4 h-4" />

@@ -103,7 +103,7 @@ def generate_chat_pdf(content: dict, output_path: str):
 
     for item in content.get("qna", []):
         question_obj = item.get("question")
-        answer_obj = item.get("response")
+        answer_obj = item.get("responses")[0]
 
         question_text = md_to_reportlab(getattr(question_obj, "content", ""))
         answer_text = md_to_reportlab(getattr(answer_obj, "content", ""))
