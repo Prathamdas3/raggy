@@ -36,12 +36,12 @@ type SingleChat = {
 	};
 };
 
-interface ExportChat{
-	data:{
-		task_id:string
-	},
-	message:string
-	status:string
+interface ExportChat {
+	data: {
+		task_id: string;
+	};
+	message: string;
+	status: string;
 }
 
 export function useGetAllChats() {
@@ -52,7 +52,7 @@ export function useGetAllChats() {
 			return data?.data;
 		},
 		retry: false,
-
+		staleTime: 10 * 60 * 1000,
 		gcTime: 10 * 60 * 1000,
 	});
 }

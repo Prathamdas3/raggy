@@ -15,6 +15,7 @@ import {
 } from "@/hooks/message";
 import { useGetTaskDetails } from "@/hooks/task";
 import MessageBubble from "@/components/chats/MessageBubble";
+import Protected from "@/layouts/protected-layout";
 
 export const Route = createFileRoute("/chats/$id")({
 	component: RouteComponent,
@@ -49,16 +50,11 @@ function RouteComponent() {
 	/* -------------------- API -------------------- */
 
 	const { data: history } = useGetAllMessages({ chatId });
-
 	const { mutate: askQuestion, isPending: isAsking } = useAskQuerstion();
-
 	const { data: task } = useGetTaskDetails(taskId);
-
 	const isTaskRunning =
 		task?.status === "PENDING" || task?.status === "STARTED";
-
 	const isTaskSuccess = task?.status === "SUCCESS";
-
 	const { data: answer } = useGetAnser({
 		chatId,
 		querstionId: questionId,
@@ -171,66 +167,70 @@ function RouteComponent() {
 	/* -------------------- RENDER -------------------- */
 
 	return (
-		<SidebarProvider>
-			<AppSidebar />
-			<div className="max-h-dvh w-full">
-				<Header tools />
-				<main className="h-[calc(100dvh-3.5rem)] flex flex-col">
-					{/* SCROLL AREA */}
-					<div className="flex-1 overflow-y-auto">
-						<div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
-							<SummarySection chatId={chatId} />
+		<Protected>
+			<SidebarProvider>
+				<AppSidebar />
+				<div className="max-h-dvh w-full">
+					<Header tools />
+					<main className="h-[calc(100dvh-3.5rem)] flex flex-col">
+						{/* SCROLL AREA */}
+						<div className="flex-1 overflow-y-auto">
+							<div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
+								<SummarySection chatId={chatId} />
 
-							{messages.map((msg) => (
-								<MessageBubble
-									key={msg.id}
-									message={msg.content}
-									role={msg.role}
-									audio_url={msg.audio_url}
-								/>
-							))}
+								{messages.map((msg) => (
+									<MessageBubble
+										key={msg.id}
+										message={msg.content}
+										role={msg.role}
+										audio_url={msg.audio_url}
+									/>
+								))}
+							</div>
 						</div>
-					</div>
 
-					{/* INPUT BAR */}
-					<div className="border-t bg-background/95 backdrop-blur">
-						<div className="mx-auto max-w-3xl px-4 py-4">
-							<form
-								onSubmit={(e) => {
-									e.preventDefault();
-									handleSubmit();
-								}}
-								className="relative"
-							>
-								<Textarea
-									ref={textareaRef}
-									value={input}
-									onChange={(e) => setInput(e.target.value)}
-									onKeyDown={handleKeyDown}
-									placeholder={
-										isTaskRunning ? "Waiting for response…" : "Ask me anything…"
-									}
-									className="min-h-[60px] pr-12 resize-none"
-									disabled={isTaskRunning || isAsking}
-								/>
-
-								<Button
-									type="submit"
-									size="icon"
-									className="absolute right-2 bottom-2 h-8 w-8"
-									disabled={!input.trim() || isTaskRunning || isAsking}
+						{/* INPUT BAR */}
+						<div className="border-t bg-background/95 backdrop-blur">
+							<div className="mx-auto max-w-3xl px-4 py-4">
+								<form
+									onSubmit={(e) => {
+										e.preventDefault();
+										handleSubmit();
+									}}
+									className="relative"
 								>
-									{isAsking || isTaskRunning ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : (
-										<Send className="h-4 w-4" />
-									)}
-								</Button>
-							</form>
+									<Textarea
+										ref={textareaRef}
+										value={input}
+										onChange={(e) => setInput(e.target.value)}
+										onKeyDown={handleKeyDown}
+										placeholder={
+											isTaskRunning
+												? "Waiting for response…"
+												: "Ask me anything…"
+										}
+										className="min-h-[60px] pr-12 resize-none"
+										disabled={isTaskRunning || isAsking}
+									/>
+
+									<Button
+										type="submit"
+										size="icon"
+										className="absolute right-2 bottom-2 h-8 w-8"
+										disabled={!input.trim() || isTaskRunning || isAsking}
+									>
+										{isAsking || isTaskRunning ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											<Send className="h-4 w-4" />
+										)}
+									</Button>
+								</form>
+							</div>
 						</div>
-					</div>
-				</main>
-			</div>
-		</SidebarProvider>
+					</main>
+				</div>
+			</SidebarProvider>
+		</Protected>
 	);
 }

@@ -15,6 +15,7 @@ from app.config import config
 from app.services.auth.token import (
     create_access_token,
     create_refresh_token,
+    get_details_from_access_token,
     get_user_id_from_refresh_token,
 )
 from app.configs.database import SessionDep
@@ -52,7 +53,13 @@ def on_signup(
         logger.debug(
             f"started generating the refresh token for user id: {new_user.data['id']}"
         )
-        refresh_token = create_refresh_token({"sub": str(new_user.data["id"])})
+        payload = {
+            "user_id": str(new_user.data["id"]),
+            "email": new_user.data["email"],
+            "name": new_user.data["name"],
+        }
+
+        refresh_token = create_refresh_token(payload)
 
         details = auth.SessionCreate(
             ip_address=ip_address,
@@ -66,7 +73,7 @@ def on_signup(
         logger.info(
             "successfully generated the refresh token and stored in the session"
         )
-        access_token = create_access_token({"sub": str(new_user.data["id"])})
+        access_token = create_access_token(payload)
         response.set_cookie(
             key="jwt",
             value=access_token,
@@ -125,7 +132,12 @@ def on_signin(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password"
             )
 
-        new_refresh_token = create_refresh_token({"sub": str(old_user.id)})
+        payload = {
+            "user_id": str(old_user.data["id"]),
+            "email": old_user.data["email"],
+            "name": old_user.data["name"],
+        }
+        new_refresh_token = create_refresh_token({"sub": payload})
 
         details = auth.SessionCreate(
             ip_address=ip_address,
@@ -137,7 +149,7 @@ def on_signin(
         )
         sessions.create_session(details, session=session)
 
-        access_token = create_access_token({"sub": str(old_user.id)})
+        access_token = create_access_token({"sub": payload})
         response.set_cookie(
             key="jwt",
             value=access_token,
@@ -250,6 +262,12 @@ def on_token_refresh(request: Request, response: Response, session: SessionDep):
         )
 
 
-@router.post("/reset-password",status_code=status.HTTP_200_OK)
-def on_reset_password(request:Request,response:Response,session:SessionDep):
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def on_reset_password(request: Request, response: Response, session: SessionDep):
     pass
+
+
+@router.get("/me", status_code=status.HTTP_200_OK)
+def on_get_current_user(request: Request):
+    token_data = get_details_from_access_token(request)
+    return {"status": "success", "message": "Authenticated", "data": token_data}

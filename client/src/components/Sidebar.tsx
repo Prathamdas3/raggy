@@ -32,12 +32,14 @@ import { Separator } from "./ui/separator";
 import { useSignout } from "@/hooks/auth";
 import { useState } from "react";
 import { UserDetailsModal } from "./modals/Usermodal";
+import { useAuth } from "@/layouts/protected-layout";
 
 export default function AppSidebar() {
 	const { open, setOpen } = useSidebar();
 	const { mutate } = useSignout();
 	const router = useNavigate();
 	const [profileOpen, setProfileOpen] = useState<boolean>(false);
+	const { data } = useAuth();
 
 	const handleSignout = () => {
 		mutate(undefined, {
@@ -209,7 +211,7 @@ export default function AppSidebar() {
 								<div className="px-2 py-2 border-b">
 									<p className="text-sm font-medium">John Doe</p>
 									<p className="text-xs text-muted-foreground">
-										john@example.com
+										{data?.email || "john@example.com"}
 									</p>
 								</div>
 								<DropdownMenuItem

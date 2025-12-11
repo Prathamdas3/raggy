@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 def create_access_token(data: dict) -> str:
     try:
         """Create a JWT access token with user_id"""
-        if not data or "sub" not in data:
+        if not data or "user_id" not in data:
             raise ValueError("Token must have user_id field")
 
         if not config.ACCESS_TOKEN_EXPIRE_MINUTES and not config.SECRET_KEY:
@@ -46,7 +46,7 @@ def create_access_token(data: dict) -> str:
 def create_refresh_token(data: dict) -> str:
     try:
         """Create a JWT refresh token with user_id"""
-        if not data or "sub" not in data:
+        if not data or "user_id" not in data:
             raise ValueError("Token must have user_id field")
 
         if not config.REFRESH_TOKEN_EXPIRE_DAYS and not config.SECRET_KEY:
@@ -90,7 +90,7 @@ def get_user_id_from_access_token(request: Request) -> UUID:
         if not config.SECRET_KEY:
             raise ValueError("SECRET_KEY missing in the env")
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=config.ALGORITHM)
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("user_id")
         token_type: str = payload.get("type")
 
         if user_id is None or token_type != "access":
@@ -132,7 +132,7 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
         if not config.SECRET_KEY:
             raise ValueError("SECRET_KEY missing in the env")
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=config.ALGORITHM)
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("user_id")
         token_type: str = payload.get("type")
 
         if user_id is None or token_type != "refresh":
@@ -160,3 +160,29 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
         )
 
     return ResponseFromToken(user_id=user_id, token=token)
+
+
+def get_details_from_access_token(request: Request) -> dict:
+    token = request.cookies.get("token")
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        payload = jwt.decode(
+            token,
+            config.SECRET_KEY,
+            algorithms=[config.ALGORITHM],
+        )
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    # Extract fields safely
+    user_id = payload.get("user_id")
+    email = payload.get("email")
+    token_type = payload.get("type")
+
+    if not user_id or token_type != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    return {"user_id": user_id, "email": email}
