@@ -45,7 +45,7 @@ class MinIOClientSingleton:
                             endpoint=config.MINIO_ENDPOINT,
                             access_key=config.MINIO_ACCESS_KEY,
                             secret_key=config.MINIO_SECRET_KEY,
-                            secure=config.MINIO_SECURE.lower() == "true",
+                            secure=config.MINIO_SECURE,
                         )
 
                         cls._initialized = True
