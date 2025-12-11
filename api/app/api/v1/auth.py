@@ -238,7 +238,12 @@ def on_token_refresh(request: Request, response: Response, session: SessionDep):
                 detail="No user found", status_code=status.HTTP_401_UNAUTHORIZED
             )
 
-        access_token = create_access_token({"sub": str(token_data.user_id)})
+        payload = {
+            "user_id": str(token_data.user_id),
+            "email": token_data.email,
+            "name": token_data.name,
+        }
+        access_token = create_access_token(payload)
         response.set_cookie(
             key="jwt",
             value=access_token,
@@ -255,7 +260,7 @@ def on_token_refresh(request: Request, response: Response, session: SessionDep):
         raise
 
     except Exception as e:
-        logger.error(f"Failed to refresh to access token {str(e)}", exc_info=True)
+        logger.error(f"Failed to refresh to refresh token {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during refresh",

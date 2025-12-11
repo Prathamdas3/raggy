@@ -47,6 +47,7 @@ type LinkFormValues = z.infer<typeof linkSchema>;
 
 export default function UploadDocs() {
 	const [activeTab, setActiveTab] = useState<"file" | "link">("file");
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [submittedLink, setSubmittedLink] = useState<string | null>(null);
 	const setTaskId = useTasksIdStore((s) => s.setTaskId);
 
@@ -60,7 +61,7 @@ export default function UploadDocs() {
 	const router = useNavigate();
 
 	const onDrop = useCallback((files: any) => {
-		console.log(files);
+		setSelectedFile(files || null);
 	}, []);
 
 	const {
@@ -84,8 +85,7 @@ export default function UploadDocs() {
 	};
 
 	const handleRemoveFile = () => {
-		// Clear files by recreating dropzone or implementing file removal logic
-		files.length = 0;
+		setSelectedFile(null);
 	};
 
 	const handleRemoveLink = () => {
@@ -95,7 +95,7 @@ export default function UploadDocs() {
 
 	const handleFinalSubmit = () => {
 		if (activeTab === "file" && files.length > 0) {
-			console.log("Submitting file:", files[0]);
+			console.log("Submitting file:", selectedFile);
 			// Handle file submission
 		} else if (activeTab === "link" && submittedLink) {
 			mutate(
@@ -166,10 +166,10 @@ export default function UploadDocs() {
 					{files.length > 0 && (
 						<div className="border rounded-lg p-4 flex items-center justify-between bg-accent/50">
 							<div className="flex items-center gap-3 flex-1 min-w-0">
-								{files[0].type.startsWith("image/") ? (
+								{selectedFile?.type.startsWith("image/") ? (
 									<img
-										src={(files[0] as any).preview}
-										alt={files[0].name}
+										src={URL.createObjectURL(selectedFile)}
+										alt={selectedFile?.name}
 										className="h-16 w-16 object-cover rounded"
 									/>
 								) : (

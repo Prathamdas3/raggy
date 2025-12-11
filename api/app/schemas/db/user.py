@@ -68,6 +68,8 @@ class UpdateUser(BaseModel):
 class ResponseFromToken(BaseModel):
     user_id: UUID
     token: str
+    email:str
+    name:str
 
 
 class UpdatePassword(BaseModel):

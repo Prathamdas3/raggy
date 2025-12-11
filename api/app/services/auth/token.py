@@ -133,6 +133,8 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
             raise ValueError("SECRET_KEY missing in the env")
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=config.ALGORITHM)
         user_id: str = payload.get("user_id")
+        email: str = payload.get("email")
+        name: str = payload.get("name")
         token_type: str = payload.get("type")
 
         if user_id is None or token_type != "refresh":
@@ -154,12 +156,13 @@ def get_user_id_from_refresh_token(request: Request) -> ResponseFromToken:
             f"Failed to extract the user id from the refresh token: {str(e)}",
             exc_info=True,
         )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to validate the user details",
         )
 
-    return ResponseFromToken(user_id=user_id, token=token)
+    return ResponseFromToken(user_id=user_id, token=token, email=email, name=name)
 
 
 def get_details_from_access_token(request: Request) -> dict:
