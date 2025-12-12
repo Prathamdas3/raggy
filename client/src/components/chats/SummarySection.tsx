@@ -15,6 +15,7 @@ export default function SummarySection({ chatId }: { chatId: string }) {
 	const { data: task } = useGetTaskDetails(taskId);
 
 	const isTaskSuccess = task?.status === "SUCCESS";
+	const isTaskFailed = task?.status === "FAILURE";
 	const shouldFetchSummary =
 		Boolean(chatId) && (taskId == null || isTaskSuccess);
 
@@ -52,6 +53,25 @@ export default function SummarySection({ chatId }: { chatId: string }) {
 		return (
 			<div className="text-muted-foreground italic">
 				Summary not available yet.
+			</div>
+		);
+	}
+
+	if (isTaskFailed) {
+		return (
+			<div className="text-red-500 bg-red-500/10 p-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-bottom-1">
+				<span className="font-medium">
+					Something went wrong while preparing your summary.
+				</span>
+				<button
+					type="button"
+					className="underline text-sm"
+					onClick={() => {
+						clearTaskId(undefined); // reset
+					}}
+				>
+					Try again
+				</button>
 			</div>
 		);
 	}

@@ -1,11 +1,19 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from celery.result import AsyncResult
 from app.configs.celery import celery
+from app.services.auth.token import get_user_id_from_access_token
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(prefix="/api/v1", tags=["tasks"])
+
 
 @router.get("/tasks/{task_id}")
-def get_task_status(task_id: str):
+def get_task_status(
+    task_id: str,
+    user_id: str = Depends(get_user_id_from_access_token),
+):
+    if not user_id:
+        HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found")
+        
     try:
         task_result = AsyncResult(task_id, app=celery)
     except Exception:

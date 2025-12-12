@@ -29,7 +29,7 @@ type ChatMessage = {
 	content: string;
 	audio_url?: string | null;
 	created_at: string;
-	status?: "pending";
+	status?: "pending" | "failed";
 };
 
 /* -------------------- COMPONENT -------------------- */
@@ -55,13 +55,12 @@ function RouteComponent() {
 	const isTaskRunning =
 		task?.status === "PENDING" || task?.status === "STARTED";
 	const isTaskSuccess = task?.status === "SUCCESS";
+	const isFailed = task?.status === "FAILURE";
 	const { data: answer } = useGetAnser({
 		chatId,
 		querstionId: questionId,
 		shouldFetch: isTaskSuccess,
 	});
-
-	/* -------------------- INITIAL LOAD (FLATTEN) -------------------- */
 
 	useEffect(() => {
 		if (!history) return;
@@ -118,7 +117,29 @@ function RouteComponent() {
 		setQuestionId(undefined);
 	}, [answer]);
 
-	/* -------------------- SEND QUESTION -------------------- */
+	useEffect(() => {
+		if (!isFailed) return;
+
+		setMessages((prev) => {
+			// Remove pending assistant message
+			const withoutPending = prev.filter((m) => m.status !== "pending");
+
+			// Add failure message
+			return [
+				...withoutPending,
+				{
+					id: crypto.randomUUID(),
+					role: "assistant",
+					content: "Something went wrong. Please try again.",
+					created_at: new Date().toISOString(),
+					status: "failed",
+				},
+			];
+		});
+
+		setTaskId(undefined);
+		setQuestionId(undefined);
+	}, [isFailed]);
 
 	const handleSubmit = () => {
 		if (!input.trim() || isTaskRunning) return;
@@ -163,8 +184,6 @@ function RouteComponent() {
 			handleSubmit();
 		}
 	};
-
-	/* -------------------- RENDER -------------------- */
 
 	return (
 		<Protected>

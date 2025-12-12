@@ -30,6 +30,7 @@ class Configs:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
 
     # Redis (IMPORTANT)
     REDIS_HOST: str = os.getenv("REDIS_HOST", "redis")

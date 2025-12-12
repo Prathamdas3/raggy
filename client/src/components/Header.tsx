@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useGetTaskDetails } from "@/hooks/task";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/axios";
 
 interface Props {
 	tools: boolean;
@@ -12,27 +13,20 @@ interface Props {
 
 async function downloadPdf(url: string) {
 	try {
-		// Show loading toast
 		const toastId = toast.loading("Preparing download...");
 
-		// Fetch the PDF
-		const response = await fetch(url);
-
-		if (!response.ok) {
-			throw new Error("Failed to fetch PDF");
-		}
-
-		// Convert to blob
-		const blob = await response.blob();
+		// Correct axios call
+		const response = await apiClient.get(url, {
+			responseType: "blob",
+		});
 
 		// Create blob URL
-		const blobUrl = URL.createObjectURL(blob);
+		const blobUrl = URL.createObjectURL(response.data);
 
-		// Extract filename from URL or use default
 		const urlPath = new URL(url).pathname;
 		const filename = urlPath.split("/").pop() || "chat-export.pdf";
 
-		// Create and trigger download
+		// Trigger download
 		const link = document.createElement("a");
 		link.href = blobUrl;
 		link.download = filename;
@@ -40,16 +34,12 @@ async function downloadPdf(url: string) {
 		link.click();
 		document.body.removeChild(link);
 
-		// Cleanup blob URL
-		setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+		setTimeout(() => URL.revokeObjectURL(blobUrl), 200);
 
-		// Update toast
 		toast.success("Download started!", { id: toastId });
 	} catch (error) {
 		console.error("Download failed:", error);
-		toast.error("Failed to download PDF. Opening in new tab instead...");
-
-		// Fallback: open in new tab
+		toast.error("Failed to download. Opening in new tab instead...");
 		window.open(url, "_blank", "noopener,noreferrer");
 	}
 }

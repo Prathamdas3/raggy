@@ -92,7 +92,6 @@ export function useGetCurrentUser() {
 		queryKey: ["getCurrentUser"],
 		retry: false,
 		gcTime: 10 * 60 * 1000,
-		staleTime: 5 * 60 * 1000,
 		queryFn: async () => {
 			const { data } = await apiClient.get<CurrentUser>("/auth/me");
 			return data?.data;

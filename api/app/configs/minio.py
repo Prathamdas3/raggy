@@ -5,6 +5,7 @@ from typing import Optional, TypeVar
 from app.config import config
 import threading
 
+
 T = TypeVar("T")
 logger = get_logger(__name__)
 
@@ -142,6 +143,70 @@ class MinIOClientSingleton:
             cls._instance = None
             cls._initialized = False
 
+    # ============================================
+    # NEW METHODS FOR PROXY SOLUTION
+    # ============================================
+
+    @classmethod
+    def get_file_stream(cls, object_name: str, bucket_name: Optional[str] = None):
+        """
+        Get a file stream from MinIO for proxying to frontend.
+
+        Args:
+            object_name: Path to the object in the bucket
+            bucket_name: Optional bucket name, defaults to configured bucket
+
+        Returns:
+            HTTPResponse: Stream object from MinIO
+
+        Raises:
+            S3Error: If file not found or other MinIO error
+        """
+        try:
+            client = cls.get_client()
+            bucket = bucket_name or config.MINIO_BUCKET_NAME
+
+            logger.debug(f"Streaming file: {bucket}/{object_name}")
+
+            response = client.get_object(bucket, object_name)
+            return response
+
+        except S3Error as e:
+            logger.error(f"Error getting file stream: {str(e)}")
+            raise
+
+    @classmethod
+    def get_file_metadata(
+        cls, object_name: str, bucket_name: Optional[str] = None
+    ) -> dict:
+        """
+        Get metadata for a file without downloading it.
+
+        Args:
+            object_name: Path to the object in the bucket
+            bucket_name: Optional bucket name, defaults to configured bucket
+
+        Returns:
+            dict: File metadata including size, content-type, etc.
+        """
+        try:
+            client = cls.get_client()
+            bucket = bucket_name or config.MINIO_BUCKET_NAME
+
+            stat = client.stat_object(bucket, object_name)
+
+            return {
+                "size": stat.size,
+                "content_type": stat.content_type,
+                "last_modified": stat.last_modified,
+                "etag": stat.etag,
+                "metadata": stat.metadata,
+            }
+
+        except S3Error as e:
+            logger.error(f"Error getting file metadata: {str(e)}")
+            raise
+
 
 # Convenience functions
 def get_minio_client() -> Minio:
@@ -180,3 +245,31 @@ def minio_health_check() -> dict:
         dict: Health check results
     """
     return MinIOClientSingleton.health_check()
+
+
+def get_file_stream(object_name: str, bucket_name: Optional[str] = None):
+    """
+    Get a file stream for proxying to frontend.
+
+    Args:
+        object_name: Path to the object in the bucket
+        bucket_name: Optional bucket name
+
+    Returns:
+        HTTPResponse: Stream object
+    """
+    return MinIOClientSingleton.get_file_stream(object_name, bucket_name)
+
+
+def get_file_metadata(object_name: str, bucket_name: Optional[str] = None) -> dict:
+    """
+    Get file metadata without downloading.
+
+    Args:
+        object_name: Path to the object in the bucket
+        bucket_name: Optional bucket name
+
+    Returns:
+        dict: File metadata
+    """
+    return MinIOClientSingleton.get_file_metadata(object_name, bucket_name)

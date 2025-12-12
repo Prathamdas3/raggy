@@ -4,7 +4,8 @@ from uuid import UUID
 from app.configs.minio import get_minio_client, get_bucket_name
 from minio import S3Error
 from fastapi import HTTPException
-from datetime import timedelta
+# from datetime import timedelta
+from app.config import config
 from app.utils.remove_file import remove_file
 
 logger = get_logger(__name__)
@@ -51,17 +52,19 @@ def upload_to_minio(
         logger.warning("File size mismatch after upload!")
 
     # Presigned URL
-    try:
-        url = minio.presigned_get_object(
-            bucket_name=bucket,
-            object_name=object_name,
-            expires=timedelta(days=expires_days),
-        )
-    except Exception:
-        from app.configs.minio import MINIO_ENDPOINT, MINIO_SECURE
+    # try:
+    #     url = minio.presigned_get_object(
+    #         bucket_name=bucket,
+    #         object_name=object_name,
+    #         expires=timedelta(days=expires_days),
+    #     )
+    # except Exception:
+    #     raise
 
-        protocol = "https" if MINIO_SECURE else "http"
-        url = f"{protocol}://{MINIO_ENDPOINT}/{bucket}/{object_name}"
+        # from app.configs.minio import MINIO_ENDPOINT, MINIO_SECURE
+
+        # protocol = "https" if MINIO_SECURE else "http"
+        # url = f"{protocol}://{MINIO_ENDPOINT}/{bucket}/{object_name}"
 
     # Optionally delete local file
     try:
@@ -69,4 +72,9 @@ def upload_to_minio(
     except Exception:
         pass
 
-    return url
+    backend_url = config.BACKEND_URL or "http://localhost:8000"
+    proxy_url = f"{backend_url}/api/v1/files/{bucket}/{object_name}"
+
+    logger.debug(f"Generated proxy URL: {proxy_url}")
+
+    return proxy_url

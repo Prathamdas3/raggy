@@ -133,11 +133,11 @@ def on_signin(
             )
 
         payload = {
-            "user_id": str(old_user.data["id"]),
-            "email": old_user.data["email"],
-            "name": old_user.data["name"],
+            "user_id": str(old_user.id),
+            "email": old_user.email,
+            "name": f"{old_user.first_name} {old_user.last_name}",
         }
-        new_refresh_token = create_refresh_token({"sub": payload})
+        new_refresh_token = create_refresh_token(payload)
 
         details = auth.SessionCreate(
             ip_address=ip_address,
@@ -149,7 +149,7 @@ def on_signin(
         )
         sessions.create_session(details, session=session)
 
-        access_token = create_access_token({"sub": payload})
+        access_token = create_access_token(payload)
         response.set_cookie(
             key="jwt",
             value=access_token,

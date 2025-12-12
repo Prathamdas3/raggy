@@ -3,6 +3,7 @@ from app.lifecycle import lifespan
 from app.utils.logger import get_logger
 from app.api.v1.router import router
 from app.api.task import router as task_router
+from app.api.file import router as file_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import config
 import app.models.all_schema
@@ -28,6 +29,7 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(task_router)
+app.include_router(file_router)
 
 
 if __name__ == "__main__":

@@ -51,48 +51,56 @@ const processQueue = (
 
 // Response interceptor for handling 401 errors
 apiClient.interceptors.response.use(
-	(response) => response,
-	async (error: AxiosError) => {
-		const originalRequest = error.config as InternalAxiosRequestConfig;
+    (response) => response,
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig;
 
-		// If error is 401 and we haven't retried yet
-		if (error.response?.status === 401 && !originalRequest._retry) {
-			if (isRefreshing) {
-				// If already refreshing, queue this request
-				return new Promise((resolve, reject) => {
-					failedQueue.push({ resolve, reject });
-				})
-					.then(() => apiClient(originalRequest))
-					.catch((err) => Promise.reject(err));
-			}
+        // If request is /auth/me → fail immediately
+        if (
+            error.response?.status === 401 &&
+            originalRequest.url === "/auth/me"
+        ) {
+            return Promise.reject(error);
+        }
 
-			originalRequest._retry = true;
-			isRefreshing = true;
+        // If refresh request failed → fail immediately
+        if (
+            error.response?.status === 401 &&
+            originalRequest.url === "/auth/refresh"
+        ) {
+            return Promise.reject(error);
+        }
 
-			try {
-				// Hit the refresh endpoint
-				await apiClient.get("/auth/refresh");
+        // Handle normal interceptor logic for others
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => apiClient(originalRequest))
+                    .catch((err) => Promise.reject(err));
+            }
 
-				// If refresh succeeds, process queued requests
-				processQueue(null);
-				isRefreshing = false;
+            originalRequest._retry = true;
+            isRefreshing = true;
 
-				// Retry the original request
-				return apiClient(originalRequest);
-			} catch (refreshError) {
-				// If refresh fails, reject all queued requests
-				processQueue(refreshError as AxiosError);
-				isRefreshing = false;
+            try {
+                await apiClient.get("/auth/refresh");
 
-				// Optionally redirect to login or clear user state
-				window.location.href = "/auth/signin";
+                processQueue(null);
+                isRefreshing = false;
 
-				return Promise.reject(refreshError);
-			}
-		}
+                return apiClient(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError as AxiosError);
+                isRefreshing = false;
 
-		return Promise.reject(error);
-	},
+                return Promise.reject(refreshError); // <-- IMPORTANT
+            }
+        }
+
+        return Promise.reject(error);
+    }
 );
 
 // Optional: Request interceptor for logging or adding custom headers

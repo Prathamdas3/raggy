@@ -29,16 +29,10 @@ def build_export_chat_content(details: GetSummary, session: Session):
 
         qna_data = get_chat_messages(details=details, session=session)
 
-        if not qna_data:
-            raise ValueError("No QNA data found")
-
-        if len(qna_data) == 0:
-            raise ValueError("QNA data is empty")
-
         export_data = {
             "original_text": text_data["original_text"],
             "summary_text": text_data["summary_text"],
-            "qna": qna_data,
+            "qna": [] if len(qna_data) == 0 else qna_data,
             "title": getattr(text_data, "title", "") or "",
         }
 

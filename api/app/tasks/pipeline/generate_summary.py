@@ -12,7 +12,9 @@ def task_generate_summary(self, data: dict) -> dict:
     logger.debug("Started the task of summary generation")
 
     try:
+
         summary_text, title = get_response(query=data.text)
+
         if not summary_text:
             raise ValueError("Failed to generate summary text")
 
