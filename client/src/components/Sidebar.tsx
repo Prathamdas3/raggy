@@ -156,7 +156,7 @@ export default function AppSidebar() {
 									<div className="flex-1 text-left min-w-0">
 										<p className="text-sm font-medium truncate">John Doe</p>
 										<p className="text-xs text-muted-foreground truncate">
-											john@example.com
+											{data?.email || "john@example.com"}
 										</p>
 									</div>
 									<ChevronRight className="h-4 w-4 text-muted-foreground" />
