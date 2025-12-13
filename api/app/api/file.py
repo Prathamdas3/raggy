@@ -6,7 +6,7 @@ from app.utils.logger import get_logger
 from minio.error import S3Error
 
 logger = get_logger(__name__)
-router = APIRouter(prefix="/api/v1/files", tags=["files"])
+router = APIRouter(prefix="/api/v1/media", tags=["files"])
 
 
 @router.get("/{bucket_name}/{file_path:path}")

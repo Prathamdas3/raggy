@@ -4,9 +4,8 @@ from uuid import UUID
 from app.configs.minio import get_minio_client, get_bucket_name
 from minio import S3Error
 from fastapi import HTTPException
-# from datetime import timedelta
-from app.config import config
 from app.utils.remove_file import remove_file
+from app.config import config
 
 logger = get_logger(__name__)
 
@@ -61,10 +60,10 @@ def upload_to_minio(
     # except Exception:
     #     raise
 
-        # from app.configs.minio import MINIO_ENDPOINT, MINIO_SECURE
+    # from app.configs.minio import MINIO_ENDPOINT, MINIO_SECURE
 
-        # protocol = "https" if MINIO_SECURE else "http"
-        # url = f"{protocol}://{MINIO_ENDPOINT}/{bucket}/{object_name}"
+    # protocol = "https" if MINIO_SECURE else "http"
+    # url = f"{protocol}://{MINIO_ENDPOINT}/{bucket}/{object_name}"
 
     # Optionally delete local file
     try:
@@ -73,7 +72,7 @@ def upload_to_minio(
         pass
 
     backend_url = config.BACKEND_URL or "http://localhost:8000"
-    proxy_url = f"{backend_url}/api/v1/files/{bucket}/{object_name}"
+    proxy_url = f"{backend_url}/api/v1/media/{bucket}/{object_name}"
 
     logger.debug(f"Generated proxy URL: {proxy_url}")
 
