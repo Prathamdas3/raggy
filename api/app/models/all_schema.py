@@ -15,7 +15,7 @@ class Type(Enum):
 class Sender(Enum):
     user = "user"
     llm = "llm"
-    system="system"
+    system = "system"
 
 
 class User(SQLModel, table=True):
@@ -153,7 +153,11 @@ class Messages(SQLModel, table=True):
     chat_id: UUID = Field(foreign_key="chats.id", nullable=False)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     question_id: Optional[UUID] = Field(
-        foreign_key="messages.id", default=None, nullable=True
+        sa_column=Column(
+            sa.UUID,
+            sa.ForeignKey("messages.id", ondelete="CASCADE"),
+            nullable=True,
+        )
     )
     sender: Sender = Field(sa_column=Column(sa.Enum(Sender), nullable=False))
     content: str = ""
