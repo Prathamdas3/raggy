@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   frontend:
-    image: pratham003/rag-frontend:latest
+    image: docker.io/pratham003/rag-frontend:latest
     container_name: rag_frontend
     restart: unless-stopped
     env_file:
@@ -15,7 +15,7 @@ services:
       - backend_api
 
   backend_api:
-    image: pratham003/rag-backend:latest
+    image: docker.io/pratham003/rag-backend:latest
     container_name: rag_backend_api
     restart: unless-stopped
     env_file:
@@ -33,7 +33,7 @@ services:
       - minio
 
   backend_worker:
-    image: pratham003/rag-backend:latest
+    image: docker.io/pratham003/rag-backend:latest
     container_name: rag_backend_worker
     restart: unless-stopped
     env_file:

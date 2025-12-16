@@ -1,6 +1,3 @@
-# ============================
-# 1) BUILDER STAGE
-# ============================
 FROM python:3.12-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
