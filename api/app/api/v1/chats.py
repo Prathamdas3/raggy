@@ -72,7 +72,7 @@ def create_new_links_chat(
 )
 def create_new_files_chat(
     session: SessionDep,
-    file: UploadFile | None = File(None),
+    file: UploadFile = File(...),
     user_id: UUID = Depends(get_user_id_from_access_token),
 ):
     try:
@@ -89,9 +89,9 @@ def create_new_files_chat(
         final_path = save_file(file_type=meta.category, file=file)
 
         details = OtherInput(
-            user_id=user_id,
-            chat_id=new_id,
-            path=final_path,
+            user_id=str(user_id),
+            chat_id=str(new_id),
+            path=str(final_path),
             sub_type=meta.subtype,
             type=meta.category,
         )

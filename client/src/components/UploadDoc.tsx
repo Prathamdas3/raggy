@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useCreateChat } from "@/hooks/chats";
 import { useNavigate } from "@tanstack/react-router";
 import { useTasksIdStore } from "@/store/task";
+import { toast } from "sonner";
 
 // Validation schema for link
 const linkSchema = z.object({
@@ -60,12 +61,13 @@ export default function UploadDocs() {
 	const { mutate } = useCreateChat();
 	const router = useNavigate();
 
-	const onDrop = useCallback((files: any) => {
-		setSelectedFile(files || null);
+	const onDrop = useCallback((acceptedFiles: File[]) => {
+		if (acceptedFiles && acceptedFiles.length > 0) {
+			setSelectedFile(acceptedFiles[0]);
+		}
 	}, []);
 
 	const {
-		acceptedFiles: files,
 		getRootProps,
 		getInputProps,
 		isDragActive,
@@ -94,9 +96,16 @@ export default function UploadDocs() {
 	};
 
 	const handleFinalSubmit = () => {
-		if (activeTab === "file" && files.length > 0) {
+		if (activeTab === "file" && selectedFile) {
 			console.log("Submitting file:", selectedFile);
-			// Handle file submission
+			mutate({ file: selectedFile }, {
+				onSuccess: (data) => {
+					setSelectedFile(null)
+					setTaskId(data?.task_id)
+					form.reset()
+					router({ to: `/chats/${data?.chat_id}`, from: "/chats" });
+				}
+			})
 		} else if (activeTab === "link" && submittedLink) {
 			mutate(
 				{ link: submittedLink },
@@ -109,11 +118,13 @@ export default function UploadDocs() {
 					},
 				},
 			);
+		} else {
+			toast.error("Please select a file or add a link first");
 		}
 	};
 
 	const hasContent =
-		(activeTab === "file" && files.length > 0) ||
+		(activeTab === "file" && selectedFile !== null) ||
 		(activeTab === "link" && submittedLink);
 
 	return (
@@ -163,13 +174,13 @@ export default function UploadDocs() {
 						</EmptyContent>
 					</Empty>
 
-					{files.length > 0 && (
+					{selectedFile && (
 						<div className="border rounded-lg p-4 flex items-center justify-between bg-accent/50">
 							<div className="flex items-center gap-3 flex-1 min-w-0">
-								{selectedFile?.type.startsWith("image/") ? (
+								{selectedFile.type.startsWith("image/") ? (
 									<img
 										src={URL.createObjectURL(selectedFile)}
-										alt={selectedFile?.name}
+										alt={selectedFile.name}
 										className="h-16 w-16 object-cover rounded"
 									/>
 								) : (
@@ -179,10 +190,10 @@ export default function UploadDocs() {
 								)}
 								<div className="flex-1 min-w-0">
 									<p className="text-sm font-medium truncate">
-										{files[0].name}
+										{selectedFile.name}
 									</p>
 									<p className="text-xs text-muted-foreground">
-										{(files[0].size / 1024).toFixed(1)} KB
+										{(selectedFile.size / 1024).toFixed(1)} KB
 									</p>
 								</div>
 							</div>

@@ -1,3 +1,4 @@
+from pathlib import Path
 from celery import chain
 from app.schemas.db.chat import GetSummary
 from app.schemas.input.file import OtherInput, Type
@@ -20,10 +21,10 @@ from app.tasks.pipeline.update_chat import task_update_chat
 logger = get_logger(__name__)
 
 TASK_MAP = {
-    Type.image: task_png_text,
-    Type.audio: task_audio_video_text,
-    Type.video: task_audio_video_text,
-    Type.document: task_other_files_text,
+    "image": task_png_text,
+    "audio": task_audio_video_text,
+    "video": task_audio_video_text,
+    "document": task_other_files_text,
 }
 
 COMMON_TASKS = [
@@ -64,20 +65,22 @@ def chain_input_link(data: YTInput) -> str:
 
 
 def chain_input_others(data: OtherInput):
+    file_path=Path(data.path)
     # -------- File checks -------- #
     if not data.path:
         raise ValueError("Empty file path provided")
 
-    if not data.path.exists():
+    if not file_path.exists():
         raise FileNotFoundError(f"File does not exist: {data.path}")
 
-    if not data.path.is_file():
+    if not file_path.is_file():
         raise IsADirectoryError(f"Path is not a file: {data.path}")
     try:
         payload = data.model_dump()
 
         # -------- Select first task -------- #
         first_task = TASK_MAP.get(data.type)
+
         if not first_task:
             raise ValueError(f"No workflow defined for type: {data.type}")
 

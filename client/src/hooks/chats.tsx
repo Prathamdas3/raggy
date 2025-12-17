@@ -87,12 +87,11 @@ export function useCreateChat() {
 				formData.append("file", file);
 
 				const { data, error } = await tryCatch(
-					apiClient.post<SingleChat>("/chats/file", formData, {
+					apiClient.post<SingleChat>("/chats/files", formData, {
 						headers: {
-							"Content-Type": "multipart/form-data",
-						},
-					}),
-				);
+							"Content-Type": "multipart/form-data"
+						}
+					}))
 
 				if (error) {
 					throw error;

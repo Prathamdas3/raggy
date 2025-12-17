@@ -58,10 +58,10 @@ class FileMeta(BaseModel):
 
 
 class OtherInput(BaseModel):
-    path: Path
+    path: str
     user_id: UUID
     chat_id: UUID
-    type: Type
+    type: str
     sub_type: Optional[str] = None
 
     @field_validator("path", mode="before")
@@ -69,10 +69,14 @@ class OtherInput(BaseModel):
         if not v:
             raise ValueError("path cannot be empty")
 
-        try:
-            return Path(v)
-        except Exception:
-            raise ValueError("path must be a valid filesystem path string")
+        if not isinstance(v, str):
+            raise TypeError("path should be a string type")
+
+        v = v.strip()
+        if not v:
+            raise ValueError("Path is empty")
+
+        return v
 
     @field_validator("user_id", "chat_id", mode="before")
     def validate_uuid(cls, v, info):
@@ -93,3 +97,7 @@ class OtherInput(BaseModel):
             raise TypeError(f"{info.field_name} should be a type of string")
 
         return v
+
+    class Config:
+        # Ensure all values are JSON serializable
+        json_encoders = {UUID: str}

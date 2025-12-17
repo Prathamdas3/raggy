@@ -14,8 +14,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
     <TooltipProvider>
       <Outlet />
-      <Toaster/>
-      <TanStackDevtools
+      <Toaster />
+      {import.meta.env.DEV && <TanStackDevtools
         config={{
           position: 'bottom-right',
         }}
@@ -26,7 +26,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
           },
           TanStackQueryDevtools,
         ]}
-      />
+      />}
     </TooltipProvider>
   ),
 })

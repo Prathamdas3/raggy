@@ -160,7 +160,7 @@ def handle_other_file(file_path: Path, file_type: str) -> str:
     text = ""
 
     try:
-        if file_type == "application/pdf":
+        if file_type == "pdf":
             text = extract_text_from_pdf(file_path)
 
         elif (

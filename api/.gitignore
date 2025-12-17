@@ -16,3 +16,4 @@ logs/
 .env
 .env.prod
 .mypy_cache
+temp/

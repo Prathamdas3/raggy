@@ -1,53 +1,6 @@
 version: "3.9"
 
 services:
-  frontend:
-    image: docker.io/pratham003/rag-frontend:v0.0.1
-    container_name: rag_frontend
-    restart: unless-stopped
-    env_file:
-      - ./client/.env.prod
-    ports:
-      - "3000:80"
-    networks:
-      - app_network
-    depends_on:
-      - backend_api
-
-  backend_api:
-    image: docker.io/pratham003/rag-backend:v0.0.1
-    container_name: rag_backend_api
-    restart: unless-stopped
-    env_file:
-      - ./api/.env.prod
-    environment:
-      MODE: "api"
-    ports:
-      - "8000:8000"
-    networks:
-      - app_network
-    depends_on:
-      - postgres
-      - redis
-      - qdrant
-      - minio
-
-  backend_worker:
-    image: docker.io/pratham003/rag-backend:v0.0.1
-    container_name: rag_backend_worker
-    restart: unless-stopped
-    env_file:
-      - ./api/.env.prod
-    environment:
-      MODE: "worker"
-    networks:
-      - app_network
-    depends_on:
-      - postgres
-      - redis
-      - qdrant
-      - minio
-
   postgres:
     image: postgres:16
     container_name: my_postgres
@@ -56,6 +9,8 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -70,6 +25,8 @@ services:
     image: redis:7
     container_name: my_redis
     restart: always
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -84,6 +41,8 @@ services:
     image: qdrant/qdrant:v1.15.1
     container_name: qdrant
     restart: unless-stopped
+    ports:
+      - "6333:6333"
     volumes:
       - qdrant-data:/qdrant/storage
     networks:
@@ -98,6 +57,9 @@ services:
     image: minio/minio:latest
     container_name: minio
     restart: unless-stopped
+    ports:
+      - 9000:9000
+      - 9001:9001
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123

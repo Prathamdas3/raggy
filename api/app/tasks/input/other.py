@@ -1,3 +1,4 @@
+from pathlib import Path
 from app.schemas.input.file import OtherInput
 from app.schemas.input.yt import TaskInput
 from app.services.input.other import handle_other_file
@@ -18,7 +19,8 @@ def task_other_files_text(self, data: dict):
         raise ValueError("Sub type is missing....")
 
     try:
-        text = handle_other_file(file_path=data.path, file_type=data.sub_type)
+        logger.info(data.sub_type)
+        text = handle_other_file(file_path=Path(data.path), file_type=data.sub_type)
 
         if not text or not text.strip():
             raise ValueError(f"{data.sub_type} to text conversion failed")

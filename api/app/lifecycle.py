@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.configs.rate_limiter import close_rate_limiter, init_rate_limiter
 from app.utils.logger import get_logger
 from app.configs import database, whisper, model, qdrant, minio
+from app.config import config
 import asyncio
 
 logger = get_logger(__name__)
@@ -11,6 +12,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting up the server events")
+    config.TEMP_DIR.mkdir(parents=True, exist_ok=True)
     try:
         logger.info("starting redis")
         await init_rate_limiter()
