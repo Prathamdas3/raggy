@@ -1,10 +1,11 @@
-from sqlmodel import Field, SQLModel, Column, Relationship
+from sqlmodel import Field, SQLModel, Relationship
 from pydantic import EmailStr
 from enum import Enum
 import sqlalchemy as sa
 from datetime import datetime
 from uuid import UUID, uuid4
 from typing import Optional
+from sqlalchemy.orm import declared_attr
 
 
 class Sender(Enum):
@@ -20,27 +21,33 @@ class Status(Enum):
     pending = "pending"
 
 
+
+
 class CreatedAtMixin:
+    __allow_unmapped__ = True
+
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    created_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(
+
+    @declared_attr
+    def created_at(cls):
+        return sa.Column(
             sa.DateTime(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
-        ),
-    )
+        )
 
 
 class UpdatedAtMixin:
-    updated_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(
+    __allow_unmapped__ = True
+
+    @declared_attr
+    def updated_at(cls):
+        return sa.Column(
             sa.DateTime(timezone=True),
+            nullable=False,
             server_default=sa.func.now(),
             onupdate=sa.func.now(),
-        ),
-    )
+        )
 
 
 class Users(CreatedAtMixin, SQLModel, table=True):
@@ -81,7 +88,7 @@ class Sessions(CreatedAtMixin, SQLModel, table=True):
 class Docs(CreatedAtMixin, SQLModel, table=True):
     original_text: str = Field(default="")
     proccessing_status: Status = Field(
-        sa_column=Column(sa.Enum(Status), nullable=False)
+        sa_column=sa.Column(sa.Enum(Status), nullable=False)
     )
 
     # Foreign keys
@@ -182,11 +189,11 @@ class ChatBranches(CreatedAtMixin, SQLModel, table=True):
 
 class Messages(CreatedAtMixin, SQLModel, table=True):
     role: Sender = Field(
-        sa_column=Column(sa.Enum(Sender), nullable=False)
+        sa_column=sa.Column(sa.Enum(Sender), nullable=False)
     )
     deleted_at: datetime | None = Field(
         default=None,
-        sa_column=Column(sa.DateTime(timezone=True), nullable=True),
+        sa_column=sa.Column(sa.DateTime(timezone=True), nullable=True),
     )
     latest_revision_id: UUID | None = Field(default=None, nullable=True)
 
