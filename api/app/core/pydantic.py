@@ -1,8 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 
 class CustomBaseModel(BaseModel):
-    class Config:
-        populate_by_name = True
-        json_encoders = {datetime: datetime.isoformat}
+    model_config = ConfigDict(
+        populate_by_name=True, json_encoders={datetime: datetime.isoformat}
+    )

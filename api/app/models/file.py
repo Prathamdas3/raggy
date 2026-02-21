@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Self
-from app.core.pydantic import CustomBaseModel
+from app.core import CustomBaseModel
 from fastapi import UploadFile
 from app.constants import (
     ALLOWED_AUDIO_TYPES,

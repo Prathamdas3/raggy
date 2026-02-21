@@ -31,7 +31,7 @@ class CombinedRotatingHandler(RotatingFileHandler):
         )
         super().__init__(full_path, maxBytes=max_bytes, backupCount=backup_count)
 
-    def emit(self, record:logging.LogRecord):
+    def emit(self, record: logging.LogRecord):
         """Override emit to check date and rotate if needed"""
         new_data = datetime.now().strftime("%Y-%m-%d")
 
