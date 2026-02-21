@@ -6,11 +6,21 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.3",
+    "bcrypt>=5.0.0",
     "celery>=5.6.2",
     "fastapi[standard]>=0.128.2",
     "langchain>=1.2.10",
     "langchain-community>=0.4.1",
     "pypdf>=6.7.0",
+    "python-jose[cryptography]>=3.5.0",
     "redis>=7.1.1",
     "sqlmodel>=0.0.33",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
 ]

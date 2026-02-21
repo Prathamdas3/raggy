@@ -1,0 +1,124 @@
+version: '3.9'
+name: raggy-stack
+services:
+  postgres:
+    image: postgres:16
+    container_name: my_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: my_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.1
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:6333/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server --console-address ":9001" /data
+    volumes:
+      - minio_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+alloy:
+  image: grafana/alloy:v1.8.1
+  ports:
+    - "12347:12345"
+  volumes:
+    - "./etc/alloy:/etc/alloy"
+    - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    - /var/run/docker.sock:/var/run/docker.sock
+  command: [ "run", "--server.http.listen-addr=0.0.0.0:12345", "--stability.level=experimental", "/etc/alloy/config.alloy" ]
+  depends_on:
+    - loki
+
+loki:
+  image: grafana/loki:3.4.1
+  command: [ "--pattern-ingester.enabled=true", "-config.file=/etc/loki/loki.yaml" ]
+  ports:
+    - "3100:3100"
+  volumes:
+    - "./etc/loki/loki.yaml:/etc/loki/loki.yaml"
+
+grafana:
+  image: grafana/grafana:11.5.1
+  volumes:
+    - ./etc/grafana/:/etc/grafana/provisioning/datasources
+    - ./etc/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+    - ./etc/dashboards:/etc/grafana/dashboards
+  ports:
+    - "10000:3000"
+  environment:
+    - GF_FEATURE_TOGGLES_ENABLE=flameGraph traceqlSearch traceQLStreaming correlations metricsSummary traceqlEditor traceToMetrics traceToProfiles datatrails
+    - GF_INSTALL_PLUGINS=grafana-lokiexplore-app,grafana-exploretraces-app,grafana-pyroscope-app
+    - GF_AUTH_ANONYMOUS_ENABLED=true
+    - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    - GF_AUTH_DISABLE_LOGIN_FORM=true
+  depends_on:
+    - alloy
+    - loki
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant-data:
+  minio_data:
+
+
+networks:
+  app_network:
+    driver: bridge
