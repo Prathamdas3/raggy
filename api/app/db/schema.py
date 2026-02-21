@@ -21,8 +21,6 @@ class Status(Enum):
     pending = "pending"
 
 
-
-
 class CreatedAtMixin:
     __allow_unmapped__ = True
 
@@ -56,7 +54,6 @@ class Users(CreatedAtMixin, SQLModel, table=True):
         sa_column=sa.Column(sa.String(), nullable=False, index=True, unique=True),
     )
     password: str = Field(nullable=False)
-    username: str = Field(nullable=False)
 
     # Relationships
     sessions: list["Sessions"] = Relationship(back_populates="user")
@@ -100,7 +97,6 @@ class Docs(CreatedAtMixin, SQLModel, table=True):
     summaries: list["DocumentSummaries"] = Relationship(back_populates="docs")
 
 
-
 class Chats(CreatedAtMixin, UpdatedAtMixin, SQLModel, table=True):
     title: str = Field(default="")
     is_bookmarked: bool = Field(default=False)
@@ -142,7 +138,6 @@ class DocumentSummaries(CreatedAtMixin, SQLModel, table=True):
     summaryvarient: list["SummaryVarients"] = Relationship(back_populates="summary")
 
 
-
 class SummaryVarients(CreatedAtMixin, SQLModel, table=True):
     content: str = Field(default="")
     audio_url: str = Field(default="")
@@ -152,7 +147,6 @@ class SummaryVarients(CreatedAtMixin, SQLModel, table=True):
 
     # Relationships
     summary: DocumentSummaries = Relationship(back_populates="summaryvarient")
-
 
 
 class ChatBranches(CreatedAtMixin, SQLModel, table=True):
@@ -177,20 +171,23 @@ class ChatBranches(CreatedAtMixin, SQLModel, table=True):
     user: Users = Relationship(back_populates="chat_branches")
     child_branches: list["ChatBranches"] = Relationship(
         back_populates="parent_branch",
-        sa_relationship_kwargs={"foreign_keys": "[ChatBranches.parent_branch_id]"},
+        sa_relationship_kwargs={
+            "foreign_keys": "[ChatBranches.parent_branch_id]",
+            "remote_side": "[ChatBranches.id]",
+        },
     )
     parent_branch: Optional["ChatBranches"] = Relationship(
         back_populates="child_branches",
         sa_relationship_kwargs={"foreign_keys": "[ChatBranches.parent_branch_id]"},
     )
-    messages: list["Messages"] = Relationship(back_populates="branch")
-
+    messages: list["Messages"] = Relationship(
+        back_populates="branch",
+        sa_relationship_kwargs={"foreign_keys": "[Messages.branch_id]"},
+    )
 
 
 class Messages(CreatedAtMixin, SQLModel, table=True):
-    role: Sender = Field(
-        sa_column=sa.Column(sa.Enum(Sender), nullable=False)
-    )
+    role: Sender = Field(sa_column=sa.Column(sa.Enum(Sender), nullable=False))
     deleted_at: datetime | None = Field(
         default=None,
         sa_column=sa.Column(sa.DateTime(timezone=True), nullable=True),
@@ -199,24 +196,30 @@ class Messages(CreatedAtMixin, SQLModel, table=True):
 
     # Foreign keys
     branch_id: UUID = Field(foreign_key="chatbranches.id", nullable=False)
-    sender_id: UUID | None = Field(  
+    sender_id: UUID | None = Field(
         default=None,
         foreign_key="users.id",
         nullable=True,
     )
-    reply_to_message_id: UUID | None = Field(  
+    reply_to_message_id: UUID | None = Field(
         default=None,
         foreign_key="messages.id",
         nullable=True,
     )
 
     # Relationships
-    branch: ChatBranches = Relationship(back_populates="messages")
+    branch: ChatBranches = Relationship(
+        back_populates="messages",
+        sa_relationship_kwargs={"foreign_keys": "[Messages.branch_id]"},
+    )
     sender: Optional[Users] = Relationship(back_populates="messages")
     revisions: list["MessageRevisions"] = Relationship(back_populates="message")
     replies: list["Messages"] = Relationship(
         back_populates="reply_to",
-        sa_relationship_kwargs={"foreign_keys": "[Messages.reply_to_message_id]"},
+        sa_relationship_kwargs={
+            "foreign_keys": "[Messages.reply_to_message_id]",
+            "remote_side": "[Messages.id]",
+        },
     )
     reply_to: Optional["Messages"] = Relationship(
         back_populates="replies",
@@ -230,7 +233,7 @@ class MessageRevisions(CreatedAtMixin, SQLModel, table=True):
 
     # Foreign keys
     message_id: UUID = Field(foreign_key="messages.id", nullable=False)
-    edited_by: UUID | None = Field( 
+    edited_by: UUID | None = Field(
         default=None,
         foreign_key="users.id",
         nullable=True,

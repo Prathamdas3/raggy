@@ -4,6 +4,9 @@ from app.core.config import config
 from app.api.v1.router import router as v1_router
 from app.lifecycle import lifespan
 
+origins = ["http://localhost", "http://localhost:3000"]
+
+
 app = FastAPI(
     lifespan=lifespan,
     title="Raggy",
@@ -14,7 +17,7 @@ app = FastAPI(
     openapi_url=None if config.env == "production" else "/openapi.json",
 )
 
-origins = ["http://localhost", "http://localhost:3000"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -23,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(v1_router)
+app.include_router(v1_router, prefix="/api/v1", tags=["v1"])
 
 if __name__ == "__main__":
     import uvicorn
@@ -34,4 +37,5 @@ if __name__ == "__main__":
         port=9000,
         log_level="debug" if config.debug else "info",
         reload=True,
+        log_config=None,
     )
