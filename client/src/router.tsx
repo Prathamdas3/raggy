@@ -9,14 +9,14 @@ const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
 
 export function getRouter() {
   const router = createTanStackRouter({
-  routeTree,
-  context: {
-    ...TanStackQueryProviderContext,
-  },
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
-  defaultPreloadStaleTime: 0,
+    routeTree,
+    context: {
+      ...TanStackQueryProviderContext,
+    },
+    defaultPreload: 'intent',
+    scrollRestoration: true,
+    defaultStructuralSharing: true,
+    defaultPreloadStaleTime: 0,
   })
 
   return router

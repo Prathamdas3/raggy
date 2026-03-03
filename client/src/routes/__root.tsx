@@ -7,6 +7,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 import '../styles.css'
 import type { QueryClient } from '@tanstack/react-query'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { Toaster } from '@/components/ui/sonner'
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -20,7 +22,11 @@ export const Route = createRootRoute<MyRouterContext>({
 function RootComponent() {
   return (
     <>
-      <Outlet />
+      <TooltipProvider>
+        <Outlet />
+        <Toaster />
+      </TooltipProvider>
+
       <TanStackDevtools
         config={{
           position: 'bottom-right',
