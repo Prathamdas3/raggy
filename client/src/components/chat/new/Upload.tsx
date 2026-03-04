@@ -11,7 +11,7 @@ import { Input } from "./ui/input";
 import { useDropzone } from "react-dropzone";
 import { useCallback, useState } from "react";
 import { Button } from "./ui/button";
-import TooltipIcon from "./Tooltip";
+import TooltipIcon from "./common/Tooltip";
 import { useForm } from "@tanstack/react-form"
 import { z } from "zod";
 import {
@@ -75,7 +75,7 @@ export default function UploadDocs() {
         autoFocus: true,
         maxFiles: 1,
         accept: {
-            "image/*": [],
+            // "image/*": [],
             "application/pdf": [],
         },
     });
@@ -121,7 +121,7 @@ export default function UploadDocs() {
                 </TabsList>
 
                 {/* File Upload Tab */}
-                <TabsContent value="file" className="space-y-4">
+                <TabsContent value="file" className="space-y-4 ">
                     <Empty
                         {...getRootProps({
                             className:
@@ -185,7 +185,7 @@ export default function UploadDocs() {
                 </TabsContent>
 
                 {/* Link Tab */}
-                <TabsContent value="link" className="space-y-4">
+                <TabsContent value="link" className="space-y-4 ">
                     {!submittedLink ? (
                         <div className="border-2 border-dashed rounded-lg p-6">
                             <div className="flex flex-col items-center mb-6">
