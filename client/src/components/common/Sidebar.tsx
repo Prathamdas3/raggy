@@ -5,6 +5,7 @@ import {
 	User,
 	LogOut,
 	Settings,
+	FileQuestionMark,
 } from "lucide-react";
 // import ChatsList from "./chats/ChatList";
 import { Button } from "../ui/button";
@@ -88,6 +89,10 @@ export default function AppSidebar() {
 								<MessageSquarePlus className="h-4 w-4 shrink-0" />
 								{open && <span className="font-medium">New Chat</span>}
 							</Button>
+						</Link>
+						<Link to="/quiz">
+							<FileQuestionMark className="h-4 w-4 shrink-0" />
+							{open && <span className="font-medium">Quizes</span>}
 						</Link>
 
 						{/* Search */}

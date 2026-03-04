@@ -11,6 +11,13 @@ interface ChatStore {
   getContent: (id: string) => ChatContent | undefined
 }
 
+interface ChatsOptions {
+  doctree: boolean
+  setDocTree: () => void
+  notes: boolean
+  setNotes: () => void
+}
+
 export const useChatCreate = create<ChatStore>((set, get) => ({
   contents: [],
 
@@ -27,4 +34,15 @@ export const useChatCreate = create<ChatStore>((set, get) => ({
     }),
 
   getContent: (id) => get().contents.find((c) => c.id === id),
+}))
+
+export const useChatOptions = create<ChatsOptions>((set) => ({
+  doctree: false,
+  setDocTree() {
+    return set((state) => ({ doctree: !state.doctree }))
+  },
+  notes: false,
+  setNotes() {
+    return set((state) => ({ notes: !state.notes }))
+  }
 }))

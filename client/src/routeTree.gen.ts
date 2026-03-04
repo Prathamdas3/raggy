@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as QuizIndexRouteImport } from './routes/quiz/index'
+import { Route as QuizIdRouteImport } from './routes/quiz/$id'
 import { Route as ChatIdRouteImport } from './routes/chat/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizIndexRoute = QuizIndexRouteImport.update({
+  id: '/quiz/',
+  path: '/quiz/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizIdRoute = QuizIdRouteImport.update({
+  id: '/quiz/$id',
+  path: '/quiz/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIdRoute = ChatIdRouteImport.update({
@@ -26,27 +38,35 @@ const ChatIdRoute = ChatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat/$id': typeof ChatIdRoute
+  '/quiz/$id': typeof QuizIdRoute
+  '/quiz/': typeof QuizIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat/$id': typeof ChatIdRoute
+  '/quiz/$id': typeof QuizIdRoute
+  '/quiz': typeof QuizIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chat/$id': typeof ChatIdRoute
+  '/quiz/$id': typeof QuizIdRoute
+  '/quiz/': typeof QuizIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chat/$id'
+  fullPaths: '/' | '/chat/$id' | '/quiz/$id' | '/quiz/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat/$id'
-  id: '__root__' | '/' | '/chat/$id'
+  to: '/' | '/chat/$id' | '/quiz/$id' | '/quiz'
+  id: '__root__' | '/' | '/chat/$id' | '/quiz/$id' | '/quiz/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatIdRoute: typeof ChatIdRoute
+  QuizIdRoute: typeof QuizIdRoute
+  QuizIndexRoute: typeof QuizIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz/': {
+      id: '/quiz/'
+      path: '/quiz'
+      fullPath: '/quiz/'
+      preLoaderRoute: typeof QuizIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz/$id': {
+      id: '/quiz/$id'
+      path: '/quiz/$id'
+      fullPath: '/quiz/$id'
+      preLoaderRoute: typeof QuizIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/$id': {
@@ -71,6 +105,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatIdRoute: ChatIdRoute,
+  QuizIdRoute: QuizIdRoute,
+  QuizIndexRoute: QuizIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

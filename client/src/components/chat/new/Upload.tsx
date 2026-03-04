@@ -6,12 +6,12 @@ import {
     EmptyHeader,
     EmptyMedia,
     EmptyTitle,
-} from "./ui/empty";
-import { Input } from "./ui/input";
+} from "@/components/ui/empty";
+import { Input } from "@/components/ui/input";
 import { useDropzone } from "react-dropzone";
 import { useCallback, useState } from "react";
-import { Button } from "./ui/button";
-import TooltipIcon from "./common/Tooltip";
+import { Button } from "@/components/ui/button";
+import TooltipIcon from "@/components/common/Tooltip";
 import { useForm } from "@tanstack/react-form"
 import { z } from "zod";
 import {
@@ -21,9 +21,9 @@ import {
     FieldGroup,
     FieldLabel,
 } from "@/components/ui/field"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "@tanstack/react-router";
-import { useChatCreate } from "@/store/chat"
+import { useChatCreate } from "@/components/chat/store"
 
 // Validation schema for link
 const linkSchema = z.object({

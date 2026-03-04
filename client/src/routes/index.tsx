@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import UploadDocs from '@/components/Upload'
+import UploadDocs from '@/components/chat/new/Upload'
 import Layout from '@/components/common/Layout'
 
 
