@@ -9,7 +9,7 @@ from app.api.v1.auth import get_user_id, RefreshTokenUserId
 # from langchain_community.vectorstores import Qdrant
 
 
-upload_router = APIRouter(prefix="/upload")
+file_router = APIRouter(prefix="/upload")
 logger = get_logger()
 
 text_spliter = RecursiveCharacterTextSplitter(
@@ -17,7 +17,7 @@ text_spliter = RecursiveCharacterTextSplitter(
 )
 
 
-@upload_router.post(
+@file_router.post(
     "/files", status_code=status.HTTP_202_ACCEPTED, response_model=Response
 )
 def upload_file(
