@@ -1,5 +1,3 @@
-import { Download, Forward, Network, StickyNote, Trash } from "lucide-react";
-import TooltipIcon from "./Tooltip";
 // import { useDeleteChat, useExportChat } from "@/hooks/chats";
 // import { useLocation, useNavigate } from "@tanstack/react-router";
 // import { useGetTaskDetails } from "@/hooks/task";
@@ -7,10 +5,6 @@ import TooltipIcon from "./Tooltip";
 import { toast } from "sonner";
 import axios from "axios";
 import { useSidebar } from "../ui/sidebar";
-import { useChatOptions } from "../chat/store";
-interface Props {
-    tools?: boolean;
-}
 async function downloadPdf(url: string) {
     try {
         const toastId = toast.loading("Preparing download...");
@@ -38,51 +32,46 @@ async function downloadPdf(url: string) {
         window.open(url, "_blank", "noopener,noreferrer");
     }
 }
-export default function Header({ tools = true }: Props) {
-    const { open } = useSidebar()
-    const { setDocTree, setNotes } = useChatOptions(s => s)
-    // const { mutate: deleteChat } = useDeleteChat();
-    // const { mutate: exportChat, isPending } = useExportChat();
-    // const router = useNavigate();
-    // const params = useLocation().pathname.split("/").reverse()[0];
-    // const [taskId, setTaskId] = useState<string | undefined>();
-    // const { data: task } = useGetTaskDetails(taskId);
-    // const hasHandledResult = useRef(false);
-    // useEffect(() => {
-    //     if (!task) return;
-    //     if (task.status !== "SUCCESS") return;
-    //     if (!task.result) return;
-    //     if (hasHandledResult.current) return;
-    //     hasHandledResult.current = true;
-    //     downloadPdf(task.result as string);
-    // }, [task]);
-    // const onDelete = () => {
-    //     deleteChat(params, {
-    //         onSuccess: () => {
-    //             router({ to: "/", replace: true });
-    //         },
-    //     });
-    // };
-    // const onExport = () => {
-    //     hasHandledResult.current = false; // reset for new export
-    //     exportChat(params, {
-    //         onSuccess: (res) => {
-    //             setTaskId(res.task_id);
-    //         },
-    //     });
-    // };
-    return (
-        <header className="flex justify-between border-b h-14 items-center px-3 w-full">
-            <h3 className={`text-xl font-semibold ${open ? "invisible" : "visible"}`}>Raggy</h3>
-            {tools && (
-                <nav className="flex gap-2">
-                    <TooltipIcon Icon={Network} content="Document tree" action={setDocTree} />
-                    <TooltipIcon Icon={StickyNote} content="Notes" action={setNotes} />
-                    <TooltipIcon Icon={Download} content="Download chat" />
-                    <TooltipIcon Icon={Forward} content="Share chat" />
-                    <TooltipIcon Icon={Trash} content="Delete chat" />
-                </nav>
-            )}
-        </header>
-    );
+
+// const { mutate: deleteChat } = useDeleteChat();
+// const { mutate: exportChat, isPending } = useExportChat();
+// const router = useNavigate();
+// const params = useLocation().pathname.split("/").reverse()[0];
+// const [taskId, setTaskId] = useState<string | undefined>();
+// const { data: task } = useGetTaskDetails(taskId);
+// const hasHandledResult = useRef(false);
+// useEffect(() => {
+//     if (!task) return;
+//     if (task.status !== "SUCCESS") return;
+//     if (!task.result) return;
+//     if (hasHandledResult.current) return;
+//     hasHandledResult.current = true;
+//     downloadPdf(task.result as string);
+// }, [task]);
+// const onDelete = () => {
+//     deleteChat(params, {
+//         onSuccess: () => {
+//             router({ to: "/", replace: true });
+//         },
+//     });
+// };
+// const onExport = () => {
+//     hasHandledResult.current = false; // reset for new export
+//     exportChat(params, {
+//         onSuccess: (res) => {
+//             setTaskId(res.task_id);
+//         },
+//     });
+// };
+
+
+export default function Header({ tools }: { tools?: React.ReactNode }) {
+  const { open } = useSidebar()
+
+  return (
+    <header className="flex justify-between border-b h-14 items-center px-3 w-full">
+      <h3 className={`text-xl font-semibold ${open ? "invisible" : "visible"}`}>Raggy</h3>
+      {tools && <nav className="flex gap-2">{tools}</nav>}
+    </header>
+  )
 }

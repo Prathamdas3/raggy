@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QuizIndexRouteImport } from './routes/quiz/index'
+import { Route as ChatIndexRouteImport } from './routes/chat/index'
 import { Route as QuizIdRouteImport } from './routes/quiz/$id'
 import { Route as ChatIdRouteImport } from './routes/chat/$id'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const QuizIndexRoute = QuizIndexRouteImport.update({
   id: '/quiz/',
   path: '/quiz/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QuizIdRoute = QuizIdRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat/$id': typeof ChatIdRoute
   '/quiz/$id': typeof QuizIdRoute
+  '/chat/': typeof ChatIndexRoute
   '/quiz/': typeof QuizIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat/$id': typeof ChatIdRoute
   '/quiz/$id': typeof QuizIdRoute
+  '/chat': typeof ChatIndexRoute
   '/quiz': typeof QuizIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/chat/$id': typeof ChatIdRoute
   '/quiz/$id': typeof QuizIdRoute
+  '/chat/': typeof ChatIndexRoute
   '/quiz/': typeof QuizIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chat/$id' | '/quiz/$id' | '/quiz/'
+  fullPaths: '/' | '/chat/$id' | '/quiz/$id' | '/chat/' | '/quiz/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat/$id' | '/quiz/$id' | '/quiz'
-  id: '__root__' | '/' | '/chat/$id' | '/quiz/$id' | '/quiz/'
+  to: '/' | '/chat/$id' | '/quiz/$id' | '/chat' | '/quiz'
+  id: '__root__' | '/' | '/chat/$id' | '/quiz/$id' | '/chat/' | '/quiz/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatIdRoute: typeof ChatIdRoute
   QuizIdRoute: typeof QuizIdRoute
+  ChatIndexRoute: typeof ChatIndexRoute
   QuizIndexRoute: typeof QuizIndexRoute
 }
 
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/quiz'
       fullPath: '/quiz/'
       preLoaderRoute: typeof QuizIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/': {
+      id: '/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/quiz/$id': {
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatIdRoute: ChatIdRoute,
   QuizIdRoute: QuizIdRoute,
+  ChatIndexRoute: ChatIndexRoute,
   QuizIndexRoute: QuizIndexRoute,
 }
 export const routeTree = rootRouteImport

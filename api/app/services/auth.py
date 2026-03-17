@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
@@ -9,6 +10,12 @@ from app.db import DatabaseService
 from app.utils import HandlePassword
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class SignInUser:
+    id: str
+    email: EmailStr
 
 
 class AuthService:
@@ -50,7 +57,7 @@ class AuthService:
                 detail="Failed to create user",
             ) from e
 
-    def user_signin(self, data: SigninUser) -> dict[str, str | EmailStr]:
+    def user_signin(self, data: SigninUser) -> SignInUser:
         try:
             user = self._user.get_user_by_email(data.email)
             if not user:
@@ -69,7 +76,7 @@ class AuthService:
                     status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password"
                 )
 
-            return {"id": str(user.id), "email": user.email}
+            return SignInUser(id=str(user.id), email=user.email)
 
         except HTTPException:
             raise

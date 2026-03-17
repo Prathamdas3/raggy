@@ -7,7 +7,8 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable'
-import ChatUI from '@/components/chat/id/chatUi'
+import ChatUI from '@/components/chat/id/ChatUi'
+import { ChatTools } from '@/components/chat/tools'
 
 export const Route = createFileRoute('/chat/$id')({
   component: RouteComponent,
@@ -22,7 +23,7 @@ function RouteComponent() {
   const hasRight = doctree || notes
 
   return (
-    <Layout>
+    <Layout tools={<ChatTools />} header>
       <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
 
         {/* Left - Chat */}

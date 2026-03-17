@@ -1,3 +1,5 @@
+from pydantic import EmailStr
+from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
@@ -11,6 +13,12 @@ from app.models import CreateUser, UpdateUser, Response, Status
 from app.utils import HandlePassword
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class CreateNewUser:
+    email: EmailStr
+    id: str
 
 
 class FindUser:
@@ -48,7 +56,25 @@ class UserService:
         self._password = password
         self._user = find_user
 
-    def create_user(self, data: CreateUser) -> dict[str, str]:
+    def get_current_user(self, user_id: str) -> Users | None:
+        try:
+            old_user = self._user.get_user_by_id(user_id=UUID(user_id))
+            if not old_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User does not exists",
+                )
+            return old_user
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error("User fetching failed", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to fetch user",
+            ) from e
+
+    def create_user(self, data: CreateUser) -> CreateNewUser:
         try:
             if self._user.get_user_by_email(data.email):
                 raise HTTPException(
@@ -69,7 +95,7 @@ class UserService:
 
             logger.info(f"User created with id={user.id}")
 
-            return {"id": str(user.id), "email": user.email}
+            return CreateNewUser(id=str(user.id), email=user.email)
 
         except HTTPException:
             raise
@@ -99,6 +125,7 @@ class UserService:
             for field, value in updates.items():
                 setattr(user, field, value)
 
+            self._db.session.add(user)
             self._db.commit()
             self._db.session.refresh(user)
 

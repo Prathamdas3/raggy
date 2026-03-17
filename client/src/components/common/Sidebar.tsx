@@ -90,9 +90,15 @@ export default function AppSidebar() {
 								{open && <span className="font-medium">New Chat</span>}
 							</Button>
 						</Link>
-						<Link to="/quiz">
-							<FileQuestionMark className="h-4 w-4 shrink-0" />
-							{open && <span className="font-medium">Quizes</span>}
+						<Link to="/quiz" className="no-underline">
+							<Button
+								variant="ghost"
+								className={`w-full h-10 mb-2 ${open ? "justify-start gap-2" : "justify-center"} `}
+								size={open ? "default" : "icon"}
+							>
+								<FileQuestionMark className="h-4 w-4 shrink-0" />
+								{open && <span className="font-medium">Quizes</span>}
+							</Button>
 						</Link>
 
 						{/* Search */}

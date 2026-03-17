@@ -84,8 +84,8 @@ class Sessions(CreatedAtMixin, SQLModel, table=True):
 
 class Docs(CreatedAtMixin, SQLModel, table=True):
     original_text: str = Field(default="")
-    proccessing_status: Status = Field(
-        sa_column=sa.Column(sa.Enum(Status), nullable=False)
+    proccessing_status: Status = Field(default=None,
+        sa_column=sa.Column(sa.Enum(Status), nullable=True)
     )
 
     # Foreign keys

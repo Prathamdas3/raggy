@@ -1,4 +1,7 @@
+
+from pydantic import EmailStr
 from sqlmodel import Session
+from dataclasses import dataclass
 
 from app.core.logger import get_logger
 from app.models.jwt import Tokens
@@ -10,6 +13,13 @@ from fastapi import HTTPException, status, Request
 from uuid import UUID
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class RefreshTokenUserId:
+    user_id: UUID
+    email: EmailStr
+    token:str
 
 
 class JWT:
@@ -145,7 +155,7 @@ class TokenToUserId:
 
         return user_id
 
-    def get_user_id_from_refresh_token(self, request: Request) -> dict[str, str]:
+    def get_user_id_from_refresh_token(self, request: Request) -> RefreshTokenUserId:
         token = request.cookies.get("token")
         if not token:
             raise HTTPException(
@@ -168,7 +178,8 @@ class TokenToUserId:
 
             # Verify user exists in database
             self._get_user_by_id(user_id)
-
+        except HTTPException:
+            raise
         except JWTError as je:
             logger.error(
                 f"Failed to fetch the creds form the refresh token: {str(je)}",
@@ -189,4 +200,4 @@ class TokenToUserId:
                 detail="Failed to validate the user details",
             )
 
-        return {"user_id": user_id, "email": email, "token": token}
+        return RefreshTokenUserId(user_id= UUID(user_id), email= email, token= token)
