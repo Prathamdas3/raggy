@@ -1,4 +1,3 @@
-
 from pydantic import EmailStr
 from sqlmodel import Session
 from dataclasses import dataclass
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 class RefreshTokenUserId:
     user_id: UUID
     email: EmailStr
-    token:str
+    token: str
 
 
 class JWT:
@@ -200,4 +199,4 @@ class TokenToUserId:
                 detail="Failed to validate the user details",
             )
 
-        return RefreshTokenUserId(user_id= UUID(user_id), email= email, token= token)
+        return RefreshTokenUserId(user_id=UUID(user_id), email=email, token=token)

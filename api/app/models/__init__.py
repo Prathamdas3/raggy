@@ -2,6 +2,7 @@ from app.models.auth import SigninUser, UpdatePassword, UpdatePasswordInput
 from app.models.user import CreateUser, UpdateUser
 from app.models.common import Status, Response
 from app.models.jwt import Tokens
+from app.models.chat import UpdateChat
 from app.models.file import FileMeta
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "Response",
     "Tokens",
     "FileMeta",
+    "UpdateChat",
 ]

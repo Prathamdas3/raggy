@@ -2,11 +2,9 @@ from fastapi import APIRouter, status, UploadFile, File, HTTPException, Depends
 from app.core import get_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.models import Response, FileMeta, Status
-from app.utils import save_file
-from app.services import get_docs_service, DocsService
+from app.utils import save_file, extract_pdf_content_from_path
+from app.services import get_chat_service, ChatService
 from app.api.v1.auth import get_user_id, RefreshTokenUserId
-# from langchain_community.document_loaders import PyPDFLoader
-# from langchain_community.vectorstores import Qdrant
 
 
 file_router = APIRouter(prefix="/upload")
@@ -22,7 +20,7 @@ text_spliter = RecursiveCharacterTextSplitter(
 )
 def upload_file(
     file: UploadFile = File(...),
-    docs_services: DocsService = Depends(get_docs_service),
+    chat_services: ChatService = Depends(get_chat_service),
     user: RefreshTokenUserId = Depends(get_user_id),
 ):
     try:
@@ -35,16 +33,14 @@ def upload_file(
                 detail="Failed to upload to file",
             )
 
-        doc_id = docs_services.create_docs(user_id=user.user_id)
-
+        doc_id = chat_services.create_chat(user_id=user.user_id)
+        extract_pdf_content_from_path(path=file_path)
         return {
             "message": "Successfully saved the docs",
             "status": Status.success,
             "data": doc_id,
         }
-        # loader = PyPDFLoader(file_path=file_path)
-        # documents = loader.load()
-        # chunks = text_spliter.split_documents(documents=documents)
+
     except HTTPException:
         raise
     except Exception as e:

@@ -10,7 +10,7 @@ from app.core import config, get_logger
 from app.db import SessionDep
 from app.models import Response, Status, CreateUser, SigninUser, Tokens
 from app.services import AuthService, get_auth_service
-from app.utils import JWT, TokenToUserId,RefreshTokenUserId
+from app.utils import JWT, TokenToUserId, RefreshTokenUserId
 
 
 logger = get_logger(__name__)

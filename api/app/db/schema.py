@@ -1,3 +1,4 @@
+from celery.worker.strategy import default
 from sqlmodel import Field, SQLModel, Relationship
 from pydantic import EmailStr
 from enum import Enum
@@ -6,6 +7,9 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from typing import Optional
 from sqlalchemy.orm import declared_attr
+
+
+# ---------------- ENUMS ----------------
 
 
 class Sender(Enum):
@@ -19,6 +23,15 @@ class Status(Enum):
     error = "error"
     success = "success"
     pending = "pending"
+
+
+class VariantType(Enum):
+    short = "short"
+    long = "long"
+    detailed = "detailed"
+
+
+# ---------------- MIXINS ----------------
 
 
 class CreatedAtMixin:
@@ -48,197 +61,193 @@ class UpdatedAtMixin:
         )
 
 
+# ---------------- USERS ----------------
+
+
 class Users(CreatedAtMixin, SQLModel, table=True):
     email: EmailStr = Field(
-        default="",
-        sa_column=sa.Column(sa.String(), nullable=False, index=True, unique=True),
+        sa_column=sa.Column(sa.String(), nullable=False, index=True, unique=True)
     )
     password: str = Field(nullable=False)
 
-    # Relationships
-    sessions: list["Sessions"] = Relationship(back_populates="user")
-    docs: list["Docs"] = Relationship(back_populates="user")
+    sessions: list["Sessions"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+
     chats: list["Chats"] = Relationship(
-        back_populates="user",
-        sa_relationship_kwargs={"foreign_keys": "[Chats.created_by]"},
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
-    summaries: list["DocumentSummaries"] = Relationship(
-        back_populates="user",
-        sa_relationship_kwargs={"foreign_keys": "[DocumentSummaries.created_by]"},
-    )
-    chat_branches: list["ChatBranches"] = Relationship(back_populates="user")
-    messages: list["Messages"] = Relationship(back_populates="sender")
-    message_revisions: list["MessageRevisions"] = Relationship(back_populates="editor")
+
+
+# ---------------- SESSIONS ----------------
 
 
 class Sessions(CreatedAtMixin, SQLModel, table=True):
     expires_at: datetime | None = Field(default=None, nullable=False)
     token: str = Field(default="")
 
-    # Foreign keys
-    user_id: UUID = Field(foreign_key="users.id", nullable=False)
+    user_id: UUID = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        )
+    )
 
-    # Relationships
     user: Users = Relationship(back_populates="sessions")
 
 
-class Docs(CreatedAtMixin, SQLModel, table=True):
-    original_text: str = Field(default="")
-    proccessing_status: Status = Field(default=None,
-        sa_column=sa.Column(sa.Enum(Status), nullable=True)
-    )
-
-    # Foreign keys
-    user_id: UUID = Field(foreign_key="users.id", nullable=False)
-
-    # Relationships
-    user: Users = Relationship(back_populates="docs")
-    chat: Optional["Chats"] = Relationship(back_populates="docs")
-    summaries: list["DocumentSummaries"] = Relationship(back_populates="docs")
+# ---------------- CHATS (ROOT ENTITY) ----------------
 
 
 class Chats(CreatedAtMixin, UpdatedAtMixin, SQLModel, table=True):
     title: str = Field(default="")
+    original_text: str = Field(default="")
+
     is_bookmarked: bool = Field(default=False)
     share_id: str | None = Field(default=None)
 
-    # Foreign keys
-    docs_id: UUID = Field(foreign_key="docs.id", unique=True, nullable=False)
-    created_by: UUID = Field(foreign_key="users.id", nullable=False)
-    # Nullable on creation — set after the first branch is created
+    processing_status: Status = Field(
+        default=Status.init, sa_column=sa.Column(sa.Enum(Status), nullable=True)
+    )
+
+    # Active branch (current conversation path)
     active_branch_id: UUID | None = Field(
         default=None,
         foreign_key="chatbranches.id",
         nullable=True,
     )
 
-    # Relationships
-    docs: Docs = Relationship(back_populates="chat")
-    user: Users = Relationship(
-        back_populates="chats",
-        sa_relationship_kwargs={"foreign_keys": "[Chats.created_by]"},
+    # Ownership
+    user_id: UUID = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        )
     )
+
+    user: Users = Relationship(back_populates="chats")
+
+    # Relationships
     branches: list["ChatBranches"] = Relationship(
-        back_populates="chat",
-        sa_relationship_kwargs={"foreign_keys": "[ChatBranches.chat_id]"},
+        back_populates="chat", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+
+    summaries: list["SummaryVariants"] = Relationship(
+        back_populates="chat", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
 
-class DocumentSummaries(CreatedAtMixin, SQLModel, table=True):
-    # Foreign keys
-    docs_id: UUID = Field(foreign_key="docs.id", nullable=False)
-    created_by: UUID = Field(foreign_key="users.id", nullable=False)
-
-    # Relationships
-    docs: Docs = Relationship(back_populates="summaries")
-    user: Users = Relationship(
-        back_populates="summaries",
-        sa_relationship_kwargs={"foreign_keys": "[DocumentSummaries.created_by]"},
-    )
-    summaryvarient: list["SummaryVarients"] = Relationship(back_populates="summary")
+# ---------------- SUMMARY VARIANTS ----------------
 
 
-class SummaryVarients(CreatedAtMixin, SQLModel, table=True):
+class SummaryVariants(CreatedAtMixin, SQLModel, table=True):
     content: str = Field(default="")
     audio_url: str = Field(default="")
 
-    # Foreign keys
-    summary_id: UUID = Field(foreign_key="documentsummaries.id", nullable=False)
+    variant_type: VariantType = Field(
+        default=VariantType.short,
+        sa_column=sa.Column(sa.Enum(VariantType), nullable=False),
+    )
 
-    # Relationships
-    summary: DocumentSummaries = Relationship(back_populates="summaryvarient")
+    chat_id: UUID = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("chats.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
+    chat: Chats = Relationship(back_populates="summaries")
+
+    __table_args__ = (sa.UniqueConstraint("chat_id", "variant_type"),)
+
+
+# ---------------- CHAT BRANCHES ----------------
 
 
 class ChatBranches(CreatedAtMixin, SQLModel, table=True):
-    chat_id: UUID = Field(foreign_key="chats.id", nullable=False)
+    chat_id: UUID = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("chats.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
     parent_branch_id: UUID | None = Field(
         default=None,
-        foreign_key="chatbranches.id",
-        nullable=True,
+        sa_column=sa.Column(
+            sa.ForeignKey("chatbranches.id", ondelete="CASCADE"), nullable=True
+        )
     )
-    forked_from_message_id: UUID | None = Field(
-        default=None,
-        foreign_key="messages.id",
-        nullable=True,
-    )
-    created_by: UUID = Field(foreign_key="users.id", nullable=False)
 
-    # Relationships
-    chat: Chats = Relationship(
-        back_populates="branches",
-        sa_relationship_kwargs={"foreign_keys": "[ChatBranches.chat_id]"},
-    )
-    user: Users = Relationship(back_populates="chat_branches")
+    chat: Chats = Relationship(back_populates="branches")
+
     child_branches: list["ChatBranches"] = Relationship(
         back_populates="parent_branch",
-        sa_relationship_kwargs={
-            "foreign_keys": "[ChatBranches.parent_branch_id]",
-            "remote_side": "[ChatBranches.id]",
-        },
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+
     parent_branch: Optional["ChatBranches"] = Relationship(
-        back_populates="child_branches",
-        sa_relationship_kwargs={"foreign_keys": "[ChatBranches.parent_branch_id]"},
+        back_populates="child_branches"
     )
+
     messages: list["Messages"] = Relationship(
         back_populates="branch",
-        sa_relationship_kwargs={"foreign_keys": "[Messages.branch_id]"},
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+
+
+# ---------------- MESSAGES ----------------
 
 
 class Messages(CreatedAtMixin, SQLModel, table=True):
     role: Sender = Field(sa_column=sa.Column(sa.Enum(Sender), nullable=False))
-    deleted_at: datetime | None = Field(
-        default=None,
-        sa_column=sa.Column(sa.DateTime(timezone=True), nullable=True),
-    )
-    latest_revision_id: UUID | None = Field(default=None, nullable=True)
 
-    # Foreign keys
-    branch_id: UUID = Field(foreign_key="chatbranches.id", nullable=False)
+    branch_id: UUID = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("chatbranches.id", ondelete="CASCADE"), nullable=False
+        )
+    )
+
     sender_id: UUID | None = Field(
-        default=None,
-        foreign_key="users.id",
-        nullable=True,
-    )
-    reply_to_message_id: UUID | None = Field(
-        default=None,
-        foreign_key="messages.id",
-        nullable=True,
+        sa_column=sa.Column(
+            sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        )
     )
 
-    # Relationships
-    branch: ChatBranches = Relationship(
-        back_populates="messages",
-        sa_relationship_kwargs={"foreign_keys": "[Messages.branch_id]"},
+    reply_to_message_id: UUID | None = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("messages.id", ondelete="CASCADE"), nullable=True
+        )
     )
-    sender: Optional[Users] = Relationship(back_populates="messages")
-    revisions: list["MessageRevisions"] = Relationship(back_populates="message")
+
+    branch: ChatBranches = Relationship(back_populates="messages")
+
+    revisions: list["MessageRevisions"] = Relationship(
+        back_populates="message",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
     replies: list["Messages"] = Relationship(
         back_populates="reply_to",
-        sa_relationship_kwargs={
-            "foreign_keys": "[Messages.reply_to_message_id]",
-            "remote_side": "[Messages.id]",
-        },
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    reply_to: Optional["Messages"] = Relationship(
-        back_populates="replies",
-        sa_relationship_kwargs={"foreign_keys": "[Messages.reply_to_message_id]"},
-    )
+
+    reply_to: Optional["Messages"] = Relationship(back_populates="replies")
+
+
+# ---------------- MESSAGE REVISIONS ----------------
 
 
 class MessageRevisions(CreatedAtMixin, SQLModel, table=True):
     content: str = Field(default="")
     audio_url: str = Field(default="")
 
-    # Foreign keys
-    message_id: UUID = Field(foreign_key="messages.id", nullable=False)
-    edited_by: UUID | None = Field(
-        default=None,
-        foreign_key="users.id",
-        nullable=True,
+    message_id: UUID = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("messages.id", ondelete="CASCADE"), nullable=False
+        )
     )
 
-    # Relationships
+    edited_by: UUID | None = Field(
+        sa_column=sa.Column(
+            sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        )
+    )
+
     message: Messages = Relationship(back_populates="revisions")
-    editor: Optional[Users] = Relationship(back_populates="message_revisions")

@@ -3,7 +3,7 @@ from app.db import DatabaseService
 from app.utils.common import HandlePassword
 from app.services.auth import AuthService
 from app.services.user import UserService, FindUser
-from app.services.docs import DocsService
+from app.services.chat import ChatService
 
 
 def get_auth_service(session: SessionDep) -> AuthService:
@@ -20,6 +20,6 @@ def get_user_service(session: SessionDep) -> UserService:
     return UserService(db_session=db_session, find_user=user, password=password)
 
 
-def get_docs_service(session: SessionDep) -> DocsService:
+def get_chat_service(session: SessionDep) -> ChatService:
     db_session = DatabaseService(session=session)
-    return DocsService(db_session=db_session)
+    return ChatService(db_session=db_session)

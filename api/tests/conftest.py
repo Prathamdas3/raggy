@@ -74,7 +74,7 @@ def test_user(db_session: Any):
 
 
 @pytest.fixture(scope="function")
-def auth_cookies(client: Any, test_user: Any) :
+def auth_cookies(client: Any, test_user: Any):
     response = client.post(
         "/api/v1/auth/sign-in",
         json={"email": test_user["email"], "password": test_user["password"]},

@@ -1,19 +1,19 @@
-"""init
+"""schema change
 
-Revision ID: 917efc6f90be
+Revision ID: 50d92d31720e
 Revises:
-Create Date: 2026-02-13 19:14:58.308250
+Create Date: 2026-03-18 17:32:19.489662
 
 """
 
 from typing import Sequence, Union
-
+import sqlmodel
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
+
 
 # revision identifiers, used by Alembic.
-revision: str = "917efc6f90be"
+revision: str = "50d92d31720e"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,29 +27,15 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("chat_id", sa.Uuid(), nullable=False),
         sa.Column("parent_branch_id", sa.Uuid(), nullable=True),
-        sa.Column("forked_from_message_id", sa.Uuid(), nullable=True),
-        sa.Column("created_by", sa.Uuid(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("(CURRENT_TIMESTAMP)"),
             nullable=False,
         ),
+        sa.ForeignKeyConstraint(["chat_id"], ["chats.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
-            ["chat_id"],
-            ["chats.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["created_by"],
-            ["users.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["forked_from_message_id"],
-            ["messages.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["parent_branch_id"],
-            ["chatbranches.id"],
+            ["parent_branch_id"], ["chatbranches.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -57,11 +43,16 @@ def upgrade() -> None:
         "chats",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("title", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("original_text", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("is_bookmarked", sa.Boolean(), nullable=False),
         sa.Column("share_id", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-        sa.Column("docs_id", sa.Uuid(), nullable=False),
-        sa.Column("created_by", sa.Uuid(), nullable=False),
+        sa.Column(
+            "processing_status",
+            sa.Enum("init", "error", "success", "pending", name="status"),
+            nullable=True,
+        ),
         sa.Column("active_branch_id", sa.Uuid(), nullable=True),
+        sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -78,46 +69,7 @@ def upgrade() -> None:
             ["active_branch_id"],
             ["chatbranches.id"],
         ),
-        sa.ForeignKeyConstraint(
-            ["created_by"],
-            ["users.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["docs_id"],
-            ["docs.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("docs_id"),
-    )
-    op.create_table(
-        "messages",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "role", sa.Enum("user", "llm", "system", name="sender"), nullable=False
-        ),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("latest_revision_id", sa.Uuid(), nullable=True),
-        sa.Column("branch_id", sa.Uuid(), nullable=False),
-        sa.Column("sender_id", sa.Uuid(), nullable=True),
-        sa.Column("reply_to_message_id", sa.Uuid(), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["branch_id"],
-            ["chatbranches.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["reply_to_message_id"],
-            ["messages.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["sender_id"],
-            ["users.id"],
-        ),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -125,7 +77,6 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("password", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("username", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -136,48 +87,25 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
     op.create_table(
-        "docs",
+        "messages",
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("original_text", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column(
-            "proccessing_status",
-            sa.Enum("init", "error", "success", "pending", name="status"),
-            nullable=False,
+            "role", sa.Enum("user", "llm", "system", name="sender"), nullable=False
         ),
-        sa.Column("user_id", sa.Uuid(), nullable=False),
+        sa.Column("branch_id", sa.Uuid(), nullable=False),
+        sa.Column("sender_id", sa.Uuid(), nullable=True),
+        sa.Column("reply_to_message_id", sa.Uuid(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("(CURRENT_TIMESTAMP)"),
             nullable=False,
         ),
+        sa.ForeignKeyConstraint(["branch_id"], ["chatbranches.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.id"],
+            ["reply_to_message_id"], ["messages.id"], ondelete="CASCADE"
         ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_table(
-        "messagerevisions",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("content", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("audio_url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("message_id", sa.Uuid(), nullable=False),
-        sa.Column("edited_by", sa.Uuid(), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["edited_by"],
-            ["users.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["message_id"],
-            ["messages.id"],
-        ),
+        sa.ForeignKeyConstraint(["sender_id"], ["users.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -192,49 +120,45 @@ def upgrade() -> None:
             server_default=sa.text("(CURRENT_TIMESTAMP)"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.id"],
-        ),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "documentsummaries",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("docs_id", sa.Uuid(), nullable=False),
-        sa.Column("created_by", sa.Uuid(), nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("(CURRENT_TIMESTAMP)"),
-            nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["created_by"],
-            ["users.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["docs_id"],
-            ["docs.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_table(
-        "summaryvarients",
+        "summaryvariants",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("content", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("audio_url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("summary_id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "variant_type",
+            sa.Enum("short", "long", "detailed", name="varianttype"),
+            nullable=False,
+        ),
+        sa.Column("chat_id", sa.Uuid(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("(CURRENT_TIMESTAMP)"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(
-            ["summary_id"],
-            ["documentsummaries.id"],
+        sa.ForeignKeyConstraint(["chat_id"], ["chats.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("chat_id", "variant_type"),
+    )
+    op.create_table(
+        "messagerevisions",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column("content", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("audio_url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("message_id", sa.Uuid(), nullable=False),
+        sa.Column("edited_by", sa.Uuid(), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
         ),
+        sa.ForeignKeyConstraint(["edited_by"], ["users.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["message_id"], ["messages.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###
@@ -243,14 +167,12 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table("summaryvarients")
-    op.drop_table("documentsummaries")
-    op.drop_table("sessions")
     op.drop_table("messagerevisions")
-    op.drop_table("docs")
+    op.drop_table("summaryvariants")
+    op.drop_table("sessions")
+    op.drop_table("messages")
     op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_table("users")
-    op.drop_table("messages")
     op.drop_table("chats")
     op.drop_table("chatbranches")
     # ### end Alembic commands ###
