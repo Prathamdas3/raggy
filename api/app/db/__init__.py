@@ -1,4 +1,4 @@
-from app.db.db import SessionDep
+from app.db.db import SessionDep,get_celery_session
 from app.db.service import DatabaseService
 from app.db.schema import (
     Users,
@@ -20,4 +20,5 @@ __all__ = [
     "VariantType",
     "SummaryVariants",
     "ChatBranches",
+    "get_celery_session"
 ]

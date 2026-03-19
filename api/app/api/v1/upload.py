@@ -28,7 +28,7 @@ def upload_file(
         file_path = save_file(file=file, file_type=meta.category)
         if not file_path:
             logger.error("Failed to upload the file missing file path", exc_info=True)
-            HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to upload to file",
             )

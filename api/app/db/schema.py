@@ -1,4 +1,3 @@
-from celery.worker.strategy import default
 from sqlmodel import Field, SQLModel, Relationship
 from pydantic import EmailStr
 from enum import Enum
@@ -127,7 +126,11 @@ class Chats(CreatedAtMixin, UpdatedAtMixin, SQLModel, table=True):
 
     # Relationships
     branches: list["ChatBranches"] = Relationship(
-        back_populates="chat", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+        back_populates="chat",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "foreign_keys": "[ChatBranches.chat_id]",
+        },
     )
 
     summaries: list["SummaryVariants"] = Relationship(
@@ -172,10 +175,15 @@ class ChatBranches(CreatedAtMixin, SQLModel, table=True):
         default=None,
         sa_column=sa.Column(
             sa.ForeignKey("chatbranches.id", ondelete="CASCADE"), nullable=True
-        )
+        ),
     )
 
-    chat: Chats = Relationship(back_populates="branches")
+    chat: Chats = Relationship(
+        back_populates="branches",
+        sa_relationship_kwargs={
+            "foreign_keys": "[ChatBranches.chat_id]",  # 👈 same here
+        },
+    )
 
     child_branches: list["ChatBranches"] = Relationship(
         back_populates="parent_branch",
@@ -183,7 +191,8 @@ class ChatBranches(CreatedAtMixin, SQLModel, table=True):
     )
 
     parent_branch: Optional["ChatBranches"] = Relationship(
-        back_populates="child_branches"
+        back_populates="child_branches",
+        sa_relationship_kwargs={"remote_side": "ChatBranches.id"},
     )
 
     messages: list["Messages"] = Relationship(
@@ -228,7 +237,12 @@ class Messages(CreatedAtMixin, SQLModel, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
 
-    reply_to: Optional["Messages"] = Relationship(back_populates="replies")
+    reply_to: Optional["Messages"] = Relationship(
+        back_populates="replies",
+        sa_relationship_kwargs={
+            "remote_side": "Messages.id"  
+        },
+    )
 
 
 # ---------------- MESSAGE REVISIONS ----------------

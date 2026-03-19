@@ -1,3 +1,5 @@
+from pathlib import Path
+from uuid import UUID
 from app.core import CustomBaseModel
 from app.db import Status
 
@@ -43,3 +45,30 @@ class UpdateChat(CustomBaseModel):
 
     def has_update(self) -> bool:
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())
+
+
+class ExtractChat(CustomBaseModel):
+    doc_id: str
+    file_path: str
+    file_type:str
+
+    @field_validator("doc_id")
+    def validate_doc_id(cls,v:str)->UUID:
+        try:
+            return UUID(v)
+        except Exception:
+            raise TypeError("Doc Id should be UUID")
+
+    @field_validator("file_path")
+    @classmethod
+    def validate_file_path(cls, v:str) -> Path:
+        try:
+            v:Path=Path(v)
+        except Exception:
+            raise TypeError("Given string is not a path")
+        v = v.resolve()
+        if not v.exists():
+            raise ValueError(f"File does not exist: {v}")
+        if not v.is_file():
+            raise ValueError(f"Path is not a file: {v}")
+        return v

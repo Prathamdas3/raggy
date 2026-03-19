@@ -9,7 +9,7 @@ class FileContent:
     content: str
 
 
-def extract_pdf_content_from_path(path: Path):
+def extract_pdf_content_from_path(path: Path)->FileContent:
     try:
         loader = PyPDFLoader(file_path=path)
         documents = loader.load()

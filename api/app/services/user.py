@@ -33,10 +33,10 @@ class FindUser:
             logger.error(f"Failed to fetch user by id={user_id}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database query failed",
+                detail="Failed to find the user",
             ) from e
 
-    def get_user_by_email(self, email: str) -> Optional[Users]:
+    def get_user_by_email(self, email: EmailStr) -> Optional[Users]:
         try:
             statement = select(Users).where(Users.email == email)
             return self._db.session.exec(statement).one_or_none()
@@ -44,7 +44,7 @@ class FindUser:
             logger.error(f"Failed to fetch user by email={email}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database query failed",
+                detail="Failed to find this user email",
             ) from e
 
 

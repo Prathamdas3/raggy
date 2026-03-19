@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from sqlmodel import create_engine, SQLModel, Session
 from fastapi import Depends
 from app.core.logger import get_logger
@@ -57,9 +58,22 @@ class Database:
 
 db = Database(url=URL)
 
-
 def get_session() -> Generator[Session, None, None]:
     yield from db.session()
 
-
 SessionDep = Annotated[Session, Depends(get_session)]
+
+
+@contextmanager
+def get_celery_session():
+    session = Session(db.engine)
+    try:
+        yield session
+        # no auto-commit — caller does session.commit()
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Celery session error: {e}", exc_info=True)
+        raise
+    finally:
+        session.close()
+
