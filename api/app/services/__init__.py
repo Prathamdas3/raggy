@@ -3,7 +3,7 @@ from app.db import DatabaseService
 from app.utils.common import HandlePassword
 from app.services.auth import AuthService
 from app.services.user import UserService, FindUser
-from app.services.chat import ChatService
+from app.services.chat import ChatService,UpdateChat
 
 
 def get_auth_service(session: SessionDep) -> AuthService:
@@ -23,3 +23,5 @@ def get_user_service(session: SessionDep) -> UserService:
 def get_chat_service(session: SessionDep) -> ChatService:
     db_session = DatabaseService(session=session)
     return ChatService(db_session=db_session)
+
+__all__=["UpdateChat"]

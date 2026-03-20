@@ -34,10 +34,21 @@ class Settings(BaseSettings):
     frontend_url: str = Field(
         validation_alias="FRONTEND_URL", default="http://localhost:3000"
     )
-    backend_url: str = Field(validation_alias="BACKEND_URL", default="")
+    backend_url: str = Field(
+        validation_alias="BACKEND_URL", default="http://localhost:9000"
+    )
 
     redis_host: str = Field(validation_alias="REDIS_HOST", default="redis")
     redis_port: int = Field(validation_alias="REDIS_PORT", default=6379)
+
+    qdrant_url: str = Field(
+        validation_alias="QDRANT_URL", default="http://localhost:6333"
+    )
+    qdrant_collection_name: str = Field(
+        validation_alias="QDRANT_COLLECTION_NAME", default="documents"
+    )
+    qdrant_vector_size: int = Field(validation_alias="QDRANT_VECTOR_SIZE", default=384)
+    qdrant_use_https: bool = Field(validation_alias="QDRANT_USE_HTTPS", default=False)
 
     model_config = SettingsConfigDict(env_file=".env")
 
