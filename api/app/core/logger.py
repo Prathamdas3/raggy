@@ -1,3 +1,9 @@
+"""Logging configuration.
+
+Provides structured logging with console and file handlers,
+including date-based rotation.
+"""
+
 import logging
 from logging.handlers import RotatingFileHandler
 import sys
@@ -14,7 +20,11 @@ level = logging.DEBUG if config.debug else logging.INFO
 
 
 class CombinedRotatingHandler(RotatingFileHandler):
-    """Custom handler that rotates on both size and time"""
+    """Custom handler that rotates on both size and time.
+
+    Rotates log files by size (like RotatingFileHandler) and
+    creates new files each day with the date in the filename.
+    """
 
     def __init__(
         self,
@@ -23,6 +33,14 @@ class CombinedRotatingHandler(RotatingFileHandler):
         max_bytes: int = 5_000_000,
         backup_count: int = 5,
     ):
+        """Initialize handler with rotation parameters.
+
+        Args:
+            folder: Directory for log files.
+            filename: Base filename for logs.
+            max_bytes: Maximum file size before rotation.
+            backup_count: Number of backup files to keep.
+        """
         self.folder = folder
         self.base_filename = filename
         self.current_date = datetime.now().strftime("%Y-%m-%d")
@@ -32,7 +50,13 @@ class CombinedRotatingHandler(RotatingFileHandler):
         super().__init__(full_path, maxBytes=max_bytes, backupCount=backup_count)
 
     def emit(self, record: logging.LogRecord):
-        """Override emit to check date and rotate if needed"""
+        """Override emit to check date and rotate if needed.
+
+        Creates a new log file with the current date when the date changes.
+
+        Args:
+            record: Log record to emit.
+        """
         new_data = datetime.now().strftime("%Y-%m-%d")
 
         if new_data != self.current_date:
@@ -50,6 +74,17 @@ class CombinedRotatingHandler(RotatingFileHandler):
 
 
 def get_logger(name: str = __name__) -> logging.Logger:
+    """Get a configured logger instance.
+
+    Creates a logger with both console and file handlers,
+    including daily rotation.
+
+    Args:
+        name: Logger name (typically __name__).
+
+    Returns:
+        Configured Logger instance.
+    """
     logger = logging.getLogger(name)
     if logger.hasHandlers():
         return logger

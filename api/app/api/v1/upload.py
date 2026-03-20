@@ -1,3 +1,8 @@
+"""File upload API endpoints.
+
+Provides endpoints for uploading and processing files including PDFs.
+"""
+
 from fastapi import APIRouter, status, UploadFile, File, HTTPException, Depends
 from app.core import get_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -23,6 +28,22 @@ def upload_file(
     chat_services: ChatService = Depends(get_chat_service),
     user: RefreshTokenUserId = Depends(get_user_id),
 ):
+    """Upload a file for processing.
+
+    Saves the file to disk, creates a new chat entry, and extracts
+    text content from PDF files.
+
+    Args:
+        file: The uploaded file.
+        chat_services: Chat service dependency.
+        user: Authenticated user dependency.
+
+    Returns:
+        Response with the created chat ID.
+
+    Raises:
+        HTTPException: If file upload or processing fails.
+    """
     try:
         meta = FileMeta.from_upload(file=file)
         file_path = save_file(file=file, file_type=meta.category)
@@ -45,7 +66,7 @@ def upload_file(
         raise
     except Exception as e:
         logger.error(f"Failed to upload file: {str(e)}", exc_info=True)
-        HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to upload to file",
         )

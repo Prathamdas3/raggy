@@ -1,3 +1,8 @@
+"""Celery configuration.
+
+Configures Celery for background task processing using Redis as broker and backend.
+"""
+
 from celery import Celery
 from app.core.config import config
 

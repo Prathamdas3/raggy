@@ -1,3 +1,8 @@
+"""Chat-related Pydantic models.
+
+Contains request/response models for chat updates and file extraction.
+"""
+
 from pathlib import Path
 from uuid import UUID
 from app.core import CustomBaseModel
@@ -8,6 +13,16 @@ from typing import Optional
 
 
 class UpdateChat(CustomBaseModel):
+    """Model for updating chat metadata.
+
+    Attributes:
+        title: Optional new title for the chat.
+        original_text: Optional original text content.
+        processing_status: Optional processing status.
+        is_bookmarked: Optional bookmark flag.
+        share_id: Optional share identifier.
+    """
+
     title: Optional[str] = None
     original_text: Optional[str] = None
     processing_status: Optional[Status] = None
@@ -17,6 +32,7 @@ class UpdateChat(CustomBaseModel):
     @field_validator("title")
     @classmethod
     def validate_title(cls, v):
+        """Validate title is not blank and within length limit."""
         if v is not None and len(v.strip()) == 0:
             raise ValueError("Title cannot be blank")
         if v is not None and len(v) > 255:
@@ -26,6 +42,7 @@ class UpdateChat(CustomBaseModel):
     @field_validator("original_text")
     @classmethod
     def validate_original_text(cls, v):
+        """Validate original text is not blank."""
         if v is not None and len(v.strip()) == 0:
             raise ValueError("Original text cannot be blank")
         return v.strip() if v else v
@@ -33,27 +50,39 @@ class UpdateChat(CustomBaseModel):
     @field_validator("share_id")
     @classmethod
     def validate_share_id(cls, v):
+        """Validate share ID is not blank."""
         if v is not None and len(v.strip()) == 0:
             raise ValueError("Share ID cannot be blank")
         return v.strip() if v else v
 
     @model_validator(mode="after")
     def validate_has_at_least_one_field(self):
+        """Ensure at least one field is provided for update."""
         if not self.has_update():
             raise ValueError("At least one field must be provided to update")
         return self
 
     def has_update(self) -> bool:
+        """Check if any fields were provided for update."""
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())
 
 
 class ExtractChat(CustomBaseModel):
+    """Model for extracting chat data from a file.
+
+    Attributes:
+        doc_id: UUID identifier for the document.
+        file_path: Path to the file to extract from.
+        file_type: Type of the file.
+    """
+
     doc_id: str
     file_path: str
-    file_type:str
+    file_type: str
 
     @field_validator("doc_id")
-    def validate_doc_id(cls,v:str)->UUID:
+    def validate_doc_id(cls, v: str) -> UUID:
+        """Validate doc_id is a valid UUID string."""
         try:
             return UUID(v)
         except Exception:
@@ -61,14 +90,15 @@ class ExtractChat(CustomBaseModel):
 
     @field_validator("file_path")
     @classmethod
-    def validate_file_path(cls, v:str) -> Path:
+    def validate_file_path(cls, v: str) -> Path:
+        """Validate file_path exists and is a file."""
         try:
-            v:Path=Path(v)
+            path: Path = Path(v)
         except Exception:
             raise TypeError("Given string is not a path")
-        v = v.resolve()
-        if not v.exists():
-            raise ValueError(f"File does not exist: {v}")
-        if not v.is_file():
-            raise ValueError(f"Path is not a file: {v}")
-        return v
+        path = path.resolve()
+        if not path.exists():
+            raise ValueError(f"File does not exist: {path}")
+        if not path.is_file():
+            raise ValueError(f"Path is not a file: {path}")
+        return path

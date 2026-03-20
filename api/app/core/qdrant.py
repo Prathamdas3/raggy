@@ -1,3 +1,9 @@
+"""Qdrant vector database configuration.
+
+Provides thread-safe singleton access to Qdrant client and vector store
+for embedding and similarity search operations.
+"""
+
 import threading
 from typing import Optional
 from qdrant_client import QdrantClient
@@ -11,6 +17,12 @@ logger = get_logger(__name__)
 
 
 class QdrantStore:
+    """Thread-safe singleton for Qdrant vector store operations.
+
+    Provides lazy initialization of Qdrant client, embeddings model,
+    and vector store with automatic collection management.
+    """
+
     _client: Optional[QdrantClient] = None
     _store: Optional[QdrantVectorStore] = None
     _embeddings: Optional[HuggingFaceEmbeddings] = None
@@ -18,6 +30,14 @@ class QdrantStore:
 
     @classmethod
     def _get_embeddings(cls) -> HuggingFaceEmbeddings:
+        """Get or create HuggingFace embeddings model.
+
+        Returns:
+            Configured HuggingFaceEmbeddings instance.
+
+        Raises:
+            Exception: If embeddings initialization fails.
+        """
         if cls._embeddings is None:
             with cls._lock:
                 if cls._embeddings is None:
@@ -27,7 +47,9 @@ class QdrantStore:
                             model_kwargs={"device": config.huggingface_device},
                             encode_kwargs={"normalize_embeddings": True},
                         )
-                        logger.info(f"Embeddings initialized: {config.huggingface_model}")
+                        logger.info(
+                            f"Embeddings initialized: {config.huggingface_model}"
+                        )
                     except Exception as e:
                         cls._embeddings = None
                         logger.error(f"Failed to initialize embeddings: {e}")
@@ -36,11 +58,21 @@ class QdrantStore:
 
     @classmethod
     def _get_client(cls) -> QdrantClient:
+        """Get or create Qdrant client.
+
+        Returns:
+            Configured QdrantClient instance.
+
+        Raises:
+            RuntimeError: If client initialization fails.
+        """
         if cls._client is None:
             with cls._lock:
                 if cls._client is None:
                     try:
-                        cls._client = QdrantClient(url=config.qdrant_url,https=config.qdrant_use_https)
+                        cls._client = QdrantClient(
+                            url=config.qdrant_url, https=config.qdrant_use_https
+                        )
                         cls._ensure_collection()
                         logger.info("Qdrant client initialized.")
                     except Exception as e:
@@ -53,6 +85,13 @@ class QdrantStore:
 
     @classmethod
     def _ensure_collection(cls) -> None:
+        """Ensure the configured collection exists, create if not.
+
+        Creates the collection with cosine distance if it doesn't exist.
+
+        Raises:
+            RuntimeError: If client is not initialized.
+        """
         if cls._client is None:
             raise RuntimeError("Client not initialized.")
         existing = [c.name for c in cls._client.get_collections().collections]
@@ -69,6 +108,14 @@ class QdrantStore:
 
     @classmethod
     def _get_store(cls) -> QdrantVectorStore:
+        """Get or create QdrantVectorStore instance.
+
+        Returns:
+            Configured QdrantVectorStore instance.
+
+        Raises:
+            Exception: If store initialization fails.
+        """
         if cls._store is None:
             with cls._lock:
                 if cls._store is None:
@@ -86,15 +133,37 @@ class QdrantStore:
         return cls._store
 
     @classmethod
-    def save(cls, texts: list[str], metadatas: list[dict]|None=None,ids:list[str]|None=None):
+    def save(
+        cls,
+        texts: list[str],
+        metadatas: list[dict] | None = None,
+        ids: list[str] | None = None,
+    ):
+        """Save texts to the vector store.
+
+        Args:
+            texts: List of text strings to embed and save.
+            metadatas: Optional list of metadata dicts.
+            ids: Optional list of custom IDs.
+
+        Returns:
+            List of saved point IDs.
+
+        Raises:
+            Exception: If save operation fails.
+        """
         try:
-            return cls._get_store().add_texts(texts=texts, metadatas=metadatas,ids=ids)
+            return cls._get_store().add_texts(texts=texts, metadatas=metadatas, ids=ids)
         except Exception as e:
             logger.error(f"Failed to save texts: {e}")
             raise
 
     @classmethod
     def reset(cls) -> None:
+        """Reset all cached instances.
+
+        Useful for testing or when configuration changes.
+        """
         with cls._lock:
             cls._client = None
             cls._store = None

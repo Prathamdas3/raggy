@@ -1,3 +1,8 @@
+"""User-related Pydantic models.
+
+Contains request/response models for user creation and updates.
+"""
+
 from typing import Optional
 from app.core.pydantic import CustomBaseModel
 from pydantic import EmailStr, field_validator
@@ -5,6 +10,14 @@ import re
 
 
 class UpdateUser(CustomBaseModel):
+    """Model for updating user profile information.
+
+    Attributes:
+        user_name: Optional username.
+        first_name: Optional first name.
+        last_name: Optional last name.
+    """
+
     user_name: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -15,6 +28,7 @@ class UpdateUser(CustomBaseModel):
     @field_validator("first_name", "last_name", "user_name", mode="before")
     @classmethod
     def verify_details(cls, v, info):
+        """Validate name fields are non-empty strings if provided."""
         if v is None:
             return v  # null is allowed
 
@@ -27,16 +41,24 @@ class UpdateUser(CustomBaseModel):
         return v.strip()
 
     def has_updates(self) -> bool:
-        """Check if any fields were provided for update"""
+        """Check if any fields were provided for update."""
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())
 
 
 class CreateUser(CustomBaseModel):
+    """Model for creating a new user account.
+
+    Attributes:
+        email: User's email address.
+        password: User's password (min 8 chars, uppercase, lowercase, digit, special char).
+    """
+
     email: EmailStr
     password: str
 
     @field_validator("email", "password", mode="before")
     def verify_fields(cls, v, info):
+        """Validate email and password are non-empty strings."""
         if not isinstance(v, str):
             raise TypeError(f"{info.field_name} must be a string")
 
@@ -47,6 +69,15 @@ class CreateUser(CustomBaseModel):
 
     @field_validator("password")
     def validate_password(cls, v):
+        """Validate password meets security requirements.
+
+        Requirements:
+        - At least 8 characters
+        - At least one uppercase letter
+        - At least one lowercase letter
+        - At least one digit
+        - At least one special character
+        """
         if not isinstance(v, str):
             raise TypeError("Password must be a string")
 

@@ -1,12 +1,25 @@
+"""Service layer initialization.
+
+Provides dependency injection functions for FastAPI endpoints.
+"""
+
 from app.db.db import SessionDep
 from app.db import DatabaseService
 from app.utils.common import HandlePassword
 from app.services.auth import AuthService
 from app.services.user import UserService, FindUser
-from app.services.chat import ChatService,UpdateChat
+from app.services.chat import ChatService, UpdateChat
 
 
 def get_auth_service(session: SessionDep) -> AuthService:
+    """Get authentication service instance.
+
+    Args:
+        session: Database session dependency.
+
+    Returns:
+        Configured AuthService instance.
+    """
     password = HandlePassword()
     db_session = DatabaseService(session=session)
     user = FindUser(db_service=db_session)
@@ -14,6 +27,14 @@ def get_auth_service(session: SessionDep) -> AuthService:
 
 
 def get_user_service(session: SessionDep) -> UserService:
+    """Get user service instance.
+
+    Args:
+        session: Database session dependency.
+
+    Returns:
+        Configured UserService instance.
+    """
     db_session = DatabaseService(session=session)
     user = FindUser(db_service=db_session)
     password = HandlePassword()
@@ -21,7 +42,16 @@ def get_user_service(session: SessionDep) -> UserService:
 
 
 def get_chat_service(session: SessionDep) -> ChatService:
+    """Get chat service instance.
+
+    Args:
+        session: Database session dependency.
+
+    Returns:
+        Configured ChatService instance.
+    """
     db_session = DatabaseService(session=session)
     return ChatService(db_session=db_session)
 
-__all__=["UpdateChat"]
+
+__all__ = ["UpdateChat"]

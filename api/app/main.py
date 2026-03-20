@@ -1,3 +1,9 @@
+"""FastAPI application entry point.
+
+Configures and creates the FastAPI application with all routes,
+middleware, and lifespan handlers.
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import config

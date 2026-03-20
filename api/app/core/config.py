@@ -1,3 +1,8 @@
+"""Application configuration.
+
+Loads and validates settings from environment variables using pydantic-settings.
+"""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from dotenv import load_dotenv
@@ -11,6 +16,31 @@ TEMP_DIR = BASE_DIR / "temp"
 
 
 class Settings(BaseSettings):
+    """Application settings loaded from environment variables.
+
+    Attributes:
+        temp_dir: Directory for temporary files.
+        env: Application environment (development, production).
+        debug: Enable debug mode.
+        model_id: ML model identifier.
+        huggingface_api_token: HuggingFace API token.
+        huggingface_model: HuggingFace model name.
+        huggingface_device: Device for inference (cpu/cuda).
+        database_url: PostgreSQL database URL.
+        access_token_expire_minutes: Access token expiration time.
+        refresh_token_expire_days: Refresh token expiration time.
+        secret_key: JWT secret key.
+        algorithm: JWT algorithm (default HS256).
+        frontend_url: Frontend application URL.
+        backend_url: Backend application URL.
+        redis_host: Redis host.
+        redis_port: Redis port.
+        qdrant_url: Qdrant server URL.
+        qdrant_collection_name: Qdrant collection name.
+        qdrant_vector_size: Embedding vector size.
+        qdrant_use_https: Use HTTPS for Qdrant.
+    """
+
     temp_dir: Path = TEMP_DIR
     env: str = Field(validation_alias="ENV", default="development")
     debug: bool = Field(validation_alias="DEBUG", default=False)
@@ -55,6 +85,11 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_config() -> Settings:
+    """Get cached application settings instance.
+
+    Returns:
+        Cached Settings instance.
+    """
     return Settings()
 
 

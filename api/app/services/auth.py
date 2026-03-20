@@ -1,3 +1,9 @@
+"""Authentication service for user sign-up and sign-in.
+
+This module provides the AuthService class that handles user registration,
+login, and password update operations.
+"""
+
 from dataclasses import dataclass
 from fastapi import HTTPException, status
 from pydantic import EmailStr
@@ -14,19 +20,44 @@ logger = get_logger(__name__)
 
 @dataclass
 class SignInUser:
+    """Data class for sign-in response."""
+
     id: str
     email: EmailStr
 
 
 class AuthService:
+    """Service class for authentication operations.
+
+    Handles user signup, signin, and password update operations.
+    """
+
     def __init__(
         self, db_service: DatabaseService, password: HandlePassword, user: FindUser
     ):
+        """Initialize AuthService with dependencies.
+
+        Args:
+            db_service: Database service instance.
+            password: Password handler for hashing/verification.
+            user: FindUser service for user lookup.
+        """
         self._db = db_service
         self._password = password
         self._user = user
 
     def user_signup(self, data: CreateUser):
+        """Register a new user.
+
+        Args:
+            data: CreateUser model with email and password.
+
+        Returns:
+            Dictionary with created user's id and email.
+
+        Raises:
+            HTTPException: If email already exists or signup fails.
+        """
         try:
             existing = self._user.get_user_by_email(data.email)
             if existing:
@@ -58,6 +89,17 @@ class AuthService:
             ) from e
 
     def user_signin(self, data: SigninUser) -> SignInUser:
+        """Authenticate a user with email and password.
+
+        Args:
+            data: SigninUser model with email and password.
+
+        Returns:
+            SignInUser with authenticated user's id and email.
+
+        Raises:
+            HTTPException: If user not found or password incorrect.
+        """
         try:
             user = self._user.get_user_by_email(data.email)
             if not user:
@@ -88,6 +130,17 @@ class AuthService:
             ) from e
 
     def update_password(self, data: UpdatePassword) -> Response[None]:
+        """Update a user's password.
+
+        Args:
+            data: UpdatePassword model with user_id, old and new passwords.
+
+        Returns:
+            Response confirming successful password update.
+
+        Raises:
+            HTTPException: If user not found or old password incorrect.
+        """
         try:
             user = self._user.get_user_by_id(data.user_id)
             if not user:

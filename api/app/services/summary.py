@@ -1,3 +1,9 @@
+"""Summary service for managing chat summaries.
+
+This module provides the SummaryService class that handles
+generation and retrieval of chat summaries in different variants.
+"""
+
 from sqlmodel.sql._expression_select_cls import SelectOfScalar
 from typing import Mapping, cast
 
@@ -11,10 +17,32 @@ logger = get_logger(__name__)
 
 
 class SummaryService:
+    """Service class for managing chat summaries.
+
+    Handles creation, retrieval, and updating of chat summaries
+    with different variant types (short, long, detailed).
+    """
+
     def __init__(self, db_service: DatabaseService):
+        """Initialize SummaryService with database session.
+
+        Args:
+            db_service: Database service instance.
+        """
         self._db = db_service
 
     def get_summaries(self, chat_id: UUID) -> list[dict[str, str]]:
+        """Get all summaries for a chat.
+
+        Args:
+            chat_id: UUID of the chat.
+
+        Returns:
+            List of summary dictionaries with content, audio_url, and created_at.
+
+        Raises:
+            HTTPException: If no summaries found or fetch fails.
+        """
         try:
             statement: SelectOfScalar[Mapping[str, str]] = select(
                 {
@@ -33,16 +61,33 @@ class SummaryService:
             raise
         except Exception as e:
             logger.error(
-                f"Failed ot get the summaries from the chat_id: {str(e)}", exc_info=True
+                f"Failed to get the summaries from the chat_id: {str(e)}", exc_info=True
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch the summaries",
             )
 
-    def create_summary(self, chat_id: UUID, summary: str, type: VariantType) -> UUID:
+    def create_summary(
+        self, chat_id: UUID, summary: str, variant_type: VariantType
+    ) -> UUID:
+        """Create a new summary for a chat.
+
+        Args:
+            chat_id: UUID of the parent chat.
+            summary: Summary content text.
+            variant_type: Type of summary (short, long, detailed).
+
+        Returns:
+            UUID of the created summary.
+
+        Raises:
+            HTTPException: If summary creation fails.
+        """
         try:
-            data = SummaryVariants(content=summary, chat_id=chat_id, variant_type=type)
+            data = SummaryVariants(
+                content=summary, chat_id=chat_id, variant_type=variant_type
+            )
             self._db.session.add(data)
             self._db.commit()
             self._db.session.refresh(data)
@@ -55,6 +100,18 @@ class SummaryService:
             )
 
     def update_summary_audio(self, summary_id: UUID, audio_path: str) -> str:
+        """Update a summary with an audio URL.
+
+        Args:
+            summary_id: UUID of the summary to update.
+            audio_path: URL or path to the audio file.
+
+        Returns:
+            Updated audio_url.
+
+        Raises:
+            HTTPException: If summary not found or update fails.
+        """
         try:
             data = self._db.session.get(SummaryVariants, summary_id)
             if not data:

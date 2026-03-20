@@ -1,3 +1,9 @@
+"""Authentication API endpoints.
+
+Provides endpoints for user registration (sign-up), authentication (sign-in),
+logout, and token refresh operations.
+"""
+
 from fastapi import (
     APIRouter,
     status,
@@ -18,16 +24,42 @@ auth_router = APIRouter(prefix="/auth")
 
 
 def get_tokens(payload: Tokens):
+    """Create JWT tokens from payload.
+
+    Args:
+        payload: Token payload containing user_id and email.
+
+    Returns:
+        JWT instance with encoded tokens.
+    """
     return JWT(payload=payload)
 
 
 def get_user_id(request: Request, session: SessionDep) -> RefreshTokenUserId:
+    """Extract user ID from refresh token.
+
+    Args:
+        request: FastAPI request object.
+        session: Database session.
+
+    Returns:
+        RefreshTokenUserId containing user_id and email.
+    """
     user = TokenToUserId(session=session)
     old_user: RefreshTokenUserId = user.get_user_id_from_refresh_token(request=request)
     return old_user
 
 
 def set_cookies(response: HttpResponse, key: str, value: str, time: int, type: str):
+    """Set HTTP-only cookies for token storage.
+
+    Args:
+        response: HTTP response object.
+        key: Cookie name.
+        value: Cookie value (JWT token).
+        time: Expiration time value.
+        type: Time unit ('days' or 'mins').
+    """
     response.set_cookie(
         key=key,
         value=value,
@@ -48,6 +80,19 @@ def handle_signup(
     response: HttpResponse,
     auth: AuthService = Depends(get_auth_service),
 ) -> dict[str, str | Status | dict[str, str]]:
+    """Register a new user account.
+
+    Args:
+        data: User registration data (email and password).
+        response: HTTP response for setting cookies.
+        auth: Authentication service dependency.
+
+    Returns:
+        Response with user info and JWT tokens.
+
+    Raises:
+        HTTPException: If user creation or token generation fails.
+    """
     try:
         user = auth.user_signup(data=data)
 
@@ -106,6 +151,19 @@ def handle_signin(
     response: HttpResponse,
     auth: AuthService = Depends(get_auth_service),
 ) -> Response:
+    """Authenticate an existing user.
+
+    Args:
+        data: User sign-in credentials (email and password).
+        response: HTTP response for setting cookies.
+        auth: Authentication service dependency.
+
+    Returns:
+        Response with user info and JWT tokens.
+
+    Raises:
+        HTTPException: If authentication or token generation fails.
+    """
     try:
         result = auth.user_signin(data=data)
 
@@ -164,6 +222,21 @@ def handle_logout(
     response: HttpResponse,
     user: RefreshTokenUserId = Depends(get_user_id),
 ) -> Response:
+    """Sign out the current user.
+
+    Clears authentication cookies and invalidates the session.
+
+    Args:
+        request: FastAPI request object.
+        response: HTTP response for clearing cookies.
+        user: Authenticated user from refresh token.
+
+    Returns:
+        Response confirming successful logout.
+
+    Raises:
+        HTTPException: If credentials are invalid or logout fails.
+    """
     try:
         if not user.user_id or not user.email:
             raise HTTPException(
@@ -191,6 +264,19 @@ def handle_refresh(
     response: HttpResponse,
     user: RefreshTokenUserId = Depends(get_user_id),
 ) -> Response:
+    """Refresh the access token using refresh token.
+
+    Args:
+        request: FastAPI request object.
+        response: HTTP response for setting new cookies.
+        user: Authenticated user from refresh token.
+
+    Returns:
+        Response with new access token.
+
+    Raises:
+        HTTPException: If token refresh fails.
+    """
     try:
         if not user.user_id or not user.email:
             raise HTTPException(

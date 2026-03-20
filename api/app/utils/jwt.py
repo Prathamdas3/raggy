@@ -1,3 +1,9 @@
+"""JWT token utilities.
+
+Provides JWT class for creating access and refresh tokens,
+and TokenToUserId for extracting user information from tokens.
+"""
+
 from pydantic import EmailStr
 from sqlmodel import Session
 from dataclasses import dataclass
@@ -16,17 +22,43 @@ logger = get_logger(__name__)
 
 @dataclass
 class RefreshTokenUserId:
+    """Data class containing user info extracted from refresh token.
+
+    Attributes:
+        user_id: UUID of the user.
+        email: User's email address.
+        token: The refresh token string.
+    """
+
     user_id: UUID
     email: EmailStr
     token: str
 
 
 class JWT:
+    """JWT token creation utility.
+
+    Provides methods for creating access and refresh tokens
+    with configurable expiration times.
+    """
+
     def __init__(self, payload: Tokens):
+        """Initialize JWT with token payload.
+
+        Args:
+            payload: Token payload containing user_id and email.
+        """
         self.payload = payload.model_dump()
 
     def create_access_token(self) -> str:
-        """Create a JWT access token with user_id and email"""
+        """Create a JWT access token with user_id and email.
+
+        Returns:
+            Encoded JWT access token string.
+
+        Raises:
+            HTTPException: If token creation fails.
+        """
         try:
             to_encode = self.payload.copy()
             expires_data = config.access_token_expire_minutes
@@ -44,14 +76,21 @@ class JWT:
 
             return encoded_jwt
         except Exception as e:
-            logger.error(f"failed to create jwt: {str(e)}")
+            logger.error(f"Failed to create jwt: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to form jwt",
             )
 
     def create_refresh_token(self) -> str:
-        """Create a JWT refresh token with user_id and email"""
+        """Create a JWT refresh token with user_id and email.
+
+        Returns:
+            Encoded JWT refresh token string.
+
+        Raises:
+            HTTPException: If token creation fails.
+        """
         try:
             to_encode = self.payload.copy()
             expires_data = config.refresh_token_expire_days
@@ -69,7 +108,7 @@ class JWT:
 
             return encoded_jwt
         except Exception as e:
-            logger.error(f"Failed create token: {str(e)}")
+            logger.error(f"Failed to create token: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to form token",
@@ -77,11 +116,34 @@ class JWT:
 
 
 class TokenToUserId:
+    """Token validation and user extraction utility.
+
+    Provides methods for extracting and validating user information
+    from JWT tokens.
+    """
+
     def __init__(self, session: Session):
+        """Initialize TokenToUserId with database session.
+
+        Args:
+            session: SQLModel session for user lookup.
+        """
         self._db = session
 
     def _get_user_by_id(self, old_user_id: str) -> Users:
-        """Fetch user by ID and raise if not found."""
+        """Fetch user by ID and raise if not found.
+
+        Args:
+            old_user_id: String representation of user UUID.
+
+        Returns:
+            User entity.
+
+        Raises:
+            ValueError: If user_id is empty.
+            TypeError: If user_id is not a valid UUID.
+            HTTPException: If user not found or database error.
+        """
         if not old_user_id:
             raise ValueError("No user id provided")
 
@@ -109,8 +171,17 @@ class TokenToUserId:
             ) from e
 
     def get_user_id_from_access_token(self, request: Request) -> str:
-        """Extracting user id from the access token"""
+        """Extract user id from the access token.
 
+        Args:
+            request: FastAPI request object.
+
+        Returns:
+            String representation of user UUID.
+
+        Raises:
+            HTTPException: If token is invalid or user not found.
+        """
         token = request.cookies.get("jwt")
 
         if not token:
@@ -135,7 +206,7 @@ class TokenToUserId:
 
         except JWTError as je:
             logger.error(
-                f"Failed to fetch the creads from the access_token:{str(je)}",
+                f"Failed to fetch the credentials from the access_token:{str(je)}",
                 exc_info=True,
             )
             raise HTTPException(
@@ -155,6 +226,17 @@ class TokenToUserId:
         return user_id
 
     def get_user_id_from_refresh_token(self, request: Request) -> RefreshTokenUserId:
+        """Extract user id from the refresh token.
+
+        Args:
+            request: FastAPI request object.
+
+        Returns:
+            RefreshTokenUserId containing user_id, email, and token.
+
+        Raises:
+            HTTPException: If token is invalid or user not found.
+        """
         token = request.cookies.get("token")
         if not token:
             raise HTTPException(
@@ -181,7 +263,7 @@ class TokenToUserId:
             raise
         except JWTError as je:
             logger.error(
-                f"Failed to fetch the creds form the refresh token: {str(je)}",
+                f"Failed to fetch the credentials from the refresh token: {str(je)}",
                 exc_info=True,
             )
             raise HTTPException(

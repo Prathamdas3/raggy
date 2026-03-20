@@ -1,3 +1,8 @@
+"""File-related Pydantic models.
+
+Contains models for file metadata and type classification.
+"""
+
 from enum import Enum
 from typing import Self
 from app.core import CustomBaseModel
@@ -12,6 +17,15 @@ import os
 
 
 class Type(Enum):
+    """File type enumeration.
+
+    Attributes:
+        image: Image files (jpeg, png, etc.).
+        audio: Audio files (mp3, wav, etc.).
+        video: Video files (mp4, mov, etc.).
+        document: Document files (pdf, docx, etc.).
+    """
+
     image = "image"
     audio = "audio"
     video = "video"
@@ -19,6 +33,16 @@ class Type(Enum):
 
 
 class FileMeta(CustomBaseModel):
+    """File metadata model extracted from uploads.
+
+    Attributes:
+        filename: Original filename.
+        content_type: MIME content type.
+        extension: File extension without dot.
+        category: File category (image, audio, video, document).
+        subtype: Specific file subtype (e.g., pdf, mp3).
+    """
+
     filename: str
     content_type: str
     extension: str
@@ -27,6 +51,18 @@ class FileMeta(CustomBaseModel):
 
     @classmethod
     def from_upload(cls, file: UploadFile) -> Self:
+        """Create FileMeta from an uploaded file.
+
+        Args:
+            file: FastAPI UploadFile object.
+
+        Returns:
+            FileMeta instance with extracted metadata.
+
+        Raises:
+            ValueError: If filename or content_type is missing,
+                       or file type is not supported.
+        """
         filename = file.filename
         if filename is None or not filename.strip():
             raise ValueError("No file name found")

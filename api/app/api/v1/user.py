@@ -1,3 +1,8 @@
+"""User API endpoints.
+
+Provides endpoints for retrieving and managing the current authenticated user.
+"""
+
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.models import Response, Status
 from app.core import get_logger
@@ -16,6 +21,18 @@ def get_current_user(
     session: SessionDep,
     user: RefreshTokenUserId = Depends(get_user_id),
 ):
+    """Get the current authenticated user.
+
+    Args:
+        session: Database session dependency.
+        user: Authenticated user from refresh token.
+
+    Returns:
+        Response with user email and ID.
+
+    Raises:
+        HTTPException: If user lookup fails.
+    """
     try:
         return Response(
             message="Successfully found the user",
@@ -32,6 +49,19 @@ def remove_current_user(
     user: RefreshTokenUserId = Depends(get_user_id),
     user_service: UserService = Depends(get_user_service),
 ):
+    """Delete the current authenticated user.
+
+    Args:
+        session: Database session dependency.
+        user: Authenticated user from refresh token.
+        user_service: User service dependency.
+
+    Returns:
+        Response confirming successful deletion.
+
+    Raises:
+        HTTPException: If user deletion fails.
+    """
     try:
         return user_service.delete_user(user_id=user.user_id)
     except HTTPException:

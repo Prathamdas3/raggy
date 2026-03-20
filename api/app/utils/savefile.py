@@ -1,3 +1,8 @@
+"""File saving utilities.
+
+Provides functions for securely saving uploaded files to disk.
+"""
+
 from app.core.logger import get_logger
 from fastapi import UploadFile, File
 from uuid import uuid4
@@ -12,6 +17,22 @@ logger = get_logger()
 
 
 def save_file(file_type: str, file: UploadFile = File(...)) -> Path:
+    """Save an uploaded file to the temp directory.
+
+    Creates a unique filename with timestamp and UUID to prevent collisions,
+    and sanitizes the original filename.
+
+    Args:
+        file_type: Type/category of the file (e.g., 'document', 'image').
+        file: FastAPI UploadFile object.
+
+    Returns:
+        Path to the saved file.
+
+    Raises:
+        ValueError: If file_type or filename is invalid.
+        RuntimeError: If file saving fails.
+    """
     logger.debug("Saving the file in the temp directory")
 
     if not file_type and not file_type.strip():

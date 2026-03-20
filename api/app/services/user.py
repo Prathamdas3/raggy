@@ -1,3 +1,10 @@
+"""User management service.
+
+This module provides FindUser and UserService classes for handling
+user-related operations including creation, retrieval, updates,
+and deletion of user accounts.
+"""
+
 from pydantic import EmailStr
 from dataclasses import dataclass
 from typing import Optional
@@ -17,15 +24,35 @@ logger = get_logger(__name__)
 
 @dataclass
 class CreateNewUser:
+    """Data class for newly created user response."""
+
     email: EmailStr
     id: str
 
 
 class FindUser:
+    """Service class for finding users by ID or email."""
+
     def __init__(self, db_service: DatabaseService) -> None:
+        """Initialize FindUser with database service.
+
+        Args:
+            db_service: Database service instance.
+        """
         self._db = db_service
 
     def get_user_by_id(self, user_id: UUID) -> Optional[Users]:
+        """Fetch a user by their UUID.
+
+        Args:
+            user_id: UUID of the user to find.
+
+        Returns:
+            User entity if found, None otherwise.
+
+        Raises:
+            HTTPException: If database query fails.
+        """
         try:
             logger.debug(f"Fetching user by id={user_id}")
             return self._db.session.get(Users, user_id)
@@ -37,6 +64,17 @@ class FindUser:
             ) from e
 
     def get_user_by_email(self, email: EmailStr) -> Optional[Users]:
+        """Fetch a user by their email address.
+
+        Args:
+            email: Email address to search for.
+
+        Returns:
+            User entity if found, None otherwise.
+
+        Raises:
+            HTTPException: If database query fails.
+        """
         try:
             statement = select(Users).where(Users.email == email)
             return self._db.session.exec(statement).one_or_none()
@@ -49,14 +87,38 @@ class FindUser:
 
 
 class UserService:
+    """Service class for user management operations.
+
+    Handles user CRUD operations including account creation,
+    updates, and deletion.
+    """
+
     def __init__(
         self, db_session: DatabaseService, password: HandlePassword, find_user: FindUser
     ):
+        """Initialize UserService with dependencies.
+
+        Args:
+            db_session: Database service instance.
+            password: Password handler for hashing/verification.
+            find_user: FindUser service for user lookup.
+        """
         self._db = db_session
         self._password = password
         self._user = find_user
 
     def get_current_user(self, user_id: str) -> Users | None:
+        """Get a user by their ID string.
+
+        Args:
+            user_id: String representation of user UUID.
+
+        Returns:
+            User entity if found.
+
+        Raises:
+            HTTPException: If user is not found.
+        """
         try:
             old_user = self._user.get_user_by_id(user_id=UUID(user_id))
             if not old_user:
@@ -75,6 +137,17 @@ class UserService:
             ) from e
 
     def create_user(self, data: CreateUser) -> CreateNewUser:
+        """Create a new user account.
+
+        Args:
+            data: CreateUser model with email and password.
+
+        Returns:
+            CreateNewUser with created user info.
+
+        Raises:
+            HTTPException: If email already exists or creation fails.
+        """
         try:
             if self._user.get_user_by_email(data.email):
                 raise HTTPException(
@@ -107,6 +180,18 @@ class UserService:
             ) from e
 
     def update_user(self, user_id: UUID, data: UpdateUser) -> Response[None]:
+        """Update a user's profile information.
+
+        Args:
+            user_id: UUID of the user to update.
+            data: UpdateUser model with fields to update.
+
+        Returns:
+            Response confirming successful update.
+
+        Raises:
+            HTTPException: If user not found or update fails.
+        """
         try:
             if not data.has_updates():
                 raise HTTPException(
@@ -146,6 +231,17 @@ class UserService:
             ) from e
 
     def delete_user(self, user_id: UUID) -> Response[None]:
+        """Delete a user account.
+
+        Args:
+            user_id: UUID of the user to delete.
+
+        Returns:
+            Response confirming successful deletion.
+
+        Raises:
+            HTTPException: If user not found or deletion fails.
+        """
         try:
             user = self._user.get_user_by_id(user_id)
             if not user:
