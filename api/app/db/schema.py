@@ -164,7 +164,7 @@ class Chats(CreatedAtMixin, UpdatedAtMixin, SQLModel, table=True):
 
     Attributes:
         title: Chat title.
-        original_text: Original text content.
+        original_doc: Original doc content.
         is_bookmarked: Bookmark flag.
         share_id: Optional share identifier.
         processing_status: Processing status.
@@ -176,7 +176,8 @@ class Chats(CreatedAtMixin, UpdatedAtMixin, SQLModel, table=True):
     """
 
     title: str = Field(default="")
-    original_text: str = Field(default="")
+    original_doc: str = Field(default="")
+    shared_doc:str=Field(default="")
 
     is_bookmarked: bool = Field(default=False)
     share_id: str | None = Field(default=None)

@@ -79,6 +79,10 @@ class Settings(BaseSettings):
     )
     qdrant_vector_size: int = Field(validation_alias="QDRANT_VECTOR_SIZE", default=384)
     qdrant_use_https: bool = Field(validation_alias="QDRANT_USE_HTTPS", default=False)
+    minio_endpoint:str=Field(validation_alias="MINIO_ENDPOINT",default="localhost:9000")
+    minio_access_key:str=Field(validation_alias="MINIO_ACCESS_KEY",default="minioadmin")
+    minio_secret_key:str=Field(validation_alias="MINIO_SECRET_KEY",default="minioadmin123")
+    minio_secure:bool=Field(validation_alias="MINIO_SECURE",default=False)
 
     model_config = SettingsConfigDict(env_file=".env")
 

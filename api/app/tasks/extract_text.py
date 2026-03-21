@@ -5,7 +5,7 @@ Contains background tasks for extracting text content from files.
 
 from app.core import celery, get_logger
 from app.models import ExtractChat
-from app.utils import extract_pdf_content_from_path
+from app.utils import extract_pdf_content
 from typing import TypedDict
 from app.tasks.save_text import SaveArgs
 
@@ -22,7 +22,7 @@ class ExtractedDictType(TypedDict):
     """
 
     doc_id: str
-    file_path: str
+    stroage_key: str
     file_type: str
 
 
@@ -47,11 +47,10 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
     """
     try:
         data = ExtractChat(**data).model_dump()
-        content = extract_pdf_content_from_path(path=data.file_path)
-        if not content.title or not content.content:
+        content = extract_pdf_content(storage_key=data.get("stroage_key"))
+        if  not content.content:
             raise ValueError("No content found from the given file path")
         return {
-            "title": content.title,
             "content": content.content,
             "chat_id": str(data.doc_id),
         }

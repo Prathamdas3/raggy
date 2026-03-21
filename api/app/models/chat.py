@@ -3,7 +3,6 @@
 Contains request/response models for chat updates and file extraction.
 """
 
-from pathlib import Path
 from uuid import UUID
 from app.core import CustomBaseModel
 from app.db import Status
@@ -24,7 +23,7 @@ class UpdateChat(CustomBaseModel):
     """
 
     title: Optional[str] = None
-    original_text: Optional[str] = None
+    shared_doc: Optional[str] = None
     processing_status: Optional[Status] = None
     is_bookmarked: Optional[bool] = None
     share_id: Optional[str] = None
@@ -39,12 +38,12 @@ class UpdateChat(CustomBaseModel):
             raise ValueError("Title must be 255 characters or less")
         return v.strip() if v else v
 
-    @field_validator("original_text")
+    @field_validator("shared_doc")
     @classmethod
     def validate_original_text(cls, v):
         """Validate original text is not blank."""
         if v is not None and len(v.strip()) == 0:
-            raise ValueError("Original text cannot be blank")
+            raise ValueError("Shared doc cannot be blank")
         return v.strip() if v else v
 
     @field_validator("share_id")
@@ -77,7 +76,7 @@ class ExtractChat(CustomBaseModel):
     """
 
     doc_id: str
-    file_path: str
+    stroage_key: str
     file_type: str
 
     @field_validator("doc_id")
@@ -88,17 +87,3 @@ class ExtractChat(CustomBaseModel):
         except Exception:
             raise TypeError("Doc Id should be UUID")
 
-    @field_validator("file_path")
-    @classmethod
-    def validate_file_path(cls, v: str) -> Path:
-        """Validate file_path exists and is a file."""
-        try:
-            path: Path = Path(v)
-        except Exception:
-            raise TypeError("Given string is not a path")
-        path = path.resolve()
-        if not path.exists():
-            raise ValueError(f"File does not exist: {path}")
-        if not path.is_file():
-            raise ValueError(f"Path is not a file: {path}")
-        return path

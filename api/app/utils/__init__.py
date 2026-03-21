@@ -1,7 +1,7 @@
 from app.utils.common import HandlePassword
 from app.utils.jwt import JWT, TokenToUserId, RefreshTokenUserId
-from app.utils.savefile import save_file
-from app.utils.pdf import extract_pdf_content_from_path, FileContent
+from app.utils.savefile import save_upload_to_minio
+from app.utils.pdf import extract_pdf_content, FileContent
 from app.utils.split_text import text_split
 
 __all__ = [
@@ -10,7 +10,8 @@ __all__ = [
     "TokenToUserId",
     "RefreshTokenUserId",
     "save_file",
-    "extract_pdf_content_from_path",
+    "extract_pdf_content",
     "FileContent",
-    "text_split"
+    "text_split",
+    "save_upload_to_minio"
 ]

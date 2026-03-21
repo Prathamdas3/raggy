@@ -1,50 +1,35 @@
-"""PDF extraction utilities.
-
-Provides functions for extracting text content from PDF files.
-"""
-
-from pathlib import Path
-from langchain_community.document_loaders import PyPDFLoader
+from io import BytesIO
 from dataclasses import dataclass
+from pypdf import PdfReader
+from app.core import get_logger,minio_client
+
+
+logger = get_logger(__name__)
 
 
 @dataclass
 class FileContent:
-    """Data class for extracted file content.
-
-    Attributes:
-        title: Document title from PDF metadata.
-        content: Extracted text content from all pages.
-    """
-
-    title: str
     content: str
 
 
-def extract_pdf_content_from_path(path: Path) -> FileContent:
-    """Extract text content from a PDF file.
-
-    Uses langchain's PyPDFLoader to extract text from all pages
-    and metadata from the first page.
-
-    Args:
-        path: Path to the PDF file.
-
-    Returns:
-        FileContent with title and extracted text.
-
-    Raises:
-        Exception: If PDF extraction fails.
-    """
+def extract_pdf_content(storage_key: str) -> FileContent:
     try:
-        loader = PyPDFLoader(file_path=path)
-        documents = loader.load()
-        title: str = (
-            documents[0].metadata["title"] if documents[0].metadata["title"] else ""
+        bucket_name, object_name = storage_key.split("/", 1)
+        pdf_bytes = minio_client.get_file(
+            bucket_name=bucket_name,
+            object_name=object_name,
         )
-        content = ""
-        for document in documents:
-            content += f"{document.page_content.replace('\n', '')}"
-        return FileContent(title=title, content=content)
-    except Exception:
-        raise Exception("Failed to extract content from PDF")
+        reader = PdfReader(BytesIO(pdf_bytes))
+        content = " ".join(
+            page.extract_text().replace("\n", " ")
+            for page in reader.pages
+            if page.extract_text()
+        )
+        if not content.strip():
+            raise ValueError("No content extracted from PDF.")
+        return FileContent(content=content)
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to extract content from '{storage_key}': {e}")
+        raise RuntimeError(f"Failed to extract PDF content: {e}") from e

@@ -97,7 +97,7 @@ class ChatService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def create_chat(self, user_id: UUID) -> UUID:
+    def create_chat(self, user_id: UUID,title:str,original_doc:str) -> UUID:
         """Create a new chat for a user.
 
         Creates a new chat with a root branch for the conversation.
@@ -113,7 +113,7 @@ class ChatService:
         """
         try:
             # 1. Create chat
-            chat = Chats(user_id=user_id)
+            chat = Chats(user_id=user_id,title=title,original_doc=original_doc)
             self._db.session.add(chat)
             self._db.session.flush()  # get chat.id
 
