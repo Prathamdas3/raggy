@@ -23,6 +23,8 @@ def text_split(text: str) -> SplitData:
     try:
         chunks = text_splitter.split_text(text)
         result = SplitData()
+        if not chunks:
+            raise ValueError("Failed to split the text")
         for index, chunk in enumerate(chunks):
             if not chunk.strip():
                 continue

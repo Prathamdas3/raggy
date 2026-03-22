@@ -7,7 +7,7 @@ from app.core import celery, get_logger
 from app.models import ExtractChat
 from app.utils import extract_pdf_content
 from typing import TypedDict
-from app.tasks.save_text import SaveArgs
+from app.tasks.task_save_text import SaveArgs
 
 logger = get_logger(__name__)
 
@@ -16,12 +16,12 @@ class ExtractedDictType(TypedDict):
     """Type definition for extraction task arguments.
 
     Attributes:
-        doc_id: UUID string of the document/chat.
+        chat_id: UUID string of the document/chat.
         file_path: Path to the file to extract from.
         file_type: Type of the file (e.g., 'document').
     """
 
-    doc_id: str
+    chat_id: str
     stroage_key: str
     file_type: str
 
@@ -34,7 +34,7 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
     the data in a format suitable for saving.
 
     Args:
-        data: ExtractedDictType containing doc_id, file_path, and file_type.
+        data: ExtractedDictType containing chat_id, file_path, and file_type.
 
     Returns:
         SaveArgs with extracted title, content, and chat_id.
@@ -48,12 +48,13 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
     try:
         data = ExtractChat(**data).model_dump()
         content = extract_pdf_content(storage_key=data.get("stroage_key"))
-        if  not content.content:
+        if not content.content:
             raise ValueError("No content found from the given file path")
-        return {
+        return_value: SaveArgs = {
             "content": content.content,
-            "chat_id": str(data.doc_id),
+            "chat_id": str(data.chat_id),
         }
+        return return_value
     except Exception as e:
         logger.error(
             f"Failed to extract the file content of type {data.get('file_type')}:{str(e)}"

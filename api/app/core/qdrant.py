@@ -107,7 +107,7 @@ class QdrantStore:
             logger.info(f"Collection '{config.qdrant_collection_name}' already exists.")
 
     @classmethod
-    def _get_store(cls) -> QdrantVectorStore:
+    def get_store(cls) -> QdrantVectorStore:
         """Get or create QdrantVectorStore instance.
 
         Returns:
@@ -153,7 +153,7 @@ class QdrantStore:
             Exception: If save operation fails.
         """
         try:
-            return cls._get_store().add_texts(texts=texts, metadatas=metadatas, ids=ids)
+            return cls.get_store().add_texts(texts=texts, metadatas=metadatas, ids=ids)
         except Exception as e:
             logger.error(f"Failed to save texts: {e}")
             raise

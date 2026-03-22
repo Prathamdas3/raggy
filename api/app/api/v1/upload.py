@@ -14,6 +14,26 @@ from app.api.v1.auth import get_user_id, RefreshTokenUserId
 file_router = APIRouter(prefix="/upload")
 logger = get_logger(__name__)
 
+ALLOWED_CONTENT_TYPES = {"application/pdf"}
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+
+def validate_file(file: UploadFile) -> None:
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Only PDF files are allowed. Got: {file.content_type}",
+        )
+    # read and check actual size
+    contents = file.file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File size exceeds the 10MB limit.",
+        )
+    # reset pointer so downstream can read again
+    file.file.seek(0)
+
 
 @file_router.post(
     "/files", status_code=status.HTTP_202_ACCEPTED, response_model=Response
@@ -40,8 +60,9 @@ def upload_file(
         HTTPException: If file upload or processing fails.
     """
     try:
+        validate_file(file)
         meta = FileMeta.from_upload(file=file)
-        original_doc=save_upload_to_minio(file=file)
+        original_doc = save_upload_to_minio(file=file)
         if not original_doc:
             logger.error("Failed to upload the file missing file path", exc_info=True)
             raise HTTPException(
@@ -49,12 +70,14 @@ def upload_file(
                 detail="Failed to upload to file",
             )
 
-        doc_id = chat_services.create_chat(user_id=user.user_id,title=meta.filename,original_doc=original_doc)
+        chat_id = chat_services.create_chat(
+            user_id=user.user_id, title=meta.filename, original_doc=original_doc
+        )
 
         return {
             "message": "Successfully saved the docs",
             "status": Status.success,
-            "data": doc_id,
+            "data": chat_id,
         }
 
     except HTTPException:

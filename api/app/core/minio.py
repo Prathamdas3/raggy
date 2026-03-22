@@ -15,16 +15,15 @@ class ContentType:
 
 
 class BucketName:
-    DOCUMENTS = "documents"   # user uploaded files
-    AUDIO = "audio"           # tts generated audio
-    EXPORTS = "exports"       # generated pdfs shared with user
+    DOCUMENTS = "documents"  # user uploaded files
+    AUDIO = "audio"  # tts generated audio
+    EXPORTS = "exports"  # generated pdfs shared with user
 
 
 class MinIOClient:
     _lock = threading.RLock()
     _client: Minio | None = None
 
-    # ── Client ────────────────────────────────────────────────────
     @classmethod
     def _get_client(cls) -> Minio:
         if cls._client is None:
@@ -41,12 +40,13 @@ class MinIOClient:
                     except Exception as e:
                         cls._client = None
                         logger.error(f"Failed to initialize MinIO client: {e}")
-                        raise RuntimeError(f"Failed to initialize MinIO client: {e}") from e
+                        raise RuntimeError(
+                            f"Failed to initialize MinIO client: {e}"
+                        ) from e
         if cls._client is None:
             raise RuntimeError("MinIO client could not be initialized.")
         return cls._client
 
-    # ── Bucket ────────────────────────────────────────────────────
     @classmethod
     def _ensure_bucket(cls, bucket_name: str) -> None:
         try:
@@ -58,7 +58,6 @@ class MinIOClient:
             logger.error(f"Failed to ensure bucket '{bucket_name}': {e}")
             raise
 
-    # ── Save ──────────────────────────────────────────────────────
     @classmethod
     def save_file(
         cls,
@@ -90,7 +89,6 @@ class MinIOClient:
             logger.error(f"Failed to save '{object_name}': {e}")
             raise
 
-    # ── Get file as bytes ─────────────────────────────────────────
     @classmethod
     def get_file(cls, bucket_name: str, object_name: str) -> bytes:
         """
@@ -113,7 +111,6 @@ class MinIOClient:
                 response.close()
                 response.release_conn()
 
-    # ── Get presigned URL ─────────────────────────────────────────
     @classmethod
     def get_url(
         cls,
@@ -140,7 +137,6 @@ class MinIOClient:
             logger.error(f"Failed to get URL for '{object_name}': {e}")
             raise
 
-    # ── Get metadata ──────────────────────────────────────────────
     @classmethod
     def get_metadata(cls, bucket_name: str, object_name: str) -> dict:
         """
@@ -163,7 +159,6 @@ class MinIOClient:
             logger.error(f"Failed to get metadata for '{object_name}': {e}")
             raise
 
-    # ── Delete ────────────────────────────────────────────────────
     @classmethod
     def delete_file(cls, bucket_name: str, object_name: str) -> None:
         try:
@@ -175,6 +170,13 @@ class MinIOClient:
         except S3Error as e:
             logger.error(f"Failed to delete '{object_name}': {e}")
             raise
+
+    @classmethod
+    def initialize(cls) -> None:
+        """Call at startup — ensures client and all buckets are ready."""
+        cls._get_client()
+        for bucket in [BucketName.DOCUMENTS, BucketName.AUDIO, BucketName.EXPORTS]:
+            cls._ensure_bucket(bucket)
 
     @classmethod
     def reset(cls) -> None:

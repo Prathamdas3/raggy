@@ -9,6 +9,7 @@ from app.utils.common import HandlePassword
 from app.services.auth import AuthService
 from app.services.user import UserService, FindUser
 from app.services.chat import ChatService, UpdateChat
+from app.services.summary import SummaryService
 
 
 def get_auth_service(session: SessionDep) -> AuthService:
@@ -53,5 +54,8 @@ def get_chat_service(session: SessionDep) -> ChatService:
     db_session = DatabaseService(session=session)
     return ChatService(db_session=db_session)
 
+def get_summary_service(session:SessionDep)->SummaryService:
+    db_session=DatabaseService(session=session)
+    return SummaryService(db_service=db_session)
 
 __all__ = ["UpdateChat"]

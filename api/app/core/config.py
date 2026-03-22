@@ -41,7 +41,6 @@ class Settings(BaseSettings):
         qdrant_use_https: Use HTTPS for Qdrant.
     """
 
-    temp_dir: Path = TEMP_DIR
     env: str = Field(validation_alias="ENV", default="development")
     debug: bool = Field(validation_alias="DEBUG", default=False)
     model_id: str = Field(validation_alias="MODEL_ID", default="")

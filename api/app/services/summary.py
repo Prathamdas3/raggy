@@ -11,6 +11,8 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from app.db import SummaryVariants, DatabaseService, VariantType
 from app.core import get_logger
+from app.models import UpdateSummary
+from app.tasks import UpdateSummaryArgs
 from sqlmodel import select
 
 logger = get_logger(__name__)
@@ -69,7 +71,7 @@ class SummaryService:
             )
 
     def create_summary(
-        self, chat_id: UUID, summary: str, variant_type: VariantType
+        self, chat_id: UUID, variant_type: VariantType
     ) -> UUID:
         """Create a new summary for a chat.
 
@@ -86,7 +88,7 @@ class SummaryService:
         """
         try:
             data = SummaryVariants(
-                content=summary, chat_id=chat_id, variant_type=variant_type
+                chat_id=chat_id, variant_type=variant_type
             )
             self._db.session.add(data)
             self._db.commit()
@@ -99,36 +101,36 @@ class SummaryService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def update_summary_audio(self, summary_id: UUID, audio_path: str) -> str:
-        """Update a summary with an audio URL.
-
-        Args:
-            summary_id: UUID of the summary to update.
-            audio_path: URL or path to the audio file.
-
-        Returns:
-            Updated audio_url.
-
-        Raises:
-            HTTPException: If summary not found or update fails.
-        """
+    def update_summary(self, data: UpdateSummaryArgs) -> str:
         try:
-            data = self._db.session.get(SummaryVariants, summary_id)
-            if not data:
+            validated = UpdateSummary(**data)
+
+            if not validated.has_update():
+                raise ValueError("No fields provided for update.")
+
+            summary = self._db.session.get(SummaryVariants, validated.summary_id)
+            if not summary:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="Chat not found"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Summary not found.",
                 )
 
-            setattr(data, "audio_url", audio_path)
-            self._db.session.add(data)
-            self._db.commit()
-            self._db.session.refresh(data)
-            return data.audio_url
-        except HTTPException:
+            # only update fields that were actually provided
+            if validated.content is not None:
+                summary.content = validated.content
+            if validated.audio_url is not None:
+                summary.audio_url = validated.audio_url
+
+            self._db.session.add(summary)
+            self._db.session.commit()
+            self._db.session.refresh(summary)
+            return summary.audio_url
+
+        except (HTTPException, ValueError):
             raise
         except Exception as e:
-            logger.error(f"Failed to store the audio url:{str(e)}", exc_info=True)
+            logger.error(f"Failed to update summary: {e}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update the summary with audio url",
+                detail="Failed to update summary.",
             )

@@ -70,20 +70,19 @@ class ExtractChat(CustomBaseModel):
     """Model for extracting chat data from a file.
 
     Attributes:
-        doc_id: UUID identifier for the document.
+        chat_id: UUID identifier for the document.
         file_path: Path to the file to extract from.
         file_type: Type of the file.
     """
 
-    doc_id: str
+    chat_id: str
     stroage_key: str
     file_type: str
 
-    @field_validator("doc_id")
-    def validate_doc_id(cls, v: str) -> UUID:
-        """Validate doc_id is a valid UUID string."""
+    @field_validator("chat_id")
+    def validate_chat_id(cls, v: str) -> UUID:
+        """Validate chat_id is a valid UUID string."""
         try:
             return UUID(v)
         except Exception:
             raise TypeError("Doc Id should be UUID")
-

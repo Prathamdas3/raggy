@@ -3,6 +3,7 @@ from app.utils.jwt import JWT, TokenToUserId, RefreshTokenUserId
 from app.utils.savefile import save_upload_to_minio
 from app.utils.pdf import extract_pdf_content, FileContent
 from app.utils.split_text import text_split
+from app.utils.generate_audio import text_to_audio
 
 __all__ = [
     "HandlePassword",
@@ -13,5 +14,6 @@ __all__ = [
     "extract_pdf_content",
     "FileContent",
     "text_split",
-    "save_upload_to_minio"
+    "save_upload_to_minio",
+    "text_to_audio"
 ]
