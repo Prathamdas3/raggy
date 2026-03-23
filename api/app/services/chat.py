@@ -161,7 +161,7 @@ class ChatService:
                 detail="Failed to remove the chat",
             )
 
-    def update_chat(self, chat_id: UUID, details: UpdateChat) -> str:
+    def update_chat(self, details: UpdateChat) -> str:
         """Update a chat's metadata.
 
         Args:
@@ -175,7 +175,7 @@ class ChatService:
             HTTPException: If chat update fails.
         """
         try:
-            chat = self.find_chat(chat_id=chat_id)
+            chat = self.find_chat(chat_id=details.chat_id)
             updated_data = details.model_dump(exclude_unset=True)
             if not details.has_update():
                 return "No data to update the chats"
@@ -210,8 +210,8 @@ class ChatService:
                 return f"{config.frontend_url}/{chat.share_id}"
 
             code = str(uuid4())
-            data = UpdateChat(share_id=code)
-            self.update_chat(chat_id=chat_id, details=data)
+            data = UpdateChat(share_id=code,chat_id=chat_id)
+            self.update_chat(details=data)
             return f"{config.frontend_url}/{code}"
         except Exception:
             logger.error("Failed to generate a share_id")

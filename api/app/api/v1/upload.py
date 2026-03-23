@@ -9,6 +9,7 @@ from app.models import Response, FileMeta, Status
 from app.utils import save_upload_to_minio
 from app.services import get_chat_service, ChatService
 from app.api.v1.auth import get_user_id, RefreshTokenUserId
+from app.tasks import chain_summary
 
 
 file_router = APIRouter(prefix="/upload")
@@ -73,7 +74,7 @@ def upload_file(
         chat_id = chat_services.create_chat(
             user_id=user.user_id, title=meta.filename, original_doc=original_doc
         )
-
+        chain_summary({"chat_id":str(chat_id),"stroage_key":original_doc,"file_type":meta.category})
         return {
             "message": "Successfully saved the docs",
             "status": Status.success,

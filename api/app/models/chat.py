@@ -21,7 +21,7 @@ class UpdateChat(CustomBaseModel):
         is_bookmarked: Optional bookmark flag.
         share_id: Optional share identifier.
     """
-
+    chat_id:UUID
     title: Optional[str] = None
     shared_doc: Optional[str] = None
     processing_status: Optional[Status] = None

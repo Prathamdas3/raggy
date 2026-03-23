@@ -12,7 +12,6 @@ from fastapi import HTTPException, status
 from app.db import SummaryVariants, DatabaseService, VariantType
 from app.core import get_logger
 from app.models import UpdateSummary
-from app.tasks import UpdateSummaryArgs
 from sqlmodel import select
 
 logger = get_logger(__name__)
@@ -101,14 +100,12 @@ class SummaryService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def update_summary(self, data: UpdateSummaryArgs) -> str:
+    def update_summary(self, data: UpdateSummary) -> str:
         try:
-            validated = UpdateSummary(**data)
-
-            if not validated.has_update():
+            if not data.has_update():
                 raise ValueError("No fields provided for update.")
 
-            summary = self._db.session.get(SummaryVariants, validated.summary_id)
+            summary = self._db.session.get(SummaryVariants, data.summary_id)
             if not summary:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -116,10 +113,10 @@ class SummaryService:
                 )
 
             # only update fields that were actually provided
-            if validated.content is not None:
-                summary.content = validated.content
-            if validated.audio_url is not None:
-                summary.audio_url = validated.audio_url
+            if data.content is not None:
+                summary.content = data.content
+            if data.audio_url is not None:
+                summary.audio_url = data.audio_url
 
             self._db.session.add(summary)
             self._db.session.commit()

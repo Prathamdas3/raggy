@@ -1,7 +1,7 @@
 from langchain_core.messages.ai import AIMessage
 from app.core.logger import get_logger
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import HumanMessage,SystemMessage
 from app.core.config import config
 from enum import Enum
 import threading
@@ -67,7 +67,7 @@ class AiModel:
     @classmethod
     def invoke(
         cls,
-        messages: list[BaseMessage],
+        messages: list[HumanMessage|SystemMessage],
         invoke_config= InvokeConfig.DEFAULT,  
     ) -> AIMessage:  
         try:
@@ -79,7 +79,7 @@ class AiModel:
         except Exception as e:
             logger.error(f"Model invocation failed: {e}")
             raise
-# in MinIOClient
+
     @classmethod
     def initialize(cls) -> None:
         """Call at startup — ensures client and all buckets are ready."""
@@ -92,4 +92,4 @@ class AiModel:
             logger.warning("AI model reset.")
 
 
-ai_model = AiModel()
+ai_model:AiModel = AiModel()

@@ -6,7 +6,7 @@ from uuid import uuid4
 logger = get_logger(__name__)
 
 
-def text_to_audio(text: str, chat_id) -> str:
+def text_to_audio(text: str, id:str) -> str:
     """
     Convert text to audio and save directly to MinIO.
     Returns storage_key → store this in DB.
@@ -20,10 +20,9 @@ def text_to_audio(text: str, chat_id) -> str:
 
         storage_key = minio_client.save_file(
             bucket_name=BucketName.AUDIO,
-            object_name=f"{chat_id}_{uuid4()}.mp3",
+            object_name=f"{id}_{uuid4()}.mp3",
             data=buffer.read(),
             content_type=ContentType.MP3,
-            metadata={"chat_id": chat_id},
         )
         return storage_key
     except ValueError:
