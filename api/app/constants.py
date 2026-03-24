@@ -41,29 +41,36 @@ YT_REGEX = re.compile(
 )
 
 
-MODEL_PROMPT_SUMMARY = """Read the following text carefully. Then create a simple summary and a short title.
+MODEL_PROMPT_CHUNK_SUMMARY = """Summarize the following text in simple, clear sentences.
+Keep only the most important information.
+Keep your response under 200 words.
+
+Text:
+{context}
+
+Write a brief summary:"""
+
+
+MODEL_PROMPT_FINAL_SUMMARY = """You are given multiple summaries of different parts of a document.
+Combine them into one final summary and title.
 
 For the TITLE:
 - Keep it very short (3-7 words)
-- Use simple, clear words
 - Capture the main idea
 
 For the SUMMARY:
-- Use short sentences (no more than 10 words)
-- Use simple, everyday words (avoid hard or complex terms)
-- Repeat important ideas so they are remembered
-- Use line breaks or bullet points to separate ideas
-- Explain in a friendly, calm, and supportive tone
+- Use short sentences
+- Use simple everyday words
+- Use bullet points to separate ideas
+- Explain in a friendly, calm, supportive tone
+- End with a "big idea" sentence in the simplest way possible
+
+Summaries to combine:
+{context}
 
 Format your response EXACTLY like this:
 TITLE: [your title here]
-SUMMARY: [your summary here]
-
-Text to summarize:
-{context}
-
-Now write the title and summary as if you are explaining to a dyslexic child. End the summary with a quick "big idea" sentence that reminds them what everything means in the simplest way possible.
-"""
+SUMMARY: [your summary here]"""
 
 MODEL_PROMPT_QUERY = """
 You are a kind teacher who helps a child with dyslexia understand things.

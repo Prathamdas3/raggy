@@ -2,6 +2,7 @@ from langchain_core.messages.ai import AIMessage
 from app.core.logger import get_logger
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_core.messages import HumanMessage,SystemMessage
+from langchain_core.runnables import RunnableConfig
 from app.core.config import config
 from enum import Enum
 import threading
@@ -49,7 +50,7 @@ class AiModel:
                             repetition_penalty=1.03,
                             stop_sequences=["</s>", "<|endoftext|>"],
                             huggingfacehub_api_token=config.huggingface_api_token,
-                            **InvokeConfig.DEFAULT,  # ty:ignore[invalid-argument-type]
+                           **InvokeConfig.DEFAULT.value,  # ty:ignore[invalid-argument-type]
                         )
                         cls._model = ChatHuggingFace(
                             llm=llm,
@@ -68,11 +69,11 @@ class AiModel:
     def invoke(
         cls,
         messages: list[HumanMessage|SystemMessage],
-        invoke_config= InvokeConfig.DEFAULT,  
+        invoke_config:InvokeConfig= InvokeConfig.DEFAULT,  
     ) -> AIMessage:  
         try:
             model = cls._get_model()
-            response: AIMessage = model.invoke(messages, **invoke_config)  # ty:ignore[invalid-argument-type]
+            response: AIMessage = model.invoke(messages, RunnableConfig(configurable=invoke_config.value)) 
             return response
         except ValueError:
             raise

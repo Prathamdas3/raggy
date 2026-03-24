@@ -82,7 +82,9 @@ class AuthService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error("User signup failed", exc_info=True)
+            logger.error(
+                "User signup failed",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create user",
@@ -123,7 +125,9 @@ class AuthService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error("User signin failed", exc_info=True)
+            logger.error(
+                "User signin failed",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Signin operation failed",
@@ -172,7 +176,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(
-                f"Password update failed for user id={data.user_id}", exc_info=True
+                f"Password update failed for user id={data.user_id}",
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

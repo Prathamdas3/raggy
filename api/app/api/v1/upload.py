@@ -65,7 +65,9 @@ def upload_file(
         meta = FileMeta.from_upload(file=file)
         original_doc = save_upload_to_minio(file=file)
         if not original_doc:
-            logger.error("Failed to upload the file missing file path", exc_info=True)
+            logger.error(
+                "Failed to upload the file missing file path",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to upload to file",
@@ -74,7 +76,13 @@ def upload_file(
         chat_id = chat_services.create_chat(
             user_id=user.user_id, title=meta.filename, original_doc=original_doc
         )
-        chain_summary({"chat_id":str(chat_id),"stroage_key":original_doc,"file_type":meta.category})
+        chain_summary(
+            {
+                "chat_id": str(chat_id),
+                "stroage_key": original_doc,
+                "file_type": meta.category,
+            }
+        )
         return {
             "message": "Successfully saved the docs",
             "status": Status.success,
@@ -84,7 +92,9 @@ def upload_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to upload file: {str(e)}", exc_info=True)
+        logger.error(
+            f"Failed to upload file: {str(e)}",
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to upload to file",

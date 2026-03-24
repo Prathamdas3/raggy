@@ -57,7 +57,9 @@ class FindUser:
             logger.debug(f"Fetching user by id={user_id}")
             return self._db.session.get(Users, user_id)
         except SQLAlchemyError as e:
-            logger.error(f"Failed to fetch user by id={user_id}", exc_info=True)
+            logger.error(
+                f"Failed to fetch user by id={user_id}",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to find the user",
@@ -79,7 +81,9 @@ class FindUser:
             statement = select(Users).where(Users.email == email)
             return self._db.session.exec(statement).one_or_none()
         except SQLAlchemyError as e:
-            logger.error(f"Failed to fetch user by email={email}", exc_info=True)
+            logger.error(
+                f"Failed to fetch user by email={email}",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to find this user email",
@@ -130,7 +134,9 @@ class UserService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error("User fetching failed", exc_info=True)
+            logger.error(
+                "User fetching failed",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch user",
@@ -173,7 +179,9 @@ class UserService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error("User creation failed", exc_info=True)
+            logger.error(
+                "User creation failed",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create user",
@@ -224,7 +232,9 @@ class UserService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"User update failed for id={user_id}", exc_info=True)
+            logger.error(
+                f"User update failed for id={user_id}",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update user",
@@ -263,7 +273,9 @@ class UserService:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"User deletion failed for id={user_id}", exc_info=True)
+            logger.error(
+                f"User deletion failed for id={user_id}",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete user",

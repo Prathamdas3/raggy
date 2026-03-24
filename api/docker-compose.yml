@@ -38,7 +38,7 @@ services:
       retries: 5
 
   qdrant:
-    image: qdrant/qdrant:v1.15.1
+    image: qdrant/qdrant:v1.17
     container_name: qdrant
     restart: unless-stopped
     ports:
@@ -74,43 +74,6 @@ services:
       timeout: 10s
       retries: 3
 
-alloy:
-  image: grafana/alloy:v1.8.1
-  ports:
-    - "12347:12345"
-  volumes:
-    - "./etc/alloy:/etc/alloy"
-    - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    - /var/run/docker.sock:/var/run/docker.sock
-  command: [ "run", "--server.http.listen-addr=0.0.0.0:12345", "--stability.level=experimental", "/etc/alloy/config.alloy" ]
-  depends_on:
-    - loki
-
-loki:
-  image: grafana/loki:3.4.1
-  command: [ "--pattern-ingester.enabled=true", "-config.file=/etc/loki/loki.yaml" ]
-  ports:
-    - "3100:3100"
-  volumes:
-    - "./etc/loki/loki.yaml:/etc/loki/loki.yaml"
-
-grafana:
-  image: grafana/grafana:11.5.1
-  volumes:
-    - ./etc/grafana/:/etc/grafana/provisioning/datasources
-    - ./etc/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
-    - ./etc/dashboards:/etc/grafana/dashboards
-  ports:
-    - "10000:3000"
-  environment:
-    - GF_FEATURE_TOGGLES_ENABLE=flameGraph traceqlSearch traceQLStreaming correlations metricsSummary traceqlEditor traceToMetrics traceToProfiles datatrails
-    - GF_INSTALL_PLUGINS=grafana-lokiexplore-app,grafana-exploretraces-app,grafana-pyroscope-app
-    - GF_AUTH_ANONYMOUS_ENABLED=true
-    - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-    - GF_AUTH_DISABLE_LOGIN_FORM=true
-  depends_on:
-    - alloy
-    - loki
 
 volumes:
   postgres_data:

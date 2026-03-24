@@ -36,7 +36,9 @@ class DatabaseService:
             self._db.commit()
         except (IntegrityError, SQLAlchemyError) as e:
             self._db.rollback()
-            logger.error("Database operation failed", exc_info=True)
+            logger.error(
+                "Database operation failed",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database operation failed",

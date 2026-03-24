@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     debug: bool = Field(validation_alias="DEBUG", default=False)
     model_id: str = Field(validation_alias="MODEL_ID", default="")
     huggingface_api_token: str = Field(
-        validation_alias="HUGGINGFACE_API_TOKEN", default=""
+        validation_alias="HF_TOKEN", default=""
     )
     huggingface_model: str = Field(validation_alias="HUGGINGFACE_MODEL", default="")
     huggingface_device: str = Field(
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
         validation_alias="BACKEND_URL", default="http://localhost:9000"
     )
 
-    redis_host: str = Field(validation_alias="REDIS_HOST", default="redis")
+    redis_host: str = Field(validation_alias="REDIS_HOST", default="localhost")
     redis_port: int = Field(validation_alias="REDIS_PORT", default=6379)
 
     qdrant_url: str = Field(

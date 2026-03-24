@@ -62,16 +62,14 @@ class SummaryService:
             raise
         except Exception as e:
             logger.error(
-                f"Failed to get the summaries from the chat_id: {str(e)}", exc_info=True
+                f"Failed to get the summaries from the chat_id: {str(e)}",
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch the summaries",
             )
 
-    def create_summary(
-        self, chat_id: UUID, variant_type: VariantType
-    ) -> UUID:
+    def create_summary(self, chat_id: UUID, variant_type: VariantType=VariantType.detailed) -> UUID:
         """Create a new summary for a chat.
 
         Args:
@@ -86,15 +84,15 @@ class SummaryService:
             HTTPException: If summary creation fails.
         """
         try:
-            data = SummaryVariants(
-                chat_id=chat_id, variant_type=variant_type
-            )
+            data = SummaryVariants(chat_id=chat_id, variant_type=variant_type)
             self._db.session.add(data)
             self._db.commit()
             self._db.session.refresh(data)
             return data.id
         except Exception as e:
-            logger.error(f"Failed to create a new summary: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to create a new summary: {str(e)}",
+            )
             raise HTTPException(
                 detail="Failed to save the summary",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -126,7 +124,9 @@ class SummaryService:
         except (HTTPException, ValueError):
             raise
         except Exception as e:
-            logger.error(f"Failed to update summary: {e}", exc_info=True)
+            logger.error(
+                f"Failed to update summary: {e}",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update summary.",

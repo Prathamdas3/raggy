@@ -34,14 +34,17 @@ app.add_middleware(
 
 app.include_router(v1_router, prefix="/api/v1", tags=["v1"])
 
-if __name__ == "__main__":
+def main():
     import uvicorn
 
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=9000,
+        port=8080,
         log_level="debug" if config.debug else "info",
         reload=True,
         log_config=None,
     )
+
+if __name__ == "__main__":
+    main()

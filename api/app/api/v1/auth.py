@@ -138,7 +138,9 @@ def handle_signup(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Signup failed: {str(e)}", exc_info=True)
+        logger.error(
+            f"Signup failed: {str(e)}",
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during signup",
@@ -207,7 +209,9 @@ def handle_signin(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Signin failed: {str(e)}", exc_info=True)
+        logger.error(
+            f"Signin failed: {str(e)}",
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during signin",
@@ -251,7 +255,9 @@ def handle_logout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Logout failed: {str(e)}", exc_info=True)
+        logger.error(
+            f"Logout failed: {str(e)}",
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during logout",
@@ -302,7 +308,9 @@ def handle_refresh(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Signin failed: {str(e)}", exc_info=True)
+        logger.error(
+            f"Signin failed: {str(e)}",
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during signin",

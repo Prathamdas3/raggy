@@ -1,6 +1,6 @@
 from fastapi import UploadFile
 from uuid import uuid4
-from app.core import get_logger,minio_client,ContentType,BucketName
+from app.core import get_logger, minio_client, ContentType, BucketName
 
 
 logger = get_logger(__name__)
@@ -10,6 +10,7 @@ ALLOWED_CONTENT_TYPES = {
     "audio/mpeg": ContentType.MP3,
     "audio/wav": ContentType.WAV,
 }
+
 
 def save_upload_to_minio(file: UploadFile) -> str:
     """
@@ -39,7 +40,9 @@ def save_upload_to_minio(file: UploadFile) -> str:
     except ValueError:
         raise
     except Exception as e:
-        logger.error(f"Failed to save upload to MinIO: {e}", exc_info=True)
+        logger.error(
+            f"Failed to save upload to MinIO: {e}",
+        )
         raise RuntimeError(f"Failed to save file: {e}") from e
 
 

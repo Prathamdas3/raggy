@@ -5,7 +5,7 @@ from pydantic import field_validator
 class UpdateSummary(CustomBaseModel):
     audio_url:str|None=None
     content:str|None=None
-    summary_id:UUID
+    summary_id:str
     
     @field_validator("summary_id")
     @classmethod

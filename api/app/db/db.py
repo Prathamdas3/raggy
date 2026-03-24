@@ -115,7 +115,9 @@ def get_celery_session():
         yield session
     except Exception as e:
         session.rollback()
-        logger.error(f"Celery session error: {e}", exc_info=True)
+        logger.error(
+            f"Celery session error: {e}",
+        )
         raise
     finally:
         session.close()

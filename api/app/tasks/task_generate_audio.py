@@ -20,6 +20,7 @@ def task_generate_audio(self, data: dict) -> dict[str, str | None]:
             **data,
             "audio_url": audio_url,
         }
+        logger.info("✅ successfully generated the audio for the given text")
         return return_value
     except ValueError:
         raise

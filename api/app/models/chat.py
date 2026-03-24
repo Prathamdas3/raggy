@@ -3,7 +3,6 @@
 Contains request/response models for chat updates and file extraction.
 """
 
-from uuid import UUID
 from app.core import CustomBaseModel
 from app.db import Status
 
@@ -21,7 +20,7 @@ class UpdateChat(CustomBaseModel):
         is_bookmarked: Optional bookmark flag.
         share_id: Optional share identifier.
     """
-    chat_id:UUID
+    chat_id:str
     title: Optional[str] = None
     shared_doc: Optional[str] = None
     processing_status: Optional[Status] = None
@@ -64,25 +63,3 @@ class UpdateChat(CustomBaseModel):
     def has_update(self) -> bool:
         """Check if any fields were provided for update."""
         return any(v is not None for v in self.model_dump(exclude_unset=True).values())
-
-
-class ExtractChat(CustomBaseModel):
-    """Model for extracting chat data from a file.
-
-    Attributes:
-        chat_id: UUID identifier for the document.
-        file_path: Path to the file to extract from.
-        file_type: Type of the file.
-    """
-
-    chat_id: str
-    stroage_key: str
-    file_type: str
-
-    @field_validator("chat_id")
-    def validate_chat_id(cls, v: str) -> UUID:
-        """Validate chat_id is a valid UUID string."""
-        try:
-            return UUID(v)
-        except Exception:
-            raise TypeError("Doc Id should be UUID")

@@ -4,7 +4,6 @@ Contains background tasks for extracting text content from files.
 """
 
 from app.core import celery, get_logger
-from app.models import ExtractChat
 from app.utils import extract_pdf_content
 from typing import TypedDict
 from app.tasks.task_save_text import SaveArgs
@@ -46,14 +45,14 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
         Automatically retries up to 3 times on failure.
     """
     try:
-        data = ExtractChat(**data).model_dump()
         content = extract_pdf_content(storage_key=data.get("stroage_key"))
         if not content.content:
             raise ValueError("No content found from the given file path")
         return_value: SaveArgs = {
             "content": content.content,
-            "chat_id": str(data.chat_id),
+            "chat_id": str(data.get("chat_id")),
         }
+        logger.info("✅ successfully extracted the text")
         return return_value
     except Exception as e:
         logger.error(

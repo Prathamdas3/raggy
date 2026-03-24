@@ -163,7 +163,7 @@ class TokenToUserId:
             return user
         except Exception as e:
             logger.error(
-                f"Database error fetching user {user_id}: {str(e)}", exc_info=True
+                f"Database error fetching user {user_id}: {str(e)}",
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -207,7 +207,6 @@ class TokenToUserId:
         except JWTError as je:
             logger.error(
                 f"Failed to fetch the credentials from the access_token:{str(je)}",
-                exc_info=True,
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -216,7 +215,6 @@ class TokenToUserId:
         except Exception as e:
             logger.error(
                 f"Failed to extract the user id from the access token: {str(e)}",
-                exc_info=True,
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -264,7 +262,6 @@ class TokenToUserId:
         except JWTError as je:
             logger.error(
                 f"Failed to fetch the credentials from the refresh token: {str(je)}",
-                exc_info=True,
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -273,7 +270,6 @@ class TokenToUserId:
         except Exception as e:
             logger.error(
                 f"Failed to extract the user id from the refresh token: {str(e)}",
-                exc_info=True,
             )
 
             raise HTTPException(

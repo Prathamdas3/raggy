@@ -50,6 +50,7 @@ def task_save_original_text_vector_db(self, data: SaveArgs) -> SaveArgs:
         qdrant_store.save(
             texts=content.texts, metadatas=content.metadatas, ids=content.ids
         )
+        logger.info("✅ successfully saved the text in the vector db")
         return data
     except Exception as e:
         logger.error(f"Failed to store the original text in the vector db: {str(e)}")

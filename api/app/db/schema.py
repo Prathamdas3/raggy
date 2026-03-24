@@ -54,12 +54,12 @@ class VariantType(Enum):
         short: Short summary.
         long: Long summary.
         detailed: Detailed summary.
+        default: Default summary
     """
 
     short = "short"
     long = "long"
     detailed = "detailed"
-    default="default"
 
 
 # ---------------- MIXINS ----------------
@@ -235,7 +235,7 @@ class SummaryVariants(CreatedAtMixin, SQLModel, table=True):
     audio_url: str = Field(default="")
 
     variant_type: VariantType = Field(
-        default=VariantType.default,
+        default=VariantType.detailed,
         sa_column=sa.Column(sa.Enum(VariantType), nullable=False),
     )
 

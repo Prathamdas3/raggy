@@ -63,7 +63,9 @@ class ChatService:
         except HTTPException:
             raise
         except Exception:
-            logger.error(f"No chat found with the given id: {chat_id}", exc_info=True)
+            logger.error(
+                f"No chat found with the given id: {chat_id}",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Something went wrong while fetching the chat",
@@ -91,13 +93,15 @@ class ChatService:
                 return []
             return cast(list[ReturnChatType], chats)
         except Exception as e:
-            logger.error(f"Failed to fetch the chats: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to fetch the chats: {str(e)}",
+            )
             raise HTTPException(
                 detail="Failed to find the chats",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def create_chat(self, user_id: UUID,title:str,original_doc:str) -> UUID:
+    def create_chat(self, user_id: UUID, title: str, original_doc: str) -> UUID:
         """Create a new chat for a user.
 
         Creates a new chat with a root branch for the conversation.
@@ -113,7 +117,7 @@ class ChatService:
         """
         try:
             # 1. Create chat
-            chat = Chats(user_id=user_id,title=title,original_doc=original_doc)
+            chat = Chats(user_id=user_id, title=title, original_doc=original_doc)
             self._db.session.add(chat)
             self._db.session.flush()  # get chat.id
 
@@ -130,7 +134,9 @@ class ChatService:
 
             return chat.id
         except Exception as e:
-            logger.error("Failed to create a new chat", exc_info=True)
+            logger.error(
+                "Failed to create a new chat",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to store the chat",
@@ -155,7 +161,9 @@ class ChatService:
             logger.info(f"Successfully removed the chat with the id: {chat_id}")
             return "Successfully removed the chat"
         except Exception:
-            logger.error("Failed to remove the chat", exc_info=True)
+            logger.error(
+                "Failed to remove the chat",
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to remove the chat",
@@ -175,8 +183,11 @@ class ChatService:
             HTTPException: If chat update fails.
         """
         try:
-            chat = self.find_chat(chat_id=details.chat_id)
-            updated_data = details.model_dump(exclude_unset=True)
+            chat_id = details.chat_id
+            if not isinstance(chat_id, UUID):
+                chat_id = UUID(chat_id)
+            chat = self.find_chat(chat_id=chat_id)
+            updated_data = details.model_dump(exclude_unset=True,exclude={"chat_id"})
             if not details.has_update():
                 return "No data to update the chats"
             for key, value in updated_data.items():
@@ -185,12 +196,9 @@ class ChatService:
             self._db.commit()
             self._db.session.refresh(chat)
             return "Successfully updated the chats"
-        except Exception:
-            logger.error("Failed to update the chat")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update the chat",
-            )
+        except Exception as e:
+            logger.exception(f"Failed to update chat: {e}")
+            raise
 
     def share_chat(self, chat_id: UUID) -> str:
         """Generate or retrieve a shareable link for a chat.
@@ -210,7 +218,7 @@ class ChatService:
                 return f"{config.frontend_url}/{chat.share_id}"
 
             code = str(uuid4())
-            data = UpdateChat(share_id=code,chat_id=chat_id)
+            data = UpdateChat(share_id=code, chat_id=str(chat_id))
             self.update_chat(details=data)
             return f"{config.frontend_url}/{code}"
         except Exception:
@@ -242,7 +250,9 @@ class ChatService:
             self._db.session.refresh(data)
             return data.id
         except Exception as e:
-            logger.error(f"Failed to create the branch: {str(e)}", exc_info=True)
+            logger.error(
+                f"Failed to create the branch: {str(e)}",
+            )
             raise HTTPException(
                 detail="Failed to create the branch",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
