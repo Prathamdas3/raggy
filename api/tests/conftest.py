@@ -60,7 +60,7 @@ def client(db_session: Any):
 
 @pytest.fixture(scope="function")
 def test_user(db_session: Any):
-    from app.db.schema import Users
+    from app.db.schemas import Users
 
     password_handler = HandlePassword()
     hashed = password_handler.get_hashed_password(TEST_PASSWORD)

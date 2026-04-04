@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = Field(
         validation_alias="REFRESH_TOKEN_EXPIRE_DAYS", default=7
     )
-    secret_key: str = Field(validation_alias="SECRET_KEY", default="")
+    secret_key: str = Field(validation_alias="SECRET_KEY", default="HelloSecretKey")
     algorithm: str = Field(validation_alias="ALGORITHM", default="HS256")
     frontend_url: str = Field(
         validation_alias="FRONTEND_URL", default="http://localhost:3000"

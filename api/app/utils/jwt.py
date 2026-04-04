@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from app.core.logger import get_logger
 from app.models.jwt import Tokens
-from app.db.schema import Users
+from app.db.schemas import Users
 from app.core.config import config
 from datetime import datetime, timezone, timedelta
 from jose import jwt, JWTError

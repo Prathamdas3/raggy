@@ -5,7 +5,7 @@ and dependency injection functions for FastAPI.
 """
 
 from contextlib import contextmanager
-from sqlmodel import create_engine, SQLModel, Session
+from sqlmodel import create_engine, Session
 from fastapi import Depends
 from app.core.logger import get_logger
 from app.core.config import config
@@ -58,13 +58,6 @@ class Database:
             )
             return engine
         except Exception:
-            raise
-
-    def init_db(self) -> None:
-        """Initialize database tables from SQLModel metadata."""
-        try:
-            SQLModel.metadata.create_all(self.engine)
-        except SQLAlchemyError:
             raise
 
     def session(self) -> Generator[Session, None, None]:

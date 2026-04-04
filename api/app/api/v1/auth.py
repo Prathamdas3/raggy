@@ -64,7 +64,7 @@ def set_cookies(response: HttpResponse, key: str, value: str, time: int, type: s
         key=key,
         value=value,
         httponly=True,
-        secure=False,
+        secure=config.env=="production",
         samesite="lax",
         max_age=time * 24 * 60 * 60 if type == "days" else time * 60,
     )

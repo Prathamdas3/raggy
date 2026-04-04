@@ -68,7 +68,7 @@ class AuthService:
 
             hashed_password = self._password.get_hashed_password(data.password)
 
-            from app.db.schema import Users
+            from app.db.schemas import Users
 
             new_user = Users(email=data.email, password=hashed_password)
             self._db.session.add(new_user)

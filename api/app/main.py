@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import config
 from app.api.v1.router import router as v1_router
 from app.lifecycle import lifespan
+from app.exceptions import register_exceptions
 
 origins = ["http://localhost", "http://localhost:3000"]
 
@@ -31,8 +32,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+register_exceptions(app)
 
 app.include_router(v1_router, prefix="/api/v1", tags=["v1"])
+
 
 def main():
     import uvicorn

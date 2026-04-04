@@ -1,24 +1,14 @@
 from app.db.db import SessionDep,get_celery_session
 from app.db.service import DatabaseService
-from app.db.schema import (
-    Users,
-    Chats,
-    Status,
-    Sender,
-    VariantType,
-    SummaryVariants,
-    ChatBranches,
-)
+import app.db.schemas as schemas
+from app.db.async_db import AsyncDatabase
+from app.db.async_service import AsyncDatabaseService
 
 __all__ = [
     "SessionDep",
     "DatabaseService",
-    "Users",
-    "Chats",
-    "Status",
-    "Sender",
-    "VariantType",
-    "SummaryVariants",
-    "ChatBranches",
-    "get_celery_session"
+    "get_celery_session",
+    "AsyncDatabase",
+    "AsyncDatabaseService",
+    *[str(s) for s in schemas.__all__]
 ]
