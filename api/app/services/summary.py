@@ -9,7 +9,8 @@ from typing import Mapping, cast
 
 from uuid import UUID
 from fastapi import HTTPException, status
-from app.db import SummaryVariants, DatabaseService, VariantType
+from app.db.schemas import SummaryVariants, VariantType
+from app.db.service import DatabaseService
 from app.core import get_logger
 from app.models import UpdateSummary
 from sqlmodel import select

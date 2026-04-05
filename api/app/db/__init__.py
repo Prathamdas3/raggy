@@ -10,5 +10,5 @@ __all__ = [
     "get_celery_session",
     "AsyncDatabase",
     "AsyncDatabaseService",
-    *[str(s) for s in schemas.__all__]
+    *schemas.__all__,
 ]

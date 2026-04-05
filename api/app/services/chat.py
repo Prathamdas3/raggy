@@ -10,7 +10,8 @@ from fastapi import HTTPException, status
 from uuid import UUID, uuid4
 from typing import TypedDict, cast
 
-from app.db import Chats, DatabaseService, ChatBranches
+from app.db.schemas import Chats, ChatBranches
+from app.db.service import DatabaseService
 from app.models import UpdateChat
 from app.core import get_logger, config
 

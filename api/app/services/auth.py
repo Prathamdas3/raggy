@@ -1,184 +1,74 @@
-"""Authentication service for user sign-up and sign-in.
-
-This module provides the AuthService class that handles user registration,
-login, and password update operations.
-"""
-
-from dataclasses import dataclass
-from fastapi import HTTPException, status
 from pydantic import EmailStr
-
-
 from app.core import get_logger
-from app.models import CreateUser, SigninUser, UpdatePassword, Response, Status
+from app.models import CreateUser, SigninUser, UpdatePassword
+from app.db import AsyncDatabaseService
+from app.utils import run_sync,HandlePassword
 from app.services.user import FindUser
-from app.db import DatabaseService
-from app.utils import HandlePassword
+from app.core import AppException
+from dataclasses import dataclass
+
+@dataclass
+class CreateNewUser:
+    email: EmailStr
+    id: str
+
 
 logger = get_logger(__name__)
 
 
-@dataclass
-class SignInUser:
-    """Data class for sign-in response."""
-
-    id: str
-    email: EmailStr
-
-
 class AuthService:
-    """Service class for authentication operations.
-
-    Handles user signup, signin, and password update operations.
-    """
-
-    def __init__(
-        self, db_service: DatabaseService, password: HandlePassword, user: FindUser
-    ):
-        """Initialize AuthService with dependencies.
-
-        Args:
-            db_service: Database service instance.
-            password: Password handler for hashing/verification.
-            user: FindUser service for user lookup.
-        """
-        self._db = db_service
+    def __init__(self,db:AsyncDatabaseService,password:HandlePassword,user:FindUser):
+        self._db = db
         self._password = password
         self._user = user
-
-    def user_signup(self, data: CreateUser):
-        """Register a new user.
-
-        Args:
-            data: CreateUser model with email and password.
-
-        Returns:
-            Dictionary with created user's id and email.
-
-        Raises:
-            HTTPException: If email already exists or signup fails.
-        """
+    async def user_signup(self,data:CreateUser) -> CreateNewUser:
         try:
-            existing = self._user.get_user_by_email(data.email)
+            existing=await self._user.get_user_by_email(data.email)
             if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Email already exists",
-                )
-
-            hashed_password = self._password.get_hashed_password(data.password)
-
+                raise AppException("Email already exists",status_code=409)
+            hashed_password=await run_sync(self._password.get_hashed_password,data.password)
             from app.db.schemas import Users
-
-            new_user = Users(email=data.email, password=hashed_password)
-            self._db.session.add(new_user)
-            self._db.commit()
-            self._db.session.refresh(new_user)
-
-            logger.info(f"User created with id={new_user.id}")
-
-            return {"id": str(new_user.id), "email": new_user.email}
-
-        except HTTPException:
+            new_user=Users(email=data.email,password=hashed_password)
+            self._db.add(new_user)
+            await self._db.commit()
+            await self._db.refresh(new_user)
+            return CreateNewUser(id=str(new_user.id), email=new_user.email)
+        except AppException:
             raise
-        except Exception as e:
-            logger.error(
-                "User signup failed",
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create user",
-            ) from e
-
-    def user_signin(self, data: SigninUser) -> SignInUser:
-        """Authenticate a user with email and password.
-
-        Args:
-            data: SigninUser model with email and password.
-
-        Returns:
-            SignInUser with authenticated user's id and email.
-
-        Raises:
-            HTTPException: If user not found or password incorrect.
-        """
+        except Exception as e: 
+            logger.error(f"Error during user signup: {e}")
+            raise AppException("Failed to sign up user",status_code=500)
+        
+    async def user_signin(self,data:SigninUser)->CreateNewUser:
         try:
-            user = self._user.get_user_by_email(data.email)
+            user=await self._user.get_user_by_email(data.email)
             if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No user found with the given email",
-                )
-
-            old_password = user.password
-            new_password = data.password
-
-            if not self._password.verify_password(
-                plain_password=new_password, hashed_password=old_password
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password"
-                )
-
-            return SignInUser(id=str(user.id), email=user.email)
-
-        except HTTPException:
+                raise AppException("Invalid email or password",status_code=401)
+            password_valid=await run_sync(self._password.verify_password,data.password,user.password)
+            if not password_valid:
+                raise AppException("Invalid email or password",status_code=401)
+            return CreateNewUser(id=str(user.id), email=user.email)
+        except AppException:
             raise
         except Exception as e:
-            logger.error(
-                "User signin failed",
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Signin operation failed",
-            ) from e
-
-    def update_password(self, data: UpdatePassword) -> Response[None]:
-        """Update a user's password.
-
-        Args:
-            data: UpdatePassword model with user_id, old and new passwords.
-
-        Returns:
-            Response confirming successful password update.
-
-        Raises:
-            HTTPException: If user not found or old password incorrect.
-        """
+            logger.error(f"Error during user signin: {e}")
+            raise AppException("Failed to sign in user",status_code=500)
+        
+    async def update_password(self,data:UpdatePassword)->str:
         try:
-            user = self._user.get_user_by_id(data.user_id)
+            user=await self._user.get_user_by_id(data.user_id)
             if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found",
-                )
-
-            if not self._password.verify_password(
-                plain_password=data.old_password,
-                hashed_password=user.password,
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Old password is incorrect",
-                )
-
-            user.password = self._password.get_hashed_password(data.new_password)
-            self._db.commit()
-
-            logger.info(f"Password updated for user id={user.id}")
-
-            return Response[None](
-                status=Status.success,
-                message="Password updated successfully",
-            )
-
-        except HTTPException:
+                raise AppException("User not found",status_code=404)
+            password_valid=await run_sync(self._password.verify_password,data.old_password,user.password)
+            if not password_valid:
+                raise AppException("Invalid old password",status_code=401)
+            new_hashed_password=await run_sync(self._password.get_hashed_password,data.new_password)
+            user.password=new_hashed_password
+            self._db.add(user)
+            await self._db.commit()
+            return "Password updated successfully"
+        except AppException:
             raise
         except Exception as e:
-            logger.error(
-                f"Password update failed for user id={data.user_id}",
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update password",
-            ) from e
+            logger.error(f"Error during password update: {e}")
+            raise AppException("Failed to update password",status_code=500)

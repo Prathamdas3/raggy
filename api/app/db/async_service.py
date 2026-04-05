@@ -1,20 +1,29 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import get_logger
 
-logger=get_logger(__name__)
+logger = get_logger(__name__)
+
 
 class AsyncDatabaseService:
-    def __init__(self,db):
+    def __init__(self, db: AsyncSession):
         self._db = db
-    
-    async def commit(self):
+
+    @property
+    def session(self) -> AsyncSession:
+        return self._db
+
+    def add(self, instance) -> None:  # ← sync, no async
+        self._db.add(instance)
+
+    async def commit(self) -> None:
         try:
             await self._db.commit()
-        except Exception as e:
+        except Exception:
             await self._db.rollback()
-            raise e
-    
-    @property
-    def session(self):
-        return self._db
-    async def refresh(self, instance):
+            raise
+
+    async def refresh(self, instance) -> None:
         await self._db.refresh(instance)
+
+    async def delete(self, instance) -> None:
+        await self._db.delete(instance)

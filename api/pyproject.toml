@@ -17,7 +17,7 @@ dependencies = [
     "langchain-huggingface>=1.2.1",
     "langchain-qdrant>=1.1.0",
     "minio>=7.2.20",
-    "psycopg2-binary>=2.9.11",
+    "psycopg[binary]>=3.3.3",
     "pypdf>=6.7.0",
     "python-jose[cryptography]>=3.5.0",
     "qdrant-client>=1.17.1",
@@ -42,3 +42,6 @@ dev = [
 [project.scripts]
 dev = "app.main:main"
 worker="app.workers:main"
+
+[tool.uv]
+package=true

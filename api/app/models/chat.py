@@ -4,7 +4,7 @@ Contains request/response models for chat updates and file extraction.
 """
 
 from app.core import CustomBaseModel
-from app.db import Status
+from app.db.schemas import Status
 
 from pydantic import field_validator, model_validator
 from typing import Optional

@@ -4,7 +4,7 @@ Provides endpoints for retrieving and managing the current authenticated user.
 """
 
 from fastapi import APIRouter, Depends, status, HTTPException
-from app.models import Response, Status
+from app.models import Response
 from app.core import get_logger
 from app.db import SessionDep
 from app.services import get_user_service, UserService
@@ -35,8 +35,6 @@ def get_current_user(
     """
     try:
         return Response(
-            message="Successfully found the user",
-            status=Status.success,
             data={"email": user.email, "user_id": user.user_id},
         )
     except HTTPException:

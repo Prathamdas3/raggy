@@ -1,282 +1,126 @@
-"""User management service.
-
-This module provides FindUser and UserService classes for handling
-user-related operations including creation, retrieval, updates,
-and deletion of user accounts.
-"""
-
-from pydantic import EmailStr
-from dataclasses import dataclass
+from app.utils import HandlePassword
+from sqlmodel import select
 from typing import Optional
 from uuid import UUID
-
-from fastapi import HTTPException, status
-from sqlmodel import select
-from sqlalchemy.exc import SQLAlchemyError
-
+from app.db import AsyncDatabaseService
+from app.db.schemas import Users
 from app.core import get_logger
-from app.db import Users, DatabaseService
-from app.models import CreateUser, UpdateUser, Response, Status
-from app.utils import HandlePassword
+from sqlalchemy.exc import SQLAlchemyError
+from app.models import CreateUser,UpdateChat,Response
+from app.core import DBErrorException,NotFoundException,AppException
+from app.utils import run_sync
 
-logger = get_logger(__name__)
-
-
-@dataclass
-class CreateNewUser:
-    """Data class for newly created user response."""
-
-    email: EmailStr
-    id: str
+logger=get_logger(__name__)
 
 
 class FindUser:
-    """Service class for finding users by ID or email."""
-
-    def __init__(self, db_service: DatabaseService) -> None:
-        """Initialize FindUser with database service.
-
-        Args:
-            db_service: Database service instance.
-        """
-        self._db = db_service
-
-    def get_user_by_id(self, user_id: UUID) -> Optional[Users]:
-        """Fetch a user by their UUID.
-
-        Args:
-            user_id: UUID of the user to find.
-
-        Returns:
-            User entity if found, None otherwise.
-
-        Raises:
-            HTTPException: If database query fails.
-        """
+    def __init__(self,db:AsyncDatabaseService):
+        self._db = db
+    
+    async def get_user_by_id(self,user_id:UUID)->Optional[Users]:
         try:
             logger.debug(f"Fetching user by id={user_id}")
-            return self._db.session.get(Users, user_id)
+            return await self._db.session.get(Users, user_id)
         except SQLAlchemyError as e:
             logger.error(
                 f"Failed to fetch user by id={user_id}",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to find the user",
-            ) from e
-
-    def get_user_by_email(self, email: EmailStr) -> Optional[Users]:
-        """Fetch a user by their email address.
-
-        Args:
-            email: Email address to search for.
-
-        Returns:
-            User entity if found, None otherwise.
-
-        Raises:
-            HTTPException: If database query fails.
-        """
+            raise DBErrorException("Failed to fetch the user by id") from e
+    
+    async def get_user_by_email(self,email:str)->Optional[Users]:
         try:
+            logger.debug(f"Fetching user by email={email}")
             statement = select(Users).where(Users.email == email)
-            return self._db.session.exec(statement).one_or_none()
+            result = await self._db.session.execute(statement)
+            return result.scalar_one_or_none()
         except SQLAlchemyError as e:
             logger.error(
                 f"Failed to fetch user by email={email}",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to find this user email",
-            ) from e
-
-
+            raise DBErrorException("Failed to fetch the user by email") from e
+        
 class UserService:
-    """Service class for user management operations.
-
-    Handles user CRUD operations including account creation,
-    updates, and deletion.
-    """
-
-    def __init__(
-        self, db_session: DatabaseService, password: HandlePassword, find_user: FindUser
-    ):
-        """Initialize UserService with dependencies.
-
-        Args:
-            db_session: Database service instance.
-            password: Password handler for hashing/verification.
-            find_user: FindUser service for user lookup.
-        """
-        self._db = db_session
+    def __init__(self,db:AsyncDatabaseService,password:HandlePassword,find_user:FindUser) -> None:
+        self._db = db
         self._password = password
         self._user = find_user
-
-    def get_current_user(self, user_id: str) -> Users | None:
-        """Get a user by their ID string.
-
-        Args:
-            user_id: String representation of user UUID.
-
-        Returns:
-            User entity if found.
-
-        Raises:
-            HTTPException: If user is not found.
-        """
+        
+    async def get_current_user(self,user_id:UUID):
         try:
-            old_user = self._user.get_user_by_id(user_id=UUID(user_id))
+            old_user=await self._user.get_user_by_id(user_id)
+            
             if not old_user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User does not exists",
-                )
+                raise NotFoundException("User not found")
             return old_user
-        except HTTPException:
+        except NotFoundException:
             raise
         except Exception as e:
             logger.error(
-                "User fetching failed",
+                f"Failed to fetch user by id={user_id}",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch user",
-            ) from e
-
-    def create_user(self, data: CreateUser) -> CreateNewUser:
-        """Create a new user account.
-
-        Args:
-            data: CreateUser model with email and password.
-
-        Returns:
-            CreateNewUser with created user info.
-
-        Raises:
-            HTTPException: If email already exists or creation fails.
-        """
+            raise Exception("Failed to fetch the user by id") from e
+        
+    async def create_user(self,data:CreateUser)->Response:
         try:
-            if self._user.get_user_by_email(data.email):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Email already exists",
-                )
-
-            hashed_password = self._password.get_hashed_password(data.password)
-
-            user = Users(
-                email=data.email,
-                password=hashed_password,
-            )
-
-            self._db.session.add(user)
-            self._db.commit()
-            self._db.session.refresh(user)
-
-            logger.info(f"User created with id={user.id}")
-
-            return CreateNewUser(id=str(user.id), email=user.email)
-
-        except HTTPException:
+            existing=await self._user.get_user_by_email(data.email)
+            if existing:
+                raise AppException(message="Email already exists",status_code=409)
+            
+            hashed_password=await run_sync(self._password.get_hashed_password,data.password)
+            
+            new_user=Users(email=data.email,password=hashed_password)
+            self._db.add(new_user)
+            await self._db.session.commit()
+            await self._db.session.refresh(new_user)
+            
+            logger.info(f"User created with id={new_user.id}")
+            
+            return Response(data={"id": str(new_user.id), "email": new_user.email})
+        except AppException:
             raise
         except Exception as e:
             logger.error(
                 "User creation failed",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create user",
-            ) from e
-
-    def update_user(self, user_id: UUID, data: UpdateUser) -> Response[None]:
-        """Update a user's profile information.
-
-        Args:
-            user_id: UUID of the user to update.
-            data: UpdateUser model with fields to update.
-
-        Returns:
-            Response confirming successful update.
-
-        Raises:
-            HTTPException: If user not found or update fails.
-        """
+            raise Exception("Failed to create user") from e
+    
+    async def update_user(self,user_id:UUID,data:UpdateChat)->Response[Users]:
         try:
-            if not data.has_updates():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No fields provided for update",
-                )
-
-            user = self._user.get_user_by_id(user_id)
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found",
-                )
-
-            updates = data.model_dump(exclude_unset=True)
+            if not data.has_update():
+                raise AppException(message="No fields to update",status_code=400)
+            old_user=await self._user.get_user_by_id(user_id)
+            if not old_user:
+                raise NotFoundException("User not found")
+            updates=data.model_dump(exclude_unset=True)
             for field, value in updates.items():
-                setattr(user, field, value)
-
-            self._db.session.add(user)
-            self._db.commit()
-            self._db.session.refresh(user)
-
+                setattr(old_user, field, value)
+            self._db.add(old_user)
+            await self._db.session.commit()
+            await self._db.session.refresh(old_user)
             logger.info(f"User updated id={user_id}, fields={list(updates.keys())}")
-
-            return Response[None](
-                status=Status.success,
-                message="User updated successfully",
-            )
-
-        except HTTPException:
+            return Response(data=old_user)
+        except (NotFoundException, AppException):
             raise
         except Exception as e:
             logger.error(
-                f"User update failed for id={user_id}",
+                f"Failed to update user id={user_id}",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update user",
-            ) from e
-
-    def delete_user(self, user_id: UUID) -> Response[None]:
-        """Delete a user account.
-
-        Args:
-            user_id: UUID of the user to delete.
-
-        Returns:
-            Response confirming successful deletion.
-
-        Raises:
-            HTTPException: If user not found or deletion fails.
-        """
+            raise Exception("Failed to update user") from e
+        
+    async def delete_user(self,user_id:UUID)->Response[str]:
         try:
-            user = self._user.get_user_by_id(user_id)
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found",
-                )
-
-            self._db.session.delete(user)
-            self._db.commit()
-
-            logger.info(f"User deleted id={user_id}")
-
-            return Response[None](
-                status=Status.success,
-                message="User deleted successfully",
-            )
-
-        except HTTPException:
+            old_user=await self._user.get_user_by_id(user_id)
+            if not old_user:
+                raise NotFoundException("User not found")
+            await self._db.session.delete(old_user)
+            await self._db.session.commit()
+            logger.info(f"User deleted with id={user_id}")
+            return Response(data="User deleted successfully")
+        
+        except NotFoundException:
             raise
         except Exception as e:
             logger.error(
-                f"User deletion failed for id={user_id}",
+                f"Failed to delete user id={user_id}",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete user",
-            ) from e
+            raise Exception("Failed to delete user") from e
