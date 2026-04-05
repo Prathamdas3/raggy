@@ -6,7 +6,7 @@ from app.db import AsyncDatabaseService
 from app.db.schemas import Users
 from app.core import get_logger
 from sqlalchemy.exc import SQLAlchemyError
-from app.models import CreateUser,UpdateChat,Response
+from app.models import CreateUser,UpdateChat
 from app.core import DBErrorException,NotFoundException,AppException
 from app.utils import run_sync
 
@@ -60,7 +60,7 @@ class UserService:
             )
             raise Exception("Failed to fetch the user by id") from e
         
-    async def create_user(self,data:CreateUser)->Response:
+    async def create_user(self,data:CreateUser)->dict[str,str]:
         try:
             existing=await self._user.get_user_by_email(data.email)
             if existing:
@@ -75,7 +75,7 @@ class UserService:
             
             logger.info(f"User created with id={new_user.id}")
             
-            return Response(data={"id": str(new_user.id), "email": new_user.email})
+            return {"id": str(new_user.id), "email": new_user.email}
         except AppException:
             raise
         except Exception as e:
@@ -84,7 +84,7 @@ class UserService:
             )
             raise Exception("Failed to create user") from e
     
-    async def update_user(self,user_id:UUID,data:UpdateChat)->Response[Users]:
+    async def update_user(self,user_id:UUID,data:UpdateChat)->Users:
         try:
             if not data.has_update():
                 raise AppException(message="No fields to update",status_code=400)
@@ -98,7 +98,7 @@ class UserService:
             await self._db.session.commit()
             await self._db.session.refresh(old_user)
             logger.info(f"User updated id={user_id}, fields={list(updates.keys())}")
-            return Response(data=old_user)
+            return old_user
         except (NotFoundException, AppException):
             raise
         except Exception as e:
@@ -107,7 +107,7 @@ class UserService:
             )
             raise Exception("Failed to update user") from e
         
-    async def delete_user(self,user_id:UUID)->Response[str]:
+    async def delete_user(self,user_id:UUID)->str:
         try:
             old_user=await self._user.get_user_by_id(user_id)
             if not old_user:
@@ -115,7 +115,7 @@ class UserService:
             await self._db.session.delete(old_user)
             await self._db.session.commit()
             logger.info(f"User deleted with id={user_id}")
-            return Response(data="User deleted successfully")
+            return "User deleted successfully"
         
         except NotFoundException:
             raise
