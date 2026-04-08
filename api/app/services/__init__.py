@@ -42,20 +42,20 @@ def get_user_service(session: SessionDep) -> UserService:
     return UserService(db=db_session, find_user=user, password=password)
 
 
-# def get_chat_service(session: SessionDep) -> ChatService:
-#     """Get chat service instance.
+def get_chat_service(session: SessionDep) -> ChatService:
+    """Get chat service instance.
 
-#     Args:
-#         session: Database session dependency.
+    Args:
+        session: Database session dependency.
 
-#     Returns:
-#         Configured ChatService instance.
-#     """
-#     db_session = DatabaseService(session=session)
-#     return ChatService(db_session=db_session)
+    Returns:
+        Configured ChatService instance.
+    """
+    db_session = AsyncDatabaseService(db=session)
+    return ChatService(db_session=db_session)
 
-# def get_summary_service(session:SessionDep)->SummaryService:
-#     db_session=DatabaseService(session=session)
-#     return SummaryService(db_service=db_session)
+def get_summary_service(session:SessionDep)->SummaryService:
+    db_session=AsyncDatabaseService(db=session)
+    return SummaryService(db_service=db_session)
 
 __all__ = ["UpdateChat"]

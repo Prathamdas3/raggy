@@ -6,11 +6,11 @@ generation and retrieval of chat summaries in different variants.
 
 from sqlmodel.sql._expression_select_cls import SelectOfScalar
 from typing import Mapping, cast
-
+from app.core import AppException
 from uuid import UUID
-from fastapi import HTTPException, status
+from fastapi import status
 from app.db.schemas import SummaryVariants, VariantType
-from app.db.service import DatabaseService
+from app.db.async_service import AsyncDatabaseService
 from app.core import get_logger
 from app.models import UpdateSummary
 from sqlmodel import select
@@ -25,15 +25,15 @@ class SummaryService:
     with different variant types (short, long, detailed).
     """
 
-    def __init__(self, db_service: DatabaseService):
+    def __init__(self, db_service: AsyncDatabaseService):
         """Initialize SummaryService with database session.
 
         Args:
             db_service: Database service instance.
         """
-        self._db = db_service
+        self._db: AsyncDatabaseService = db_service
 
-    def get_summaries(self, chat_id: UUID) -> list[dict[str, str]]:
+    async def get_summaries(self, chat_id: str) -> list[dict[str, str]]:
         """Get all summaries for a chat.
 
         Args:
@@ -43,8 +43,13 @@ class SummaryService:
             List of summary dictionaries with content, audio_url, and created_at.
 
         Raises:
-            HTTPException: If no summaries found or fetch fails.
+            AppException: If no summaries found or fetch fails.
         """
+        try:
+            chat_id:UUID=UUID(chat_id)
+        except Exception:
+            raise AppException(status_code=400,message="Chat id must be of valid id")
+        
         try:
             statement: SelectOfScalar[Mapping[str, str]] = select(
                 {
@@ -53,24 +58,25 @@ class SummaryService:
                     "create_at": SummaryVariants.created_at,
                 }
             ).where(SummaryVariants.chat_id == chat_id)
-            summaries = self._db.session.exec(statement=statement).all()
+            summaries =await self._db.session.execute(statement=statement)
+            summaries=summaries.all()
             if not summaries:
-                raise HTTPException(
-                    detail="No summaries found", status_code=status.HTTP_400_BAD_REQUEST
+                raise AppException(
+                    message="No summaries found", status_code=status.HTTP_400_BAD_REQUEST
                 )
             return cast(list[dict[str, str]], summaries)
-        except HTTPException:
+        except AppException:
             raise
         except Exception as e:
             logger.error(
                 f"Failed to get the summaries from the chat_id: {str(e)}",
             )
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch the summaries",
+                message="Failed to fetch the summaries",
             )
 
-    def create_summary(self, chat_id: UUID, variant_type: VariantType=VariantType.detailed) -> UUID:
+    async def create_summary(self, chat_id: UUID, variant_type: VariantType=VariantType.detailed) -> UUID:
         """Create a new summary for a chat.
 
         Args:
@@ -82,33 +88,33 @@ class SummaryService:
             UUID of the created summary.
 
         Raises:
-            HTTPException: If summary creation fails.
+            AppException: If summary creation fails.
         """
         try:
             data = SummaryVariants(chat_id=chat_id, variant_type=variant_type)
-            self._db.session.add(data)
-            self._db.commit()
-            self._db.session.refresh(data)
+            self._db.add(data)
+            await self._db.commit()
+            await self._db.refresh(data)
             return data.id
         except Exception as e:
             logger.error(
                 f"Failed to create a new summary: {str(e)}",
             )
-            raise HTTPException(
-                detail="Failed to save the summary",
+            raise AppException(
+                message="Failed to save the summary",
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def update_summary(self, data: UpdateSummary) -> str:
+    async def update_summary(self, data: UpdateSummary) -> str:
         try:
             if not data.has_update():
-                raise ValueError("No fields provided for update.")
+                raise AppException(message="No data found to update", status_code=status.HTTP_400_BAD_REQUEST)
 
-            summary = self._db.session.get(SummaryVariants, data.summary_id)
+            summary = await self._db.session.get(SummaryVariants, data.summary_id)
             if not summary:
-                raise HTTPException(
+                raise AppException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Summary not found.",
+                    message="Summary not found.",
                 )
 
             # only update fields that were actually provided
@@ -117,18 +123,18 @@ class SummaryService:
             if data.audio_url is not None:
                 summary.audio_url = data.audio_url
 
-            self._db.session.add(summary)
-            self._db.session.commit()
-            self._db.session.refresh(summary)
+            self._db.add(summary)
+            await self._db.commit()
+            await self._db.refresh(summary)
             return summary.audio_url
 
-        except (HTTPException, ValueError):
+        except AppException:
             raise
         except Exception as e:
             logger.error(
                 f"Failed to update summary: {e}",
             )
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update summary.",
+                message="Failed to update summary.",
             )

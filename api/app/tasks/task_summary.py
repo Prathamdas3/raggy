@@ -3,8 +3,6 @@ from uuid import UUID
 from app.tasks.task_save_text import task_save_original_text_vector_db
 from app.tasks.task_generate_audio import task_generate_audio
 from app.core import get_logger, celery
-
-
 from app.models import UpdateChat, UpdateSummary
 
 from celery import chain

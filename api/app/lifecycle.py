@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.core import get_logger,minio_client,qdrant_store,ai_model
+from app.core import get_logger,boto_client,qdrant_store,ai_model
 
 logger = get_logger(__name__)
 
@@ -10,7 +10,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up...")
 
     try:
-        minio_client.initialize()
+        await boto_client.initialize()
         logger.info("✓ MinIO ready.")
     except Exception as e:
         logger.error(f"✗ MinIO init failed: {e}")
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 
     # ── Shutdown ──────────────────────────────────────────────────
     logger.info("Shutting down...")
-    minio_client.reset()
+    boto_client.reset()
     qdrant_store.reset()
     ai_model.reset()
     logger.info("✓ Cleanup complete.")

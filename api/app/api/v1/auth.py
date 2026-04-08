@@ -198,7 +198,7 @@ async def handle_logout(
 
 
 @auth_router.get("/refresh", status_code=status.HTTP_200_OK, response_model=Response)
-def handle_refresh(
+async def handle_refresh(
     request: Request,
     response: HttpResponse,
     user: RefreshTokenUserId = Depends(get_user_id),
@@ -219,7 +219,7 @@ def handle_refresh(
 
 
     payload = Tokens(user_id=str(user.user_id), email=user.email)
-    access_token = create_auth_tokens(payload=payload)[0]
+    access_token,_ = create_auth_tokens(payload=payload)
         
     set_cookies(
             response=response,
