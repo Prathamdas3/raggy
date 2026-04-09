@@ -3,13 +3,13 @@
 Provides dependency injection functions for FastAPI endpoints.
 """
 
-from app.db.db import SessionDep
-from app.db import DatabaseService
+from app.core import SessionDep
 from app.utils.common import HandlePassword
 from app.services.auth import AuthService
-from app.services.user import UserService, FindUser
+from app.services.user import UserService
 from app.services.chat import ChatService, UpdateChat
 from app.services.summary import SummaryService
+from app.repository import UserRepo, ChatRepo, SummaryRepo
 
 
 def get_auth_service(session: SessionDep) -> AuthService:
@@ -22,9 +22,8 @@ def get_auth_service(session: SessionDep) -> AuthService:
         Configured AuthService instance.
     """
     password = HandlePassword()
-    db_session = DatabaseService(session=session)
-    user = FindUser(db_service=db_session)
-    return AuthService(db_service=db_session, user=user, password=password)
+    repo = UserRepo(session=session)
+    return AuthService(password=password, repo=repo)
 
 
 def get_user_service(session: SessionDep) -> UserService:
@@ -36,10 +35,9 @@ def get_user_service(session: SessionDep) -> UserService:
     Returns:
         Configured UserService instance.
     """
-    db_session = DatabaseService(session=session)
-    user = FindUser(db_service=db_session)
+    repo = UserRepo(session)
     password = HandlePassword()
-    return UserService(db_session=db_session, find_user=user, password=password)
+    return UserService(repo=repo, password=password)
 
 
 def get_chat_service(session: SessionDep) -> ChatService:
@@ -51,11 +49,19 @@ def get_chat_service(session: SessionDep) -> ChatService:
     Returns:
         Configured ChatService instance.
     """
-    db_session = DatabaseService(session=session)
-    return ChatService(db_session=db_session)
+    repo = ChatRepo(session=session)
+    return ChatService(repo=repo)
 
-def get_summary_service(session:SessionDep)->SummaryService:
-    db_session=DatabaseService(session=session)
-    return SummaryService(db_service=db_session)
 
-__all__ = ["UpdateChat"]
+def get_summary_service(session: SessionDep) -> SummaryService:
+    repo = SummaryRepo(session=session)
+    return SummaryService(repo=repo)
+
+
+__all__ = [
+    "UpdateChat",
+    "get_summary_service",
+    "get_chat_service",
+    "get_user_service",
+    "get_auth_service",
+]

@@ -4,22 +4,9 @@ Contains shared models like Status enum and generic Response wrapper.
 """
 
 from app.core import CustomBaseModel
-from enum import Enum
 from typing import TypeVar, Generic, Optional
 
 T = TypeVar("T")
-
-
-class Status(Enum):
-    """Response status enumeration.
-
-    Attributes:
-        success: Operation was successful.
-        failed: Operation failed.
-    """
-
-    success = "success"
-    failed = "failed"
 
 
 class Response(CustomBaseModel, Generic[T]):
@@ -32,8 +19,6 @@ class Response(CustomBaseModel, Generic[T]):
         error: Optional error details.
     """
 
-    status: Status
-    message: str
     data: Optional[T] = None
     error: Optional[T] = None
 

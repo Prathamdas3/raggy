@@ -8,13 +8,11 @@ from fastapi import (
     APIRouter,
     status,
     Depends,
-    HTTPException,
     Response as HttpResponse,
     Request,
 )
-from app.core import config, get_logger
-from app.db import SessionDep
-from app.models import Response, Status, CreateUser, SigninUser, Tokens
+from app.core import config, get_logger, AppException,SessionDep
+from app.models import Response, CreateUser, SigninUser, Tokens
 from app.services import AuthService, get_auth_service
 from app.utils import JWT, TokenToUserId, RefreshTokenUserId
 
@@ -45,8 +43,14 @@ def get_user_id(request: Request, session: SessionDep) -> RefreshTokenUserId:
     Returns:
         RefreshTokenUserId containing user_id and email.
     """
-    user = TokenToUserId(session=session)
-    old_user: RefreshTokenUserId = user.get_user_id_from_refresh_token(request=request)
+    user = TokenToUserId(session)
+    old_user: RefreshTokenUserId = user.get_user_id_from_refresh_token(
+        request=request
+    )
+    if not old_user.user_id or not old_user.email:
+        raise AppException(
+            status_code=status.HTTP_401_UNAUTHORIZED, message="Invalid credentials"
+        )
     return old_user
 
 
@@ -64,10 +68,21 @@ def set_cookies(response: HttpResponse, key: str, value: str, time: int, type: s
         key=key,
         value=value,
         httponly=True,
-        secure=False,
+        secure=config.env == "production",
         samesite="lax",
         max_age=time * 24 * 60 * 60 if type == "days" else time * 60,
     )
+
+
+def create_auth_tokens(payload: Tokens) -> tuple[str, str]:
+    tokens = get_tokens(payload=payload)
+    access_token = tokens.create_access_token()
+    refresh_token = tokens.create_refresh_token()
+
+    if not access_token or not refresh_token:
+        raise AppException(message="Failed to generate tokens.",status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return access_token, refresh_token
 
 
 @auth_router.post(
@@ -79,7 +94,7 @@ def handle_signup(
     data: CreateUser,
     response: HttpResponse,
     auth: AuthService = Depends(get_auth_service),
-) -> dict[str, str | Status | dict[str, str]]:
+) -> dict[str, dict[str,str]]:
     """Register a new user account.
 
     Args:
@@ -93,58 +108,28 @@ def handle_signup(
     Raises:
         HTTPException: If user creation or token generation fails.
     """
-    try:
-        user = auth.user_signup(data=data)
 
-        if not user.get("id"):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create the user",
-            )
+    user =auth.user_signup(data=data)
+    access_token, refresh_token = create_auth_tokens(
+        Tokens(user_id=str(user.id), email=user.email)
+    )
 
-        payload = Tokens(user_id=str(user["id"]), email=user["email"])
-        tokens = get_tokens(payload=payload)
+    set_cookies(
+        response=response,
+        key="jwt",
+        value=access_token,
+        type="mins",
+        time=config.access_token_expire_minutes,
+    )
+    set_cookies(
+        response=response,
+        key="token",
+        value=refresh_token,
+        type="days",
+        time=config.refresh_token_expire_days,
+    )
 
-        access_token = tokens.create_access_token()
-        refresh_token = tokens.create_refresh_token()
-
-        if not access_token or not refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create tokens",
-            )
-
-        set_cookies(
-            response=response,
-            key="jwt",
-            value=access_token,
-            type="mins",
-            time=config.access_token_expire_minutes,
-        )
-        set_cookies(
-            response=response,
-            key="token",
-            value=refresh_token,
-            type="days",
-            time=config.refresh_token_expire_days,
-        )
-
-        return {
-            "message": "Successfully created the user",
-            "status": Status.success,
-            "data": {"id": user["id"], "email": user["email"]},
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Signup failed: {str(e)}",
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during signup",
-        )
+    return {"data": {"id": user.id, "email": user.email}}
 
 
 @auth_router.post("/sign-in", status_code=status.HTTP_200_OK, response_model=Response)
@@ -152,70 +137,33 @@ def handle_signin(
     data: SigninUser,
     response: HttpResponse,
     auth: AuthService = Depends(get_auth_service),
-) -> Response:
-    """Authenticate an existing user.
+) -> dict[str, dict[str,str]]:
+    user = auth.user_signin(data=data)
+    access_token, refresh_token = create_auth_tokens(
+        Tokens(user_id=str(user.id), email=user.email)
+    )
 
-    Args:
-        data: User sign-in credentials (email and password).
-        response: HTTP response for setting cookies.
-        auth: Authentication service dependency.
+    set_cookies(
+        response=response,
+        key="jwt",
+        value=access_token,
+        type="mins",
+        time=config.access_token_expire_minutes,
+    )
+    set_cookies(
+        response=response,
+        key="token",
+        value=refresh_token,
+        type="days",
+        time=config.refresh_token_expire_days,
+    )
 
-    Returns:
-        Response with user info and JWT tokens.
-
-    Raises:
-        HTTPException: If authentication or token generation fails.
-    """
-    try:
-        result = auth.user_signin(data=data)
-
-        if not result.id:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to sign in the user",
-            )
-
-        payload = Tokens(user_id=str(result.id), email=result.email)
-        tokens = get_tokens(payload=payload)
-
-        access_token = tokens.create_access_token()
-        refresh_token = tokens.create_refresh_token()
-
-        if not access_token or not refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create tokens",
-            )
-
-        set_cookies(
-            response=response,
-            key="jwt",
-            value=access_token,
-            type="mins",
-            time=config.access_token_expire_minutes,
-        )
-        set_cookies(
-            response=response,
-            key="token",
-            value=refresh_token,
-            type="days",
-            time=config.refresh_token_expire_days,
-        )
-
-        return Response(
-            message="Successfully signed in", status=Status.success, data=result
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Signin failed: {str(e)}",
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during signin",
-        )
+    return {
+        "data": {
+            "id": user.id,
+            "email": user.email,
+        }
+    }
 
 
 @auth_router.delete(
@@ -224,8 +172,8 @@ def handle_signin(
 def handle_logout(
     request: Request,
     response: HttpResponse,
-    user: RefreshTokenUserId = Depends(get_user_id),
-) -> Response:
+    _user: RefreshTokenUserId = Depends(get_user_id),
+) -> dict[str, str]:
     """Sign out the current user.
 
     Clears authentication cookies and invalidates the session.
@@ -241,27 +189,11 @@ def handle_logout(
     Raises:
         HTTPException: If credentials are invalid or logout fails.
     """
-    try:
-        if not user.user_id or not user.email:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-            )
 
-        response.delete_cookie(key="jwt")
-        response.delete_cookie(key="token")
+    response.delete_cookie(key="jwt")
+    response.delete_cookie(key="token")
 
-        return Response(message="Successfully signed out", status=Status.success)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Logout failed: {str(e)}",
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during logout",
-        )
+    return {"data": "Successfully signed out"}
 
 
 @auth_router.get("/refresh", status_code=status.HTTP_200_OK, response_model=Response)
@@ -269,7 +201,7 @@ def handle_refresh(
     request: Request,
     response: HttpResponse,
     user: RefreshTokenUserId = Depends(get_user_id),
-) -> Response:
+) -> dict[str, str]:
     """Refresh the access token using refresh token.
 
     Args:
@@ -283,35 +215,16 @@ def handle_refresh(
     Raises:
         HTTPException: If token refresh fails.
     """
-    try:
-        if not user.user_id or not user.email:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
-            )
 
-        payload = Tokens(user_id=str(user.user_id), email=user.email)
-        tokens = get_tokens(payload=payload)
-        access_token = tokens.create_access_token()
-        if not access_token:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create tokens",
-            )
-        set_cookies(
+
+    payload = Tokens(user_id=str(user.user_id), email=user.email)
+    access_token,_ = create_auth_tokens(payload=payload)
+        
+    set_cookies(
             response=response,
             key="jwt",
             value=access_token,
             type="mins",
             time=config.access_token_expire_minutes,
         )
-        return Response(message="Token refreshed", status=Status.success)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Signin failed: {str(e)}",
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during signin",
-        )
+    return {"data": "Token refreshed"}

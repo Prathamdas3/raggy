@@ -4,10 +4,11 @@ Contains request/response models for chat updates and file extraction.
 """
 
 from app.core import CustomBaseModel
-from app.db import Status
+from app.schemas import Status
 
 from pydantic import field_validator, model_validator
 from typing import Optional
+from uuid import UUID
 
 
 class UpdateChat(CustomBaseModel):
@@ -20,7 +21,7 @@ class UpdateChat(CustomBaseModel):
         is_bookmarked: Optional bookmark flag.
         share_id: Optional share identifier.
     """
-    chat_id:str
+    chat_id:UUID
     title: Optional[str] = None
     shared_doc: Optional[str] = None
     processing_status: Optional[Status] = None

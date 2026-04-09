@@ -48,7 +48,7 @@ def db_session(test_engine: Any):
 @pytest.fixture(scope="function")
 def client(db_session: Any):
     from app.main import app
-    from app.db.db import get_session
+    from app.core import get_session
 
     def override_get_session():
         yield db_session
@@ -60,7 +60,7 @@ def client(db_session: Any):
 
 @pytest.fixture(scope="function")
 def test_user(db_session: Any):
-    from app.db.schema import Users
+    from app.schemas import Users
 
     password_handler = HandlePassword()
     hashed = password_handler.get_hashed_password(TEST_PASSWORD)

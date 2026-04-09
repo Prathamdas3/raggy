@@ -153,7 +153,7 @@ class TestSecurity:
         assert "password" not in data.get("data", {})
 
     def test_signup_password_hashed_in_db(self, client: TestClient, db_session: Any):
-        from app.db.schema import Users
+        from app.schemas import Users
 
         email = "hashtest@example.com"
         client.post(

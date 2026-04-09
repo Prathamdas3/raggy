@@ -5,7 +5,7 @@ Provides endpoints for uploading and processing files including PDFs.
 
 from fastapi import APIRouter, status, UploadFile, File, HTTPException, Depends
 from app.core import get_logger
-from app.models import Response, FileMeta, Status
+from app.models import Response, FileMeta
 from app.utils import save_upload_to_minio
 from app.services import get_chat_service, ChatService
 from app.api.v1.auth import get_user_id, RefreshTokenUserId
@@ -84,8 +84,7 @@ def upload_file(
             }
         )
         return {
-            "message": "Successfully saved the docs",
-            "status": Status.success,
+
             "data": chat_id,
         }
 

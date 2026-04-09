@@ -38,7 +38,7 @@ def task_update_summary(self, data: dict):
         raise ValueError("Invalid summary id")
 
     try:
-        from app.db import get_celery_session
+        from app.core import get_celery_session
         from app.services import get_summary_service
 
         with get_celery_session() as session:
@@ -71,13 +71,13 @@ def task_update_title(self, data: dict):
         raise ValueError("Invalid chat id to update the title")
 
     try:
-        from app.db import get_celery_session
+        from app.core import get_celery_session
         from app.services import get_chat_service
 
         with get_celery_session() as session:
             service = get_chat_service(session=session)
             details = UpdateChat(chat_id=chat_id, title=title)
-            service.update_chat(details=details)
+            service.update_chat(data=details)
             logger.info("✅ successfully updated the title")
     except Exception as e:
         logger.error(f"Failed to update summary: {e}")
@@ -96,7 +96,7 @@ def task_parallel_save_and_create_summary(self, data: dict) -> dict:
         task_save_original_text_vector_db.delay(data)
 
         # create summary and return result to next chain task
-        from app.db import get_celery_session
+        from app.core import get_celery_session
         from app.services import get_summary_service
 
         with get_celery_session() as session:

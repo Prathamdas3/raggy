@@ -10,11 +10,12 @@ from dataclasses import dataclass
 
 from app.core.logger import get_logger
 from app.models.jwt import Tokens
-from app.db.schema import Users
+from app.schemas import Users
 from app.core.config import config
 from datetime import datetime, timezone, timedelta
 from jose import jwt, JWTError
-from fastapi import HTTPException, status, Request
+from app.core import AppException
+from fastapi import  status, Request
 from uuid import UUID
 
 logger = get_logger(__name__)
@@ -57,7 +58,7 @@ class JWT:
             Encoded JWT access token string.
 
         Raises:
-            HTTPException: If token creation fails.
+            AppException: If token creation fails.
         """
         try:
             to_encode = self.payload.copy()
@@ -77,9 +78,9 @@ class JWT:
             return encoded_jwt
         except Exception as e:
             logger.error(f"Failed to create jwt: {str(e)}")
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to form jwt",
+                message="Failed to form jwt",
             )
 
     def create_refresh_token(self) -> str:
@@ -89,7 +90,7 @@ class JWT:
             Encoded JWT refresh token string.
 
         Raises:
-            HTTPException: If token creation fails.
+            AppException: If token creation fails.
         """
         try:
             to_encode = self.payload.copy()
@@ -109,9 +110,9 @@ class JWT:
             return encoded_jwt
         except Exception as e:
             logger.error(f"Failed to create token: {str(e)}")
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to form token",
+                message="Failed to form token",
             )
 
 
@@ -142,7 +143,7 @@ class TokenToUserId:
         Raises:
             ValueError: If user_id is empty.
             TypeError: If user_id is not a valid UUID.
-            HTTPException: If user not found or database error.
+            AppException: If user not found or database error.
         """
         if not old_user_id:
             raise ValueError("No user id provided")
@@ -156,18 +157,18 @@ class TokenToUserId:
             user = self._db.get(Users, user_id)
             if user is None:
                 logger.warning(f"User not found: {user_id}")
-                raise HTTPException(
+                raise AppException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User not found or invalid",
+                    message="User not found or invalid",
                 )
             return user
         except Exception as e:
             logger.error(
                 f"Database error fetching user {user_id}: {str(e)}",
             )
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database error during user validation",
+                message="Database error during user validation",
             ) from e
 
     def get_user_id_from_access_token(self, request: Request) -> str:
@@ -180,13 +181,13 @@ class TokenToUserId:
             String representation of user UUID.
 
         Raises:
-            HTTPException: If token is invalid or user not found.
+            AppException: If token is invalid or user not found.
         """
         token = request.cookies.get("jwt")
 
         if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found "
+            raise AppException(
+                status_code=status.HTTP_401_UNAUTHORIZED, message="No user found "
             )
 
         try:
@@ -195,8 +196,8 @@ class TokenToUserId:
             token_type = payload.get("type")
 
             if user_id is None or token_type != "access":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                raise AppException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, message="Invalid token"
                 )
 
             user_id = str(user_id)  # Safe cast since checked not None
@@ -208,17 +209,17 @@ class TokenToUserId:
             logger.error(
                 f"Failed to fetch the credentials from the access_token:{str(je)}",
             )
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
+                message="Could not validate credentials",
             )
         except Exception as e:
             logger.error(
                 f"Failed to extract the user id from the access token: {str(e)}",
             )
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to validate the user details",
+                message="Failed to validate the user details",
             )
 
         return user_id
@@ -233,12 +234,12 @@ class TokenToUserId:
             RefreshTokenUserId containing user_id, email, and token.
 
         Raises:
-            HTTPException: If token is invalid or user not found.
+            AppException: If token is invalid or user not found.
         """
         token = request.cookies.get("token")
         if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="No user found"
+            raise AppException(
+                status_code=status.HTTP_401_UNAUTHORIZED, message="No user found"
             )
 
         try:
@@ -248,8 +249,8 @@ class TokenToUserId:
             token_type = payload.get("type")
 
             if user_id is None or email is None or token_type != "refresh":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                raise AppException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, message="Invalid token"
                 )
 
             user_id = str(user_id)
@@ -257,24 +258,24 @@ class TokenToUserId:
 
             # Verify user exists in database
             self._get_user_by_id(user_id)
-        except HTTPException:
+        except AppException:
             raise
         except JWTError as je:
             logger.error(
                 f"Failed to fetch the credentials from the refresh token: {str(je)}",
             )
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
+                message="Could not validate credentials",
             )
         except Exception as e:
             logger.error(
                 f"Failed to extract the user id from the refresh token: {str(e)}",
             )
 
-            raise HTTPException(
+            raise AppException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to validate the user details",
+                message="Failed to validate the user details",
             )
 
         return RefreshTokenUserId(user_id=UUID(user_id), email=email, token=token)

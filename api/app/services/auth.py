@@ -5,15 +5,16 @@ login, and password update operations.
 """
 
 from dataclasses import dataclass
-from fastapi import HTTPException, status
+from fastapi import status
 from pydantic import EmailStr
 
 
 from app.core import get_logger
-from app.models import CreateUser, SigninUser, UpdatePassword, Response, Status
-from app.services.user import FindUser
-from app.db import DatabaseService
+from app.models import CreateUser, SigninUser, UpdatePassword
+from app.schemas import Users
 from app.utils import HandlePassword
+from app.core import AppException
+from app.repository import UserRepo
 
 logger = get_logger(__name__)
 
@@ -33,7 +34,9 @@ class AuthService:
     """
 
     def __init__(
-        self, db_service: DatabaseService, password: HandlePassword, user: FindUser
+        self,
+        repo: UserRepo,
+        password: HandlePassword,
     ):
         """Initialize AuthService with dependencies.
 
@@ -42,11 +45,10 @@ class AuthService:
             password: Password handler for hashing/verification.
             user: FindUser service for user lookup.
         """
-        self._db = db_service
+        self._repo = repo
         self._password = password
-        self._user = user
 
-    def user_signup(self, data: CreateUser):
+    def user_signup(self, data: CreateUser)->SignInUser:
         """Register a new user.
 
         Args:
@@ -56,39 +58,23 @@ class AuthService:
             Dictionary with created user's id and email.
 
         Raises:
-            HTTPException: If email already exists or signup fails.
+            AppException: If email already exists or signup fails.
         """
-        try:
-            existing = self._user.get_user_by_email(data.email)
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Email already exists",
-                )
-
-            hashed_password = self._password.get_hashed_password(data.password)
-
-            from app.db.schema import Users
-
-            new_user = Users(email=data.email, password=hashed_password)
-            self._db.session.add(new_user)
-            self._db.commit()
-            self._db.session.refresh(new_user)
-
-            logger.info(f"User created with id={new_user.id}")
-
-            return {"id": str(new_user.id), "email": new_user.email}
-
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(
-                "User signup failed",
+        existing = self._repo.get_by_email(data.email)
+        if existing:
+            raise AppException(
+                status_code=status.HTTP_409_CONFLICT,
+                message="Email already exists",
             )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create user",
-            ) from e
+
+        hashed_password = self._password.get_hashed_password(data.password)
+
+        new_user = Users(email=data.email, password=hashed_password)
+        self._repo.save(instance=new_user)
+
+        logger.info(f"User created with id={new_user.id}")
+
+        return SignInUser(id= str(new_user.id), email= new_user.email)
 
     def user_signin(self, data: SigninUser) -> SignInUser:
         """Authenticate a user with email and password.
@@ -100,40 +86,30 @@ class AuthService:
             SignInUser with authenticated user's id and email.
 
         Raises:
-            HTTPException: If user not found or password incorrect.
+            AppException: If user not found or password incorrect.
         """
-        try:
-            user = self._user.get_user_by_email(data.email)
-            if not user:
-                raise HTTPException(
+        user = self._repo.get_by_email(data.email)
+        if not user:
+                raise AppException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No user found with the given email",
+                    message="No user found with the given email",
                 )
 
-            old_password = user.password
-            new_password = data.password
+        old_password = user.password
+        new_password = data.password
 
-            if not self._password.verify_password(
+        if not self._password.verify_password(
                 plain_password=new_password, hashed_password=old_password
             ):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password"
+                raise AppException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    message="Incorrect password",
                 )
 
-            return SignInUser(id=str(user.id), email=user.email)
+        return SignInUser(id=str(user.id), email=user.email)
 
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(
-                "User signin failed",
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Signin operation failed",
-            ) from e
 
-    def update_password(self, data: UpdatePassword) -> Response[None]:
+    def update_password(self, data: UpdatePassword) -> str:
         """Update a user's password.
 
         Args:
@@ -143,42 +119,29 @@ class AuthService:
             Response confirming successful password update.
 
         Raises:
-            HTTPException: If user not found or old password incorrect.
+            AppException: If user not found or old password incorrect.
         """
-        try:
-            user = self._user.get_user_by_id(data.user_id)
-            if not user:
-                raise HTTPException(
+        user = self._repo.get_by_id(data.user_id)
+        if not user:
+            raise AppException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found",
+                    message="User not found",
                 )
 
-            if not self._password.verify_password(
+        if not self._password.verify_password(
                 plain_password=data.old_password,
                 hashed_password=user.password,
             ):
-                raise HTTPException(
+            raise AppException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="Old password is incorrect",
+                    message="Old password is incorrect",
                 )
 
-            user.password = self._password.get_hashed_password(data.new_password)
-            self._db.commit()
+        user.password = self._password.get_hashed_password(data.new_password)
+        self._repo.save(instance=user)
 
-            logger.info(f"Password updated for user id={user.id}")
+        logger.info(f"Password updated for user id={user.id}")
 
-            return Response[None](
-                status=Status.success,
-                message="Password updated successfully",
-            )
+        return "Password updated successfully"
 
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(
-                f"Password update failed for user id={data.user_id}",
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update password",
-            ) from e
+
