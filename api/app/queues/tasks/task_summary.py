@@ -1,13 +1,11 @@
 from uuid import UUID
 
-from app.tasks.task_save_text import task_save_original_text_vector_db
-from app.tasks.task_generate_audio import task_generate_audio
+from app.queues.tasks.task_save_text import task_save_original_text_vector_db
 from app.core import get_logger, celery
 
 
 from app.models import UpdateChat, UpdateSummary
 
-from celery import chain
 from typing import TypedDict
 
 logger = get_logger(__name__)
@@ -109,24 +107,4 @@ def task_parallel_save_and_create_summary(self, data: dict) -> dict:
         }
     except Exception as e:
         logger.error(f"Failed to process parallel tasks: {e}")
-        raise self.retry(exc=e)
-
-
-@celery.task(
-    bind=True,
-    max_retries=3,
-    default_retry_delay=10,
-    name="task_handle_ai_generated_content",
-)
-def task_handle_ai_generated_content(self, data: dict):
-    try:
-        chain(
-            # task_update_summary.s(data),
-            task_generate_audio.s(data),
-            task_update_summary.s(),
-            task_update_title.s(),
-        ).delay()
-
-    except Exception as e:
-        logger.error("Failed to handle the ai generated content")
         raise self.retry(exc=e)

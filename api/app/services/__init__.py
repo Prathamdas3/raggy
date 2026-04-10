@@ -10,6 +10,8 @@ from app.services.user import UserService
 from app.services.chat import ChatService, UpdateChat
 from app.services.summary import SummaryService
 from app.repository import UserRepo, ChatRepo, SummaryRepo
+from fastapi import Depends
+from typing import Annotated
 
 
 def get_auth_service(session: SessionDep) -> AuthService:
@@ -58,8 +60,17 @@ def get_summary_service(session: SessionDep) -> SummaryService:
     return SummaryService(repo=repo)
 
 
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
+SummaryServiceDep = Annotated[SummaryService, Depends(get_summary_service)]
+
 __all__ = [
     "UpdateChat",
+    "AuthServiceDep",
+    "UserServiceDep",
+    "ChatServiceDep",
+    "SummaryServiceDep",
     "get_summary_service",
     "get_chat_service",
     "get_user_service",

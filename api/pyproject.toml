@@ -43,4 +43,4 @@ package=true
 
 [project.scripts]
 dev = "app.main:main"
-worker="app.workers:main"
+workers="app.workers:main"

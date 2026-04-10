@@ -6,7 +6,7 @@ Contains background tasks for extracting text content from files.
 from app.core import celery, get_logger
 from app.utils import extract_pdf_content
 from typing import TypedDict
-from app.tasks.task_save_text import SaveArgs
+from app.queues.tasks.task_save_text import SaveArgs
 
 logger = get_logger(__name__)
 
@@ -54,6 +54,8 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
         }
         logger.info("✅ successfully extracted the text")
         return return_value
+    except ValueError:
+        raise
     except Exception as e:
         logger.error(
             f"Failed to extract the file content of type {data.get('file_type')}:{str(e)}"
