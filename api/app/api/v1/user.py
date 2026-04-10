@@ -3,12 +3,12 @@
 Provides endpoints for retrieving and managing the current authenticated user.
 """
 
-from fastapi import APIRouter, Depends, status, Response as HttpResponse
+from fastapi import APIRouter,  status, Response as HttpResponse
 from app.models import Response
-from app.core import get_logger,SessionDep
-from app.services import get_user_service, UserService
-from app.utils import RefreshTokenUserId
-from app.api.v1.auth import get_user_id
+from app.core import get_logger
+from app.services import UserServiceDep
+from app.utils import CurrentUserDep
+
 
 logger = get_logger(__name__)
 
@@ -17,8 +17,7 @@ user_router = APIRouter(prefix="/users")
 
 @user_router.get("/me", status_code=status.HTTP_200_OK, response_model=Response)
 def get_current_user(
-    session: SessionDep,
-    user: RefreshTokenUserId = Depends(get_user_id),
+    user: CurrentUserDep,
 ) -> dict[str, dict[str, str]]:
     """Get the current authenticated user.
 
@@ -38,9 +37,8 @@ def get_current_user(
 @user_router.delete("/me", status_code=status.HTTP_200_OK, response_model=Response)
 def remove_current_user(
     response: HttpResponse,
-    session: SessionDep,
-    user: RefreshTokenUserId = Depends(get_user_id),
-    user_service: UserService = Depends(get_user_service),
+    user: CurrentUserDep,
+    user_service: UserServiceDep,
 )-> dict[str, str]:
     """Delete the current authenticated user.
 

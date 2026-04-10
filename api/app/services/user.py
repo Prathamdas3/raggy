@@ -1,6 +1,6 @@
 from uuid import UUID
 from app.core import AppException, get_logger
-from app.models import CreateUser, UpdateUser
+from app.models import CreateUser, UpdateUser, UpdatePassword
 from app.schemas import Users
 from app.utils import HandlePassword
 
@@ -37,6 +37,21 @@ class UserService:
         for field, value in data.model_dump(exclude_unset=True).items():
             setattr(user, field, value)
         return self._repo.save(user)
+
+    def update_password(self, data: UpdatePassword):
+        user = self._find_user(data.user_id)
+        if not self._password.verify_password(
+            plain_password=data.old_password, hashed_password=user.password
+        ):
+            raise AppException(
+                status_code=409,
+                message="Old password is incorrect",
+            )
+        user.password = self._password.get_hashed_password(data.new_password)
+        self._repo.save(user)
+        logger.info(f"Password updated for user id={user.id}")
+
+        return "Password updated successfully"
 
     def delete_user(self, user_id: UUID) -> str:
         user = self._find_user(user_id)

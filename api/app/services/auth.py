@@ -10,7 +10,7 @@ from pydantic import EmailStr
 
 
 from app.core import get_logger
-from app.models import CreateUser, SigninUser, UpdatePassword
+from app.models import CreateUser, SigninUser
 from app.schemas import Users
 from app.utils import HandlePassword
 from app.core import AppException
@@ -107,41 +107,3 @@ class AuthService:
                 )
 
         return SignInUser(id=str(user.id), email=user.email)
-
-
-    def update_password(self, data: UpdatePassword) -> str:
-        """Update a user's password.
-
-        Args:
-            data: UpdatePassword model with user_id, old and new passwords.
-
-        Returns:
-            Response confirming successful password update.
-
-        Raises:
-            AppException: If user not found or old password incorrect.
-        """
-        user = self._repo.get_by_id(data.user_id)
-        if not user:
-            raise AppException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    message="User not found",
-                )
-
-        if not self._password.verify_password(
-                plain_password=data.old_password,
-                hashed_password=user.password,
-            ):
-            raise AppException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    message="Old password is incorrect",
-                )
-
-        user.password = self._password.get_hashed_password(data.new_password)
-        self._repo.save(instance=user)
-
-        logger.info(f"Password updated for user id={user.id}")
-
-        return "Password updated successfully"
-
-

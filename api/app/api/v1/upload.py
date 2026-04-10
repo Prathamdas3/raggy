@@ -3,13 +3,12 @@
 Provides endpoints for uploading and processing files including PDFs.
 """
 
-from fastapi import APIRouter, status, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, status, UploadFile, File, HTTPException
 from app.core import get_logger
 from app.models import Response, FileMeta
-from app.utils import save_upload_to_minio
-from app.services import get_chat_service, ChatService
-from app.api.v1.auth import get_user_id, RefreshTokenUserId
-from app.tasks import chain_summary
+from app.utils import save_upload_to_minio,CurrentUserDep
+from app.services import ChatServiceDep
+from app.queues.chains import chain_summary
 
 
 file_router = APIRouter(prefix="/upload")
@@ -40,9 +39,9 @@ def validate_file(file: UploadFile) -> None:
     "/files", status_code=status.HTTP_202_ACCEPTED, response_model=Response
 )
 def upload_file(
+    chat_services: ChatServiceDep,
+    user: CurrentUserDep,
     file: UploadFile = File(...),
-    chat_services: ChatService = Depends(get_chat_service),
-    user: RefreshTokenUserId = Depends(get_user_id),
 ):
     """Upload a file for processing.
 
@@ -84,12 +83,9 @@ def upload_file(
             }
         )
         return {
-
             "data": chat_id,
         }
 
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(
             f"Failed to upload file: {str(e)}",

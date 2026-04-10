@@ -7,51 +7,17 @@ logout, and token refresh operations.
 from fastapi import (
     APIRouter,
     status,
-    Depends,
     Response as HttpResponse,
     Request,
 )
-from app.core import config, get_logger, AppException,SessionDep
+from app.core import config, get_logger, AppException
 from app.models import Response, CreateUser, SigninUser, Tokens
-from app.services import AuthService, get_auth_service
-from app.utils import JWT, TokenToUserId, RefreshTokenUserId
+from app.services import AuthServiceDep
+from app.utils import create_access_token, create_refresh_token,CurrentUserDep,CurrentUserRefreshDep
 
 
 logger = get_logger(__name__)
 auth_router = APIRouter(prefix="/auth")
-
-
-def get_tokens(payload: Tokens):
-    """Create JWT tokens from payload.
-
-    Args:
-        payload: Token payload containing user_id and email.
-
-    Returns:
-        JWT instance with encoded tokens.
-    """
-    return JWT(payload=payload)
-
-
-def get_user_id(request: Request, session: SessionDep) -> RefreshTokenUserId:
-    """Extract user ID from refresh token.
-
-    Args:
-        request: FastAPI request object.
-        session: Database session.
-
-    Returns:
-        RefreshTokenUserId containing user_id and email.
-    """
-    user = TokenToUserId(session)
-    old_user: RefreshTokenUserId = user.get_user_id_from_refresh_token(
-        request=request
-    )
-    if not old_user.user_id or not old_user.email:
-        raise AppException(
-            status_code=status.HTTP_401_UNAUTHORIZED, message="Invalid credentials"
-        )
-    return old_user
 
 
 def set_cookies(response: HttpResponse, key: str, value: str, time: int, type: str):
@@ -75,9 +41,8 @@ def set_cookies(response: HttpResponse, key: str, value: str, time: int, type: s
 
 
 def create_auth_tokens(payload: Tokens) -> tuple[str, str]:
-    tokens = get_tokens(payload=payload)
-    access_token = tokens.create_access_token()
-    refresh_token = tokens.create_refresh_token()
+    access_token = create_access_token(payload=payload)
+    refresh_token = create_refresh_token(payload=payload)
 
     if not access_token or not refresh_token:
         raise AppException(message="Failed to generate tokens.",status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -93,7 +58,7 @@ def create_auth_tokens(payload: Tokens) -> tuple[str, str]:
 def handle_signup(
     data: CreateUser,
     response: HttpResponse,
-    auth: AuthService = Depends(get_auth_service),
+    auth: AuthServiceDep,
 ) -> dict[str, dict[str,str]]:
     """Register a new user account.
 
@@ -136,7 +101,7 @@ def handle_signup(
 def handle_signin(
     data: SigninUser,
     response: HttpResponse,
-    auth: AuthService = Depends(get_auth_service),
+    auth: AuthServiceDep,
 ) -> dict[str, dict[str,str]]:
     user = auth.user_signin(data=data)
     access_token, refresh_token = create_auth_tokens(
@@ -172,7 +137,7 @@ def handle_signin(
 def handle_logout(
     request: Request,
     response: HttpResponse,
-    _user: RefreshTokenUserId = Depends(get_user_id),
+    _user: CurrentUserDep,
 ) -> dict[str, str]:
     """Sign out the current user.
 
@@ -200,7 +165,7 @@ def handle_logout(
 def handle_refresh(
     request: Request,
     response: HttpResponse,
-    user: RefreshTokenUserId = Depends(get_user_id),
+    user: CurrentUserRefreshDep,
 ) -> dict[str, str]:
     """Refresh the access token using refresh token.
 
