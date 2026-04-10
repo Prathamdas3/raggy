@@ -40,6 +40,7 @@ def create_chat(
             "chat_id": str(chat_id),
             "storage_key": original_doc,
             "file_type": meta.category,
+            "user_id":str(user.user_id)
         }
     )
     return {"data": chat_id}
@@ -74,8 +75,8 @@ def bookmark_chat(
     return {"data": chat.update_chat(data)}
 
 
-@chat_router.patch(
-    "/{chat_id}", status_code=status.HTTP_200_OK, response_model=Response
-)
-def share_chat(chat_id: UUID, user: CurrentUserDep, chat: ChatServiceDep):
-    return {"data": chat.share_chat(chat_id=chat_id, user_id=user.user_id)}
+# @chat_router.get(
+#     "/{chat_id}", status_code=status.HTTP_200_OK, response_model=Response
+# )
+# def get_share_chat(chat_id: UUID, user: CurrentUserDep, chat: ChatServiceDep):
+#     return {"data": chat.share_chat(chat_id=chat_id, user_id=user.user_id)}

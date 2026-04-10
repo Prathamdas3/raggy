@@ -1,28 +1,53 @@
-from fastapi import APIRouter
-from fastapi.sse import EventSourceResponse
+from pydantic import BaseModel
 from collections.abc import Iterable
-from app.core import redis_client
+from fastapi import APIRouter
+from fastapi.sse import EventSourceResponse, ServerSentEvent
+from app.core import redis_client,get_logger
 from app.services import SummaryServiceDep
+import time
 import json
 
-summary_router = APIRouter(prefix="/summary",tags=["summary"])
+logger=get_logger(__name__)
+summary_router = APIRouter(prefix="/summary", tags=["summary"])
 
+class Item(BaseModel):
+    name: str
+    description: str | None
 
-@summary_router.get("/{chat_id}",response_class=EventSourceResponse)
-def handle_summary(chat_id:str,summary:SummaryServiceDep)-> Iterable[str]:
-    pubsub=redis_client.pubsub()
+items = [
+    Item(name="Plumbus", description="A multi-purpose household device."),
+    Item(name="Portal Gun", description="A portal opening device."),
+    Item(name="Meeseeks Box", description="A box that summons a Meeseeks."),
+]
+
+def _stream(chat_id: str, summary: SummaryServiceDep):
+    pubsub = redis_client.pubsub()
     pubsub.subscribe(f"chat:{chat_id}:done")
+
     for message in pubsub.listen():
-            if message["type"] != "message":
-                continue
+        if message["type"] != "message":
+            continue
 
-            data = json.loads(message["data"])
+        data = json.loads(message["data"])
 
-            if data["status"] == "done":
-                # fetch the actual content from 
-                # result =await summary.get_summaries(chat_id=chat_id)
+        if data["status"] == "done":
+            result = summary.get_summaries(chat_id=chat_id)
+            yield ServerSentEvent(
+                event="result",
+                data=json.dumps({"summary": result}),
+            )
+            yield ServerSentEvent(event="done", data="{}")
+            break
 
-                # yield f"event: result\ndata: {json.dumps({'summary': result})}\n\n"
-                yield "event: done\ndata: {}\n\n"
-                break
 
+# @summary_router.get("/{chat_id}")
+# def handle_summary(chat_id: str, summary: SummaryServiceDep) -> EventSourceResponse:
+#     return EventSourceResponse(_stream(chat_id, summary))
+
+
+@summary_router.get("/", response_class=EventSourceResponse)
+def sse_items_no_async() -> Iterable[Item]:
+    logger.info("connected")
+    for item in items:
+        time.sleep(100)
+        yield item

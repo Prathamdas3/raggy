@@ -6,6 +6,7 @@ from app.queues.tasks.task_summary import (
     task_parallel_save_and_create_summary,
     task_update_summary,
     task_update_title,
+    publish_task
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "task_parallel_save_and_create_summary",
     "task_update_summary",
     "task_update_title",
+    "publish_task"
 ]

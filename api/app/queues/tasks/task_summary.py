@@ -61,9 +61,9 @@ def task_update_summary(self, data: dict):
     name="task_update_title",
 )
 def task_update_title(self, data: dict):
-    title:str|None = data.get("title")
-    chat_id:str|None = data.get("chat_id")
-    user_id:str|None=data.get("user_id")
+    title: str | None = data.get("title")
+    chat_id: str | None = data.get("chat_id")
+    user_id: str | None = data.get("user_id")
     if not isinstance(title, str) or not title.strip():
         return
     if not isinstance(chat_id, str) or not chat_id.strip():
@@ -76,7 +76,7 @@ def task_update_title(self, data: dict):
 
         with get_celery_session() as session:
             service = get_chat_service(session=session)
-            details = UpdateChat(chat_id=chat_id, title=title,user_id=user_id)
+            details = UpdateChat(chat_id=chat_id, title=title, user_id=user_id)
             service.update_chat(data=details)
             logger.info("✅ successfully updated the title")
     except Exception as e:
@@ -109,4 +109,26 @@ def task_parallel_save_and_create_summary(self, data: dict) -> dict:
         }
     except Exception as e:
         logger.error(f"Failed to process parallel tasks: {e}")
+        raise self.retry(exc=e)
+
+
+@celery.task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=10,
+    name="task_parallel_save_and_create_summary",
+)
+def publish_task(self, data: dict):
+    chat_id = data.get("chat_id")
+    if not isinstance(chat_id, str) or not chat_id.strip():
+        raise ValueError("Invalid chat id")
+    from app.core import redis_client
+    import json
+
+    try:
+        redis_client.publish(
+            f"chat:{chat_id}:done", json.dumps({"status": "done", "chat_id": chat_id})
+        )
+    except Exception as e:
+        logger.error(f"Failed to publish the task to redis for the summary: {str(e)}")
         raise self.retry(exc=e)
