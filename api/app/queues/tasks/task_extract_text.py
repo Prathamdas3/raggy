@@ -21,6 +21,7 @@ class ExtractedDictType(TypedDict):
     """
 
     chat_id: str
+    user_id:str
     storage_key: str
     file_type: str
 
@@ -51,6 +52,7 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
         return_value: SaveArgs = {
             "content": content.content,
             "chat_id": str(data.get("chat_id")),
+            "user_id":str(data.get("user_id"))
         }
         logger.info("✅ successfully extracted the text")
         return return_value

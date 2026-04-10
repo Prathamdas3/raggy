@@ -20,6 +20,7 @@ class SaveArgs(TypedDict):
 
     chat_id: str
     content: str
+    user_id:str
 
 
 @celery.task(

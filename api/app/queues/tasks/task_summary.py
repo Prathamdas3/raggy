@@ -61,20 +61,22 @@ def task_update_summary(self, data: dict):
     name="task_update_title",
 )
 def task_update_title(self, data: dict):
-    title = data.get("title")
-    chat_id = data.get("chat_id")
+    title:str|None = data.get("title")
+    chat_id:str|None = data.get("chat_id")
+    user_id:str|None=data.get("user_id")
     if not isinstance(title, str) or not title.strip():
         return
     if not isinstance(chat_id, str) or not chat_id.strip():
         raise ValueError("Invalid chat id to update the title")
-
+    if not isinstance(user_id, str) or not user_id.strip():
+        raise ValueError("Invalid user id to update the title")
     try:
         from app.core import get_celery_session
         from app.services import get_chat_service
 
         with get_celery_session() as session:
             service = get_chat_service(session=session)
-            details = UpdateChat(chat_id=chat_id, title=title)
+            details = UpdateChat(chat_id=chat_id, title=title,user_id=user_id)
             service.update_chat(data=details)
             logger.info("✅ successfully updated the title")
     except Exception as e:
