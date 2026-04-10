@@ -22,6 +22,7 @@ class UpdateChat(CustomBaseModel):
         share_id: Optional share identifier.
     """
     chat_id:UUID
+    user_id:UUID
     title: Optional[str] = None
     shared_doc: Optional[str] = None
     processing_status: Optional[Status] = None

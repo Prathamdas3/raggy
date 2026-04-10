@@ -5,7 +5,7 @@ from app.utils.jwt import (
     create_access_token,
     create_refresh_token,
 )
-from app.utils.savefile import save_upload_to_minio
+from app.utils.savefile import save_bytes_to_minio, validate_and_read
 from app.utils.pdf import extract_pdf_content, FileContent
 from app.utils.split_text import text_split
 from app.utils.generate_audio import text_to_audio
@@ -21,7 +21,8 @@ __all__ = [
     "extract_pdf_content",
     "FileContent",
     "text_split",
-    "save_upload_to_minio",
+    "save_bytes_to_minio",
+    "validate_and_read",
     "text_to_audio",
     "parse_title_and_summary",
     "get_user_id",

@@ -12,7 +12,7 @@ from app.utils import CurrentUserDep
 
 logger = get_logger(__name__)
 
-user_router = APIRouter(prefix="/users")
+user_router = APIRouter(prefix="/users",tags=["users"])
 
 
 @user_router.get("/me", status_code=status.HTTP_200_OK, response_model=Response)

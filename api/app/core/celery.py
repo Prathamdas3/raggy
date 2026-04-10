@@ -10,5 +10,5 @@ celery = Celery(
     "raggy_api",
     broker=f"redis://{config.redis_host}:{config.redis_port}/0",
     backend=f"redis://{config.redis_host}:{config.redis_port}/1",
-    include=["app.queues"],
+    include=["app.queues.tasks","app.queues.chains"],
 )

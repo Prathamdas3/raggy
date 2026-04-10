@@ -6,7 +6,7 @@ Contains background tasks for extracting text content from files.
 from app.core import celery, get_logger
 from app.utils import extract_pdf_content
 from typing import TypedDict
-from app.queues.tasks.task_save_text import SaveArgs
+from app.queues.tasks import SaveArgs
 
 logger = get_logger(__name__)
 
@@ -21,7 +21,7 @@ class ExtractedDictType(TypedDict):
     """
 
     chat_id: str
-    stroage_key: str
+    storage_key: str
     file_type: str
 
 
@@ -45,7 +45,7 @@ def task_extract_text(self, data: ExtractedDictType) -> SaveArgs:
         Automatically retries up to 3 times on failure.
     """
     try:
-        content = extract_pdf_content(storage_key=data.get("stroage_key"))
+        content = extract_pdf_content(storage_key=data.get("storage_key"))
         if not content.content:
             raise ValueError("No content found from the given file path")
         return_value: SaveArgs = {

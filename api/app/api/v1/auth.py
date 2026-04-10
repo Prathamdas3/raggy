@@ -8,7 +8,6 @@ from fastapi import (
     APIRouter,
     status,
     Response as HttpResponse,
-    Request,
 )
 from app.core import config, get_logger, AppException
 from app.models import Response, CreateUser, SigninUser, Tokens
@@ -17,7 +16,7 @@ from app.utils import create_access_token, create_refresh_token,CurrentUserDep,C
 
 
 logger = get_logger(__name__)
-auth_router = APIRouter(prefix="/auth")
+auth_router = APIRouter(prefix="/auth",tags=["auth"])
 
 
 def set_cookies(response: HttpResponse, key: str, value: str, time: int, type: str):
@@ -135,7 +134,6 @@ def handle_signin(
     "/sign-out", status_code=status.HTTP_200_OK, response_model=Response
 )
 def handle_logout(
-    request: Request,
     response: HttpResponse,
     _user: CurrentUserDep,
 ) -> dict[str, str]:
@@ -163,7 +161,6 @@ def handle_logout(
 
 @auth_router.get("/refresh", status_code=status.HTTP_200_OK, response_model=Response)
 def handle_refresh(
-    request: Request,
     response: HttpResponse,
     user: CurrentUserRefreshDep,
 ) -> dict[str, str]:

@@ -17,20 +17,16 @@ class ChatRepo:
     def __init__(self, session: Session):
         self._db = session
 
-    def get_by_id(self, chat_id: UUID) -> Chats | None:
-        return self._db.get(Chats, chat_id)
+    def get_by_id(self, chat_id: UUID, user_id: UUID) -> Chats | None:
+        return self._db.exec(
+            select(Chats).where(Chats.id == chat_id, Chats.user_id == user_id)
+        ).first()
 
     def get_chats(self, user_id: UUID) -> list[ReturnChatType]:
         chats = self._db.exec(
-            select(
-                {
-                    "title": Chats.title,
-                    "is_bookmarked": Chats.is_bookmarked,
-                    "created_at": Chats.created_at,
-                }
-            ).where(Chats.user_id == user_id)
+           select(Chats).where(Chats.user_id == user_id)
         ).fetchall()
-        if chats:
+        if not chats:
             return []
         return cast(list[ReturnChatType], chats)
 
@@ -64,4 +60,3 @@ class ChatRepo:
         self._db.commit()
         self._db.refresh(branch)
         return branch
-

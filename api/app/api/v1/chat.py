@@ -4,64 +4,78 @@ Provides endpoints for managing chat conversations, including
 creating, updating, sharing, and branching conversations.
 """
 
-from fastapi import APIRouter, status,Request
-from app.models import Response
-from fastapi.sse import EventSourceResponse
-from collections.abc import Iterable
-from app.core import redis_client
+from fastapi import APIRouter, status, File, UploadFile
+from app.utils import CurrentUserDep, validate_and_read, save_bytes_to_minio
+from app.core import get_logger, AppException
+from app.models import Response, UpdateChat, FileMeta
+from app.services import ChatServiceDep
+from app.queues.chains import chain_summary
+from uuid import UUID
+
+chat_router = APIRouter(prefix="/chat", tags=["chats"])
+logger = get_logger(__name__)
 
 
-from app.services import SummaryServiceDep
-import json
+# route
+@chat_router.post("/", status_code=status.HTTP_202_ACCEPTED, response_model=Response)
+def create_chat(
+    chat_services: ChatServiceDep,
+    user: CurrentUserDep,
+    file: UploadFile = File(...),
+):
+    contents = validate_and_read(file)  # read once
+    meta = FileMeta.from_upload(file)
+    original_doc = save_bytes_to_minio(file, contents,filename=meta.filename,content_type=meta.content_type)  # reuse bytes
 
-chat_router = APIRouter(prefix="/chat")
+    if not original_doc:
+        raise AppException(status_code=500, message="Failed to upload file")
 
-@chat_router.get("/",response_model=Response)
-def get_list_of_chats():...
-
-
-@chat_router.get("/{chat_id}",response_class=EventSourceResponse)
-def handle_summary(request:Request,chat_id:str,summary:SummaryServiceDep)-> Iterable[str]:
-    pubsub=redis_client.pubsub()
-    pubsub.subscribe(f"chat:{chat_id}:done")
-    for message in pubsub.listen():
-            if message["type"] != "message":
-                continue
-
-            data = json.loads(message["data"])
-
-            if data["status"] == "done":
-                # fetch the actual content from 
-                # result =await summary.get_summaries(chat_id=chat_id)
-
-                # yield f"event: result\ndata: {json.dumps({'summary': result})}\n\n"
-                yield "event: done\ndata: {}\n\n"
-                break
-
-
-
+    chat_id = chat_services.create_chat(
+        user_id=user.user_id,
+        title=meta.filename,
+        original_doc=original_doc,
+    )
+    chain_summary(
+        {
+            "chat_id": str(chat_id),
+            "storage_key": original_doc,
+            "file_type": meta.category,
+        }
+    )
+    return {"data": chat_id}
 
 
+@chat_router.get("/", response_model=Response, status_code=status.HTTP_200_OK)
+def get_chats(user: CurrentUserDep, chat: ChatServiceDep):
+    return {"data": chat.get_chats(user_id=user.user_id)}
 
 
-
-@chat_router.get("/query", status_code=status.HTTP_200_OK, response_model=Response)
-def handle_query(query: str) -> dict[str, dict[str, str]]:
-    """Handle a chat query.
-
-    Args:
-        query: The user's query.
-
-    Returns:
-        Response with the chatbot's reply.
-    """
-    # Placeholder implementation - replace with actual chat logic
-    return {"data": {"message": "successfully updated the chats"}}
+@chat_router.get("/{chat_id}", response_model=Response, status_code=status.HTTP_200_OK)
+def get_chat(chat_id: UUID, user: CurrentUserDep, chat: ChatServiceDep):
+    return {"data": chat.find_chat(chat_id=chat_id, user_id=user.user_id)}
 
 
+@chat_router.delete(
+    "/{chat_id}", response_model=Response, status_code=status.HTTP_200_OK
+)
+def remove_chat(chat_id: UUID, user: CurrentUserDep, chat: ChatServiceDep):
+    return {"data": chat.remove_chat(chat_id=chat_id, user_id=user.user_id)}
 
 
-@chat_router.get("/query",response_class=EventSourceResponse)
-def handle_answer()->Iterable[str]:
-    for i in [""]:
-        yield i
+@chat_router.patch(
+    "/{chat_id}", status_code=status.HTTP_200_OK, response_model=Response
+)
+def bookmark_chat(
+    chat_id: UUID, is_bookmarked: bool, user: CurrentUserDep, chat: ChatServiceDep
+):
+    data = UpdateChat(
+        chat_id=chat_id, user_id=user.user_id, is_bookmarked=is_bookmarked
+    )
+    return {"data": chat.update_chat(data)}
+
+
+@chat_router.patch(
+    "/{chat_id}", status_code=status.HTTP_200_OK, response_model=Response
+)
+def share_chat(chat_id: UUID, user: CurrentUserDep, chat: ChatServiceDep):
+    return {"data": chat.share_chat(chat_id=chat_id, user_id=user.user_id)}

@@ -1,5 +1,6 @@
-from fastapi import UploadFile
+from fastapi import UploadFile, status
 from uuid import uuid4
+from app.core import AppException
 from app.core import get_logger, minio_client, ContentType, BucketName
 
 
@@ -12,38 +13,37 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 
-def save_upload_to_minio(file: UploadFile) -> str:
-    """
-    Read uploaded file bytes and save directly to MinIO.
-    Returns storage_key → store this in DB to retrieve later.
-    e.g. "documents/uuid4.pdf"
-    """
-    if not file.filename or not file.filename.strip():
-        raise ValueError("No file name provided.")
+# ALLOWED_CONTENT_TYPES = {"application/pdf"}
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
+
+def validate_and_read(file: UploadFile) -> bytes:
     if file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise ValueError(f"Unsupported file type: {file.content_type}.")
-
-    try:
-        file_bytes = file.file.read()  # bytes straight from upload, no disk write
-        object_name = f"{uuid4()}{_get_extension(file.content_type)}"
-
-        storage_key = minio_client.save_file(
-            bucket_name=BucketName.DOCUMENTS,
-            object_name=object_name,
-            data=file_bytes,
-            content_type=ALLOWED_CONTENT_TYPES[file.content_type],
-            metadata={"original_filename": file.filename},
+        raise AppException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            message=f"Only PDF files are allowed. Got: {file.content_type}",
         )
-        return storage_key
-
-    except ValueError:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to save upload to MinIO: {e}",
+    contents = file.file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise AppException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            message="File size exceeds the 10MB limit.",
         )
-        raise RuntimeError(f"Failed to save file: {e}") from e
+    return contents  # caller owns the bytes, no seek needed
+
+
+def save_bytes_to_minio(file: UploadFile, contents: bytes,filename:str,content_type:str) -> str:
+
+
+    object_name = f"{uuid4()}{_get_extension(content_type)}"
+    storage_key = minio_client.save_file(
+        bucket_name=BucketName.DOCUMENTS,
+        object_name=object_name,
+        data=contents,
+        content_type=ALLOWED_CONTENT_TYPES[content_type],
+        metadata={"original_filename": file.filename},
+    )
+    return storage_key
 
 
 def _get_extension(content_type: str) -> str:

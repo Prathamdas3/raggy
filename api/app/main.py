@@ -7,7 +7,7 @@ middleware, and lifespan handlers.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import config
-from app.api.router import router
+from app.api.router import api_router
 from app.lifecycle import lifespan
 from app.exception import register_exceptions
 
@@ -35,7 +35,7 @@ app.add_middleware(
 
 register_exceptions(app)
 
-app.include_router(router, prefix="/api")
+app.include_router(api_router, prefix="/api")
 
 def main():
     import uvicorn
