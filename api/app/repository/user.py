@@ -1,6 +1,5 @@
 from uuid import UUID
-from sqlmodel import select
-from sqlmodel import Session
+from sqlmodel import select,Session
 from app.schemas import Users
 
 
